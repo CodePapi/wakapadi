@@ -1,54 +1,75 @@
-// src/whois/whois.controller.ts
-import { Controller, Get, Post, Delete, Body, Req, UseGuards, Query, Param } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Body, Req, UseGuards, Query } from '@nestjs/common';
+import { ObjectId, Types } from 'mongoose';
 import { WhoisService } from '../services/whois.service';
-import { AuthGuard } from '../gateways/auth.guard';
-import { Request } from 'express';
+import { AuthGuard, OptionalAuthGuard } from '../gateways/auth.guard';
+import { NearbyQueryDto, NearbyUserResult, PingPresenceDto } from '../types/whois.dto';
+import { ApiBearerAuth, ApiQuery, ApiResponse } from '@nestjs/swagger';
+import { UnauthorizedException } from '@nestjs/common';
+import { Public } from 'src/gateways/decorators/public.decorator';
 
 interface AuthRequest extends Request {
   user?: {
-    id: string;
-    email: string;
-    role: string;
+    sub: Types.ObjectId;
   };
 }
 
+@ApiBearerAuth()
 @Controller('whois')
 export class WhoisController {
   constructor(private readonly whoisService: WhoisService) {}
 
+  @UseGuards(AuthGuard)
   @Post('ping')
-  @UseGuards(AuthGuard)
-  async ping(@Body() body, @Req() req: AuthRequest) {
-    return this.whoisService.pingPresence(req.user!.id, body);
+  // @Public() // This endpoint is publicly accessible
+  @ApiResponse({ status: 200, description: 'Presence updated successfully' })
+  async ping(@Body() dto: PingPresenceDto, @Req() req: AuthRequest) {
+    if (!req.user?.sub) {
+      console.log("error ping")
+      throw new UnauthorizedException();
+    }
+
+    console.log("ping", req.user.sub)
+    console.log("dto here", dto)
+    // const Sub: any = req.user.sub
+    return this.whoisService.pingPresence(
+     req.user?.sub,
+     
+       // Convert to ObjectId here
+      dto
+    );
   }
 
+  @UseGuards(AuthGuard)
   @Delete()
-  @UseGuards(AuthGuard)
+  @ApiResponse({ status: 200, description: 'Presence hidden successfully' })
   async hide(@Req() req: AuthRequest) {
-    return this.whoisService.hidePresence(req.user!.id);
+    if (!req.user?.sub) {
+      throw new UnauthorizedException();
+    }
+    return this.whoisService.hidePresence(
+      new Types.ObjectId(req.user.sub) // Convert to ObjectId here
+    );
   }
 
+  @UseGuards(OptionalAuthGuard)
   @Get('nearby')
-async nearby(@Req() req: AuthRequest) {
-  const city = req.query.city as string;
-  const isAuthenticated = !!req.user;
-  return this.whoisService.getNearby(city, isAuthenticated);
-}
+  @Public() // This endpoint is publicly accessible
+  @ApiQuery({ name: 'city', required: true })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Returns nearby users',
+    type: [Object] // Adjust this to match your actual response type
+  })
+  async nearby(@Query() query: { city: string }, @Req() req: AuthRequest): Promise<NearbyUserResult[]> {
+    const nearbyQuery: NearbyQueryDto = {
+      city: query.city
+    };
 
-
-  
-  @UseGuards(AuthGuard)
-  @Get('chat/:userId')
-  async getChat(@Param('userId') userId: string, @Req() req: AuthRequest) {
-    return this.whoisService.getChatHistory(req.user!.id, userId);
+    console.log("nerby", query.city,  req.user)
+    return this.whoisService.getNearby(
+      nearbyQuery,
+      req.user?.sub
+    );
   }
-  
-  @UseGuards(AuthGuard)
-  @Post('chat/:userId/read')
-  async markAsRead(@Param('userId') userId: string, @Req() req: AuthRequest) {
-    return this.whoisService.markMessagesAsRead(userId, req.user!.id);
-  }
-  
+
 }
-
-

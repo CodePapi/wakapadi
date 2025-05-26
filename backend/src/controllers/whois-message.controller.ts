@@ -1,41 +1,49 @@
-// src/whois/whois-message.controller.ts
-import { Controller, Post, Get, Param, Body, Req, UseGuards, Query } from '@nestjs/common';
+import { Controller, Post, Get, Delete, Body, Req, Param, Query, UseGuards } from '@nestjs/common';
 import { WhoisMessageService } from '../services/whois-message.service';
 import { AuthGuard } from '../gateways/auth.guard';
-import { Request } from 'express';
+import { ApiBearerAuth, ApiParam, ApiResponse } from '@nestjs/swagger';
+import { SendMessageDto, GetThreadQueryDto } from 'src/types/message.dto';
 
-interface AuthRequest extends Request {
-  user?: { id: string };
-}
-
-@Controller('whois/chat')
+@ApiBearerAuth()
 @UseGuards(AuthGuard)
+@Controller('whois/chat')
 export class WhoisMessageController {
   constructor(private readonly messageService: WhoisMessageService) {}
 
   @Post('send')
-  async send(@Req() req: AuthRequest, @Body() body: { toUserId: string; message: string }) {
-    return this.messageService.sendMessage(req.user!.id, body.toUserId, body.message);
+  async send(@Body() dto: SendMessageDto, @Req() req) {
+    return this.messageService.sendMessage({
+      ...dto,
+      fromUserId: req.user.sub // Now matches DTO
+    });
   }
-
+  
   @Get('thread/:userId')
   async getThread(
-    @Req() req: AuthRequest,
-    @Param('userId') userId: string,
-    @Query('page') page = '1',
-    @Query('limit') limit = '20'
+    @Param('userId') targetUserId: string,
+    @Query() query: GetThreadQueryDto,
+    @Req() req
   ) {
-    return this.messageService.getConversation(req.user!.id, userId, parseInt(page), parseInt(limit));
+    return this.messageService.getConversation({
+      ...query,
+      userId: req.user.sub,
+      targetUserId
+    });
   }
 
-  @Get('inbox')
-  async inbox(@Req() req: AuthRequest) {
-    return this.messageService.getInbox(req.user!.id);
+  @Delete('thread/:userId')
+  @ApiParam({ name: 'userId', required: true })
+  @ApiResponse({ status: 200, description: 'Thread cleared successfully' })
+  async clearThread(@Param('userId') userId: string, @Req() req) {
+    console.log("delete")
+    return this.messageService.clearThread(req.user.sub, userId);
   }
 
   @Get('unread-count')
-  async unreadCount(@Req() req: AuthRequest) {
-    const count = await this.messageService.getUnreadCount(req.user!.id);
-    return { unreadCount: count };
+  @ApiResponse({ status: 200, description: 'Returns unread message count' })
+  async unreadCount(@Req() req) {
+    return { 
+      count: await this.messageService.getUnreadCount(req.user.sub) 
+    };
   }
 }

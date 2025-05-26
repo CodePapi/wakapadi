@@ -1,83 +1,135 @@
-// src/whois/whois-message.service.ts
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { WhoisMessage } from '../schemas/whois-message.schema';
 import { WhoisGateway } from '../gateways/whois.gateway';
-
-
+import { SendMessageDto, GetThreadQueryDto } from '../types/message.dto';
+import { WhoisMessageDocument } from 'src/types/mongoose.types';
+import { UserPresenceService } from './user-presence.service';
 
 @Injectable()
-export class WhoisMessageService implements OnModuleInit {
+export class WhoisMessageService {
   constructor(
-    @InjectModel(WhoisMessage.name)
-    private readonly messageModel: Model<WhoisMessage>,
+    // @InjectModel(WhoisMessage.name) private readonly messageModel: Model<WhoisMessage>,
+    @InjectModel(WhoisMessage.name) 
+    private readonly messageModel: Model<WhoisMessageDocument>,
     private readonly gateway: WhoisGateway,
+    @Inject(forwardRef(() => UserPresenceService))
+    private readonly userPresenceService: UserPresenceService,
   ) {}
 
-  onModuleInit() {}
-
-  async sendMessage(fromUserId: string, toUserId: string, message: string) {
-    const newMessage = await this.messageModel.create({ fromUserId, toUserId, message });
-    const leanMessage = newMessage.toObject();
-
-    this.gateway.emitToUser(toUserId, 'message:new', {
-      fromUserId,
-      message,
-      sentAt: leanMessage.createdAt,
+  async sendMessage(dto: SendMessageDto) {
+    const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000); // 48h TTL
+    
+    const message = await this.messageModel.create({
+      fromUserId: dto.fromUserId,
+      toUserId: new Types.ObjectId(dto.toUserId),
+      message: dto.message,
+      expiresAt,
     });
 
-    return newMessage;
+    this.gateway.emitToUser(dto.toUserId, 'message:new', {
+      id: message._id,
+      fromUserId: dto.fromUserId,
+      message: dto.message,
+      sentAt: message.createdAt,
+    });
+
+    return message;
   }
 
-  async getConversation(userId: string, otherUserId: string, page = 1, limit = 20) {
-    const skip = (page - 1) * limit;
-
-    const filter = {
-      $or: [
-        { fromUserId: userId, toUserId: otherUserId },
-        { fromUserId: otherUserId, toUserId: userId },
-      ],
-    };
-
+  async getConversation(dto: GetThreadQueryDto) {
     const [messages, total] = await Promise.all([
-      this.messageModel.find(filter).sort({ createdAt: 1 }).skip(skip).limit(limit),
-      this.messageModel.countDocuments(filter),
+      this.messageModel
+        .find({
+          $or: [
+            { fromUserId: dto.userId, toUserId: dto.targetUserId },
+            { fromUserId: dto.targetUserId, toUserId: dto.userId },
+          ],
+          expiresAt: { $gt: new Date() },
+        })
+        .sort({ createdAt: -1 })
+        .skip((dto.page - 1) * dto.limit)
+        .limit(dto.limit),
+      
+      this.messageModel.countDocuments({
+        $or: [
+          { fromUserId: dto.userId, toUserId: dto.targetUserId },
+          { fromUserId: dto.targetUserId, toUserId: dto.userId },
+        ],
+      }),
     ]);
 
-    await this.messageModel.updateMany(
-      { fromUserId: otherUserId, toUserId: userId, read: false },
-      { $set: { read: true } }
-    );
+    if (messages.length > 0) {
+      await this.markMessagesAsRead(
+        new Types.ObjectId(dto.targetUserId), 
+        new Types.ObjectId(dto.userId)
+      );
+        }
 
     return {
-      page,
-      limit,
-      total,
-      totalPages: Math.ceil(total / limit),
-      messages,
+      data: messages.reverse(), // Oldest first
+      meta: {
+        page: dto.page,
+        limit: dto.limit,
+        total,
+        totalPages: Math.ceil(total / dto.limit),
+      },
     };
   }
 
-  async getInbox(userId: string) {
-    return this.messageModel.aggregate([
-      { $match: { $or: [ { fromUserId: userId }, { toUserId: userId } ] } },
-      { $sort: { createdAt: -1 } },
-      { $group: {
-          _id: {
-            $cond: [
-              { $eq: ['$fromUserId', userId] }, '$toUserId', '$fromUserId'
-            ]
-          },
-          lastMessage: { $first: '$$ROOT' }
-        }
-      },
-      { $replaceRoot: { newRoot: '$lastMessage' } },
-      { $sort: { createdAt: -1 } }
-    ]);
+  async markMessagesAsRead(fromUserId: string | Types.ObjectId, toUserId: string | Types.ObjectId) {
+    const filter = {
+      fromUserId: new Types.ObjectId(fromUserId),
+      toUserId: new Types.ObjectId(toUserId),
+      read: false
+    };
+    
+    await this.messageModel.updateMany(filter, { $set: { read: true } });
+
+////
+    this.gateway.emitToUser(
+      fromUserId.toString(), 
+      'messages:read', 
+      { byUserId: toUserId.toString() }
+    );
+
+    
   }
 
-  async getUnreadCount(userId: string) {
-    return this.messageModel.countDocuments({ toUserId: userId, read: false });
-  }
+ 
+  
+// Add this method to the service:
+async clearThread(userId: string, targetUserId: string) {
+  await this.messageModel.deleteMany({
+    $or: [
+      { fromUserId: userId, toUserId: targetUserId },
+      { fromUserId: targetUserId, toUserId: userId }
+    ]
+  });
+  return { success: true };
+}
+
+// Update getUnreadCount method:
+async getUnreadCount(userId: string) {
+  return this.messageModel.countDocuments({ 
+    toUserId: userId, 
+    read: false,
+    expiresAt: { $gt: new Date() }
+  });
+}
+
+  // Example usage in WhoisService
+async getEnhancedNearby(city: string) {
+  const { online, recentlyActive } = await this.userPresenceService.getActiveUsersInCity(city);
+  
+  return {
+    online, // Real-time online users
+    travellers: recentlyActive, // Recently active users
+    // ... existing whois data
+  };
+}
+async getCityActivity(city: string) {
+  return this.userPresenceService.getActiveUsersInCity(city);
+}
 }

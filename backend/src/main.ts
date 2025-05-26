@@ -1,7 +1,14 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { webcrypto } from 'crypto';
+
 
 async function bootstrap() {
+  if (!globalThis.crypto) {
+    globalThis.crypto = webcrypto as unknown as Crypto;
+  }
+  
+
   const app = await NestFactory.create(AppModule);
   app.enableCors({
     origin: true,
