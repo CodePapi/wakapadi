@@ -1,0 +1,150 @@
+.header-nav {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0.5rem 0 1rem 0;
+}
+
+.header-nav img {
+  width: 10rem;
+  height: 5rem;
+  object-fit: contain;
+}
+
+.header-link-container {
+  display: flex;
+  grid-gap: 4rem;
+}
+
+.header-nav a,
+.header-nav .header-authentication-link a {
+  font-weight: 500;
+  line-height: 1.4rem;
+  color: rgba(255, 255, 255, 1);
+  transition: color 0.5s ease-in-out;
+  letter-spacing: -0.5%;
+  text-decoration: none;
+  transition: color 0.5s;
+}
+
+.header-nav a:focus-visible {
+  outline: 0;
+}
+
+.header-nav .header-authentication-link svg {
+  color: rgba(255, 255, 255, 1);
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.header-nav a:active,
+.header-nav a:hover {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.header-nav svg {
+  padding: 0.7rem;
+  cursor: pointer;
+  border-radius: 100%;
+  background: #f0f0f0;
+  width: 2.9rem;
+  height: 2.9rem;
+}
+
+.header-nav button {
+  color: rgba(255, 255, 255, 1);
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.8rem 1.6rem;
+  border-radius: 3rem;
+  text-transform: none !important;
+  font-size: inherit;
+}
+
+.header-nav .header-authentication-link {
+  display: flex;
+  align-items: center;
+  grid-gap: 1.5rem;
+}
+
+.mobile-header-authentication-link {
+  display: none;
+}
+
+@media only screen and (max-width: 1200px) {
+  .header-link-container {
+    grid-gap: 2rem;
+  }
+
+  .header-nav .header-authentication-link {
+    grid-gap: 1rem;
+  }
+}
+
+@media only screen and (max-width: 900px) {
+  .main {
+    width: 100%;
+  }
+
+  .header-nav {
+    backdrop-filter: blur(10px);
+    background: rgba(19, 19, 19, 0.3);
+    margin-top: 0;
+    padding: 0.5rem 2rem;
+  }
+
+  .header-link-container {
+    grid-gap: 2rem;
+  }
+
+  .mobile-header-authentication-link {
+    display: flex;
+    gap: 1rem;
+  }
+
+  .mobile-header-authentication-link svg {
+    background: none;
+    width: 4rem;
+    height: 4rem;
+    color: #fff;
+  }
+
+  .header-link-container,
+  .header-nav .header-authentication-link {
+    display: none;
+  }
+}
+
+@media only screen and (max-width: 425px) {
+  .main {
+    width: 90%;
+  }
+
+  .header-nav {
+    padding: 0.7rem 1.2rem;
+  }
+
+  .header-nav img {
+    width: 8rem;
+    height: 3rem;
+  }
+
+  .header-link-container,
+  .header-nav .header-authentication-link {
+    display: none;
+  }
+
+  .mobile-header-authentication-link {
+    display: flex;
+    gap: 0.6rem;
+  }
+
+  .header-nav svg {
+    background: none;
+    width: 3rem;
+    height: 3rem;
+  }
+
+  .break {
+    display: none;
+  }
+}

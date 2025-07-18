@@ -232,12 +232,12 @@ export default function WhoisPage() {
 
   const UserSkeleton = () => (
     <Box sx={{ display: 'flex', alignItems: 'center', p: 2, gap: 2 }}>
-      <Skeleton variant="circular" width={44} height={44} />
+      <Skeleton variant='circular' width={44} height={44} />
       <Box sx={{ flex: 1 }}>
-        <Skeleton variant="text" width="60%" height={24} />
-        <Skeleton variant="text" width="40%" height={20} />
+        <Skeleton variant='text' width='60%' height={24} />
+        <Skeleton variant='text' width='40%' height={20} />
       </Box>
-      {isLoggedIn && <Skeleton variant="rectangular" width={80} height={36} />}
+      {isLoggedIn && <Skeleton variant='rectangular' width={80} height={36} />}
     </Box>
   );
 
@@ -247,12 +247,13 @@ export default function WhoisPage() {
     <Layout title={`#${t('whoisNearby')} – Wakapadi`}>
       <Head>
         <title>{`#${t('whoisNearby')} – Wakapadi`}</title>
-        <meta name="description" content={t('whoisDescription')} />
+        <meta name='description' content={t('whoisDescription')} />
         {/* ... other meta tags ... */}
       </Head>
 
-      <Container maxWidth="md" className={styles.container}>
-        <motion.div initial="hidden" animate="visible" variants={fadeInUp}>
+      <Container maxWidth='md' className={styles.container}>
+        {/* <motion.div initial="hidden" animate="visible" variants={fadeInUp}>  */}
+        <motion.div initial='hidden' variants={fadeInUp}>
           <div className={styles.content}>
             <header className={styles.header}>
               <motion.div
@@ -264,7 +265,7 @@ export default function WhoisPage() {
                   #{t('whoisNearby')}
                 </Typography> */}
                 <Typography
-                  variant="subtitle1"
+                  variant='subtitle1'
                   className={styles.headerSubtitle}
                 >
                   {t('discoverTravelers')}
@@ -282,18 +283,18 @@ export default function WhoisPage() {
                       city.charAt(0).toUpperCase() + city.slice(1)
                     }`}
                     className={styles.locationChip}
-                    icon={<PlaceIcon fontSize="small" />}
+                    icon={<PlaceIcon fontSize='small' />}
                   />
                 </motion.div>
               )}
             </header>
 
             {error && (
-              <Alert severity="error" className={styles.errorAlert}>
+              <Alert severity='error' className={styles.errorAlert}>
                 {error}
                 <Button
-                  variant="text"
-                  color="inherit"
+                  variant='text'
+                  color='inherit'
                   onClick={() => window.location.reload()}
                   sx={{ ml: 1 }}
                 >
@@ -304,7 +305,7 @@ export default function WhoisPage() {
 
             {isLoggedIn ? (
               <>
-              {/* <Box className={styles.visibilityToggle}> */}
+                {/* <Box className={styles.visibilityToggle}> */}
                 {/* <Box display="flex" alignItems="center" width="100%">
                   <Typography variant="body1" mr={2}>
                     {t('visibility')}:
@@ -327,18 +328,18 @@ export default function WhoisPage() {
                     ? t('visibilityDescription')
                     : t('hiddenDescription')}
                 </Typography> */}
-              {/* </Box> */}
+                {/* </Box> */}
               </>
             ) : (
-              <Box mb={3} textAlign="center">
+              <Box mb={3} textAlign='center'>
                 {/* <Typography variant="body1" className={styles.subtitle}>
                   {t('connectPrompt')}
                 </Typography> */}
                 <Button
-                  variant="contained"
-                  color="primary"
+                  variant='contained'
+                  color='primary'
                   onClick={() => router.push('/login')}
-                  size="large"
+                  size='large'
                   sx={{ mt: 1 }}
                   className={styles.ctaButton}
                 >
@@ -376,7 +377,7 @@ export default function WhoisPage() {
                                   ? getRandomFunName()
                                   : user.username}
                                 <Box
-                                  component="span"
+                                  component='span'
                                   className={styles.statusIndicator}
                                   sx={{
                                     backgroundColor:
@@ -402,8 +403,8 @@ export default function WhoisPage() {
 
                           {isLoggedIn && !user.anonymous && user.userId && (
                             <Button
-                              variant="outlined"
-                              color="primary"
+                              variant='outlined'
+                              color='primary'
                               className={styles.chatButton}
                               onClick={() =>
                                 router.push(
@@ -432,7 +433,7 @@ export default function WhoisPage() {
                 <div ref={ref} className={styles.infiniteScrollLoader}>
                   {loadingMore && <CircularProgress size={24} />}
                   {!hasMore && users.length > 0 && (
-                    <Typography variant="body2" color="textSecondary">
+                    <Typography variant='body2' color='textSecondary'>
                       {t('noMoreUsers')}
                     </Typography>
                   )}
@@ -440,13 +441,13 @@ export default function WhoisPage() {
               </>
             ) : (
               <Box className={styles.emptyState}>
-                <Typography variant="body1" mb={2}>
+                <Typography variant='body1' mb={2}>
                   {isLoggedIn ? t('noUsersFound') : t('loginPrompt')}
                 </Typography>
                 {!isLoggedIn && (
                   <Button
-                    variant="outlined"
-                    color="primary"
+                    variant='outlined'
+                    color='primary'
                     onClick={() => router.push('/login')}
                     className={styles.secondaryButton}
                   >

@@ -1,31 +1,48 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
 /* Base Styles & Typography */
 :root {
-  --primary-color: #4A90E2; 
-  --secondary-color: #50E3C2; 
+  --primary-color: #4a90e2;
+  --secondary-color: #50e3c2;
   --text-color-dark: #333;
   --text-color-light: #555;
-  --bg-color-light: #F8F9FA; 
-  --card-bg-color: #FFFFFF;
-  --border-color: #E0E0E0;
+  --bg-color-light: #f8f9fa;
+  --card-bg-color: #ffffff;
+  --border-color: #e0e0e0;
   --shadow-light: 0px 4px 15px rgba(0, 0, 0, 0.05);
   --border-radius: 12px;
 }
 
-
 /* Optional: Add smooth scrolling */
 html {
-    scroll-behavior: smooth;
-  }
-  
-  /* Set default font */
-  body {
-    /* font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif; */
-    color: #333;
-    line-height: 1.6;
-  }
+  scroll-behavior: smooth;
+}
 
-  body {
-    font-family: 'Inter', sans-serif; /* Use a modern font, ensure it's imported in _app.js or similar */
-    background-color: var(--bg-color-light);
-    color: var(--text-color-dark);
-  }
+/* Set default font */
+body {
+  /* font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif; */
+  color: #333;
+  line-height: 1.6;
+}
+
+body {
+  background-color: var(--bg-color-light);
+  color: var(--text-color-dark);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  font-family: 'Inter', sans-serif;
+}
+
+h3 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+p {
+  font-size: 1.1rem;
+}
