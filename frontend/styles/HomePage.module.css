@@ -544,15 +544,15 @@
 
 @media only screen and (max-width: 425px) {
   .hero {
-    height: 75vh;
+    height: 90vh;
   }
 
-  /* .headerContent {
-    width: 80%;
-  } */
+  .headerContent {
+    bottom: 5%;
+  }
 
   .headerContent h1 {
-    font-size: 2.3rem;
+    font-size: 2rem;
   }
 
   .headerContent h1 span {
@@ -562,6 +562,7 @@
   .headerContent p {
     width: inherit;
     text-wrap-mode: wrap;
+    font-size: 1rem !important;
   }
 
   .headerContent .inputGroup {
