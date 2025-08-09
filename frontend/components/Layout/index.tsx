@@ -5,6 +5,8 @@ import Header from './Header';
 import Footer from './../Footer';
 import { LayoutProps } from './../../types/components/layout';
 import styles from '../../styles/components/layout.module.css';
+import OverlayNav from './OverlayNav';
+import { useReducer } from 'react';
 
 export default function Layout({
   children,
@@ -12,6 +14,30 @@ export default function Layout({
   description,
   homepage = false,
 }: LayoutProps) {
+  const handleMobileNavState = (state: boolean, action: string) => {
+    switch (action) {
+      case 'OPEN':
+        return true;
+      case 'CLOSE':
+        return false;
+      default:
+        return state;
+    }
+  };
+
+  const [ismobileMenuOpen, dispatch] = useReducer(handleMobileNavState, false);
+
+  const overlayNavProps = {
+    homepage,
+    ismobileMenuOpen,
+    dispatch,
+  };
+
+  const HeaderProps = {
+    homepage,
+    dispatch,
+    ismobileMenuOpen,
+  };
   return (
     <>
       <Head>
@@ -22,10 +48,11 @@ export default function Layout({
       </Head>
 
       <main className={styles.main}>
+        <OverlayNav {...overlayNavProps} />
         <Container
           className={`${styles.container} ${homepage ? styles.homepage : ''}`}
         >
-          <Header homepage={homepage} />
+          <Header {...HeaderProps} />
         </Container>
 
         {/* header */}

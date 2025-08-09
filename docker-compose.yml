@@ -16,25 +16,25 @@ services:
     container_name: nestjs
     ports:
       - '3000:3000'
-    # env_file: .env
-    # environment:
-    #   - MONGODB_URI=${MONGODB_URI}
-    #   - JWT_SECRET=${JWT_SECRET}
-    #   - THROTTLE_TTL=${THROTTLE_TTL}
-    #   - THROTTLE_LIMIT=${THROTTLE_LIMIT}
-    #   - FRONTEND_URL=${FRONTEND_URL}
-    #   - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-    #   - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-    #   - QDRANTURL=${QDRANTURL}
-    #   - QDRANTAPIKEYS=${QDRANTAPIKEYS}
-    #   - MAILGUN_API_KEY=${MAILGUN_API_KEY}
-    #   - MAILGUN_DOMAIN=${MAILGUN_DOMAIN}
-    #   - NODE_ENV=${NODE_ENV}
-    #   - OPENAI_API_KEY=${OPENAI_API_KEY}
+    env_file: .env
+    environment:
+      - MONGODB_URI=${MONGODB_URI}
+      - JWT_SECRET=${JWT_SECRET}
+      - THROTTLE_TTL=${THROTTLE_TTL}
+      - THROTTLE_LIMIT=${THROTTLE_LIMIT}
+      - FRONTEND_URL=${FRONTEND_URL}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - QDRANTURL=${QDRANTURL}
+      - QDRANTAPIKEYS=${QDRANTAPIKEYS}
+      - MAILGUN_API_KEY=${MAILGUN_API_KEY}
+      - MAILGUN_DOMAIN=${MAILGUN_DOMAIN}
+      - NODE_ENV=${NODE_ENV}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
     depends_on:
       - embed_service
-      # - qdrant
-      # - ollama
+      - qdrant
+      - ollama
     restart: always
 
   # qdrant:

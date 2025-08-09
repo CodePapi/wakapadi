@@ -1,11 +1,19 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
+import {
+  Box,
+  Button,
+  Typography,
+  Card,
+  CardContent,
+  Autocomplete,
+  TextField,
+} from '@mui/material';
 import Head from 'next/head';
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import { useRouter } from 'next/router';
 import debounce from 'lodash.debounce';
-import { Box, Button, Typography, Card, CardContent } from '@mui/material';
 import LanguageIcon from '@mui/icons-material/Language';
 import GroupsIcon from '@mui/icons-material/Groups';
 import NearMeIcon from '@mui/icons-material/NearMe';
@@ -15,11 +23,9 @@ import styles from '../styles/HomePage.module.css';
 import Layout from '../components/Layout';
 import Tours from '../components/home/Tours';
 
-const PER_PAGE = 12;
-
 export type Tour = {
   image: string;
-  id: number;
+  _id: string;
   location: string;
   altText: string;
   title: string;
@@ -30,14 +36,29 @@ export type Tour = {
 };
 
 export default function HomePage() {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 599px)');
+
+    const handleChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mediaQuery.addEventListener('change', handleChange);
+
+    // Initial check
+    setIsMobile(mediaQuery.matches);
+
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
+
+  const PER_PAGE = isMobile ? 6 : 12;
   const { t } = useTranslation('common');
   const [tours, setTours] = useState<Tour[]>([]);
   const [search, setSearch] = useState('');
   const [suggestion, setSuggestion] = useState('');
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [hideIcon, setHideIcon] = useState(false);
   const [totalPages, setTotalPages] = useState(1);
+  const topRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { q } = router.query;
 
@@ -103,7 +124,7 @@ export default function HomePage() {
   }, [filteredTours, page]);
 
   const paginatedTours = useMemo(() => {
-    return filteredTours.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+    return filteredTours?.slice((page - 1) * PER_PAGE, page * PER_PAGE);
   }, [filteredTours, page]);
 
   useEffect(() => {
@@ -141,8 +162,8 @@ export default function HomePage() {
           sx={{ color: 'green', width: '2.5rem', height: '2.5rem' }}
         />
       ),
-      header: 'Local Experts',
-      text: 'Meet passionate locals who know their cities inside out and love sharing hidden gems and authentic stories.',
+      header: t('whyCard1Title'),
+      text: t('whyCard1Content'),
     },
     {
       icon: (
@@ -150,23 +171,39 @@ export default function HomePage() {
           sx={{ color: 'green', width: '2.5rem', height: '2.5rem' }}
         />
       ),
-      header: 'Cultural Connection',
-      text: 'Perfect for tourists, travelers, immigrants, and new settlers looking to connect with their new community.',
+      header: t('whyCard2Title'),
+      text: t('whyCard2Content'),
     },
     {
       icon: (
         // eslint-disable-next-line @next/next/no-img-element
         <img src='/sale_fill.svg' alt='tours' className={styles.toursSvg} />
       ),
-      header: 'Free Walking Tours',
-      text: 'Discover amazing free walking tours and pay-what-you-feel experiences that fit any budget.',
+      header: t('whyCard3Title'),
+      text: t('whyCard3Content'),
     },
   ];
+
+  const locations = useMemo(
+    () =>
+      Array.isArray(tours) ? [...new Set(tours?.map((t) => t?.location))] : [],
+    [tours]
+  );
+
+  const handlePageChange = useCallback(
+    (_: React.ChangeEvent<unknown>, value: number) => {
+      setPage(value);
+      window.scrollTo({
+        top: topRef.current?.offsetTop || 0,
+        behavior: 'smooth',
+      });
+    },
+    []
+  );
 
   return (
     <>
       <Head>
-        <title>{t('homePageTitle')}</title>
         <meta name='description' content={t('homePageDescription')} />
         <meta name='viewport' content='width=device-width, initial-scale=1' />
         <meta name='robots' content='index, follow' />
@@ -175,35 +212,49 @@ export default function HomePage() {
         <link rel='icon' type='image/png' href='/favicon.png' />
       </Head>
 
-      <Layout homepage={true}>
+      <Layout homepage={true} title={t('homePageTitle')}>
         <div className={styles.hero}>
           <div className={styles.headerContent}>
             <div
             // className={styles.headerText}
             >
               <h1>
-                <span>Travel smarter, meet new </span>
-                <span>people, and explore like a local.</span>
+                <span>{t('homeTitleSub1')} </span>
+                <span>{t('homeTitleSub2')}</span>
               </h1>
-              <p>
-                Connect with passionate guides and experience authentic cultural
-                adventures in cities worldwide.
-              </p>
+              <p>{t('homeSubtitle')}</p>
             </div>
 
             <div className={styles.inputGroup}>
               <div className={styles.input}>
-                <span className={styles.searchIcon}>
-                  {!hideIcon && !suggestion ? <SearchIcon /> : null}
-                </span>
-                <input
-                  type='search'
-                  placeholder='Search by City'
-                  value={suggestion}
-                  onChange={(e) => handleSearchInput(e.target.value)}
-                  onFocus={() => setHideIcon(true)}
-                  onBlur={() => setHideIcon(false)}
-                  className={styles.searchInput}
+                <Autocomplete
+                  freeSolo
+                  fullWidth
+                  options={locations}
+                  getOptionLabel={(option) => option}
+                  inputValue={search}
+                  onInputChange={(_, value) => handleSearchInput(value)}
+                  disableClearable
+                  renderInput={(params) => (
+                    <>
+                      <span className={styles.searchIcon}>
+                        {!suggestion ? <SearchIcon /> : null}
+                      </span>
+                      <TextField
+                        {...params}
+                        placeholder={t('searchPlaceholder')}
+                        variant='standard'
+                        fullWidth
+                        InputProps={{
+                          ...params.InputProps,
+                          disableUnderline: true,
+                          className: styles.inputField,
+                          'aria-label': 'Search tours',
+                        }}
+                      />
+                    </>
+                  )}
+                  noOptionsText={t('noResults')}
                 />
               </div>
 
@@ -211,9 +262,9 @@ export default function HomePage() {
             </div>
 
             <div className={styles.buttonGroup}>
-              <Button>
+              <Button onClick={() => router.push('/whois')}>
                 <NearMeIcon />
-                #Whois Nearby
+                {t('whoisNearby')}
               </Button>
             </div>
           </div>
@@ -223,15 +274,15 @@ export default function HomePage() {
           loading={loading}
           search={search}
           paginatedTours={paginatedTours}
+          totalPages={totalPages}
+          page={page}
+          handlePageChange={handlePageChange}
         />
 
         <Box className={styles.why}>
           <Box className={styles['why-container']}>
-            <h2>Why Choose Wakapadi?</h2>
-            <p>
-              Connect with local guides and helpers for authentic cultural
-              experiences that go beyond typical tourist attractions.
-            </p>
+            <h2>{t('whyTitle')}</h2>
+            <p>{t('whysubTitle')}</p>
 
             <Box className={styles['card-container']}>
               {cards?.map((card, index) => (

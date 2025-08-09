@@ -8,27 +8,6 @@ import WatchLaterIcon from '@mui/icons-material/WatchLater';
 import { formattedTime } from '../../utils/formatTime';
 import { useRouter } from 'next/router';
 
-// const highlightText = (text: string = '', highlight: string = '') => {
-//   if (!highlight || !text) return text;
-
-//   const regex = new RegExp(`(${highlight})`, 'gi');
-//   const parts = text.split(regex);
-
-//   return parts.map((part, i) =>
-//     regex.test(part) ? (
-//       <mark key={i} className={styles.highlight}>
-//         {part}
-//       </mark>
-//     ) : (
-//       part
-//     )
-//   );
-// };
-// function extractPath(url: string): string {
-//   const parsed = new URL(url);
-//   return `/tours${parsed.pathname}`;
-// }
-
 export default function TourCard({ tour }: { tour: Tour; highlight?: string }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const tourTime = useMemo(() => formattedTime(tour.recurringSchedule), []);
