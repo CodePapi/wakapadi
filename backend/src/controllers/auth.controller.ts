@@ -1,7 +1,6 @@
 // src/auth/auth.controller.ts
-import { Controller, Post, Body, Get, UseGuards, Req, Patch } from '@nestjs/common';
+import { Controller, Post, Body, Get, UseGuards, Req, Patch, Delete, Query } from '@nestjs/common';
 import { AuthGuard } from '../gateways/auth.guard';
-import { GoogleAuthGuard } from '../gateways/google-auth.guard';
 import { AuthService } from '../services/auth.service';
 
 @Controller('auth')
@@ -14,19 +13,14 @@ async getProfile(@Req() req) {
   return user;
 }
 
-  @Post('register')
-  register(@Body() body) {
-    return this.authService.register(body);
+  @Get('visits/daily')
+  async getDailyVisits(@Query('day') day?: string) {
+    return this.authService.getDailyVisits(day);
   }
 
-  @Post('login')
-  login(@Body() body) {
-    return this.authService.login(body);
-  }
-
-  @Post('guest')
-  createGuest() {
-    return this.authService.createGuest();
+  @Post('anonymous')
+  createAnonymous(@Body('deviceId') deviceId: string) {
+    return this.authService.createAnonymous(deviceId);
   }
 
   @Patch('profile')
@@ -35,33 +29,10 @@ async getProfile(@Req() req) {
     return this.authService.updateProfile(req.user.id, body);
   }
 
-  @Get('google')
-  @UseGuards(GoogleAuthGuard)
-  async googleAuth() {}
 
-  @Get('google/callback')
-  @UseGuards(GoogleAuthGuard)
-  async googleAuthRedirect(@Req() req) {
-    const user = await this.authService.googleLogin(req.user);
-    return user; // Include token
+  @Delete('me')
+  @UseGuards(AuthGuard)
+  async deleteMe(@Req() req) {
+    return this.authService.deleteAccount(req.user.id);
   }
-
-  @Post('google/token')
-async handleGoogleToken(@Body('idToken') idToken: string) {
-  const userData = await this.authService.verifyGoogleToken(idToken);
-  return this.authService.googleLogin(userData); // returns your own JWT
-}
-
-
-
-@Post('forgot-password')
-async forgotPassword(@Body('email') email: string) {
-  return this.authService.requestPasswordReset(email);
-}
-
-@Post('reset-password')
-async resetPassword(@Body() body: { token: string; newPassword: string }) {
-  const { token, newPassword } = body;
-  return this.authService.resetPassword(token, newPassword);
-}
 }

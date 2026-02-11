@@ -2,8 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Tour, TourDocument } from '../schemas/tour.schema';
-import { EmbeddingService } from './embedding.service';
-import { QdrantService } from './qdrant.service';
 
 @Injectable()
 export class TourService {
@@ -11,28 +9,8 @@ export class TourService {
   private readonly logger = new Logger(TourService.name);
     constructor(
       @InjectModel(Tour.name) private tourModel: Model<TourDocument>,
-      private readonly embeddingService: EmbeddingService,
-      private readonly qdrantService: QdrantService,
     ) {}
   
-
-async searchByVector(query: string) {
-  const vector = await this.embeddingService.embed(query);
-
-  const results = await this.qdrantService.searchSimilarTours(vector) as {
-    id: string;
-    score: number;
-    payload: any;
-  }[];
-console.log("tes",results)
-  return results.map((r) => ({
-    id: r.id,
-    score: r.score,
-    ...r.payload,
-  }));
-}
-
-
   async create(data: Partial<Tour>): Promise<Tour> {
     const newTour = new this.tourModel(data);
     return newTour.save();
@@ -98,8 +76,9 @@ console.log("tes",results)
     await this.tourModel.deleteMany({ location, sourceType });
   }
 
-  async embedText(text: string): Promise<number[]> {
-    return this.embeddingService.embed(text);
+  async embedText(_text: string): Promise<number[]> {
+    this.logger.warn('Embedding is disabled for this deployment.');
+    return [];
   }
   
   

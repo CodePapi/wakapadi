@@ -33,6 +33,7 @@ import { api } from '../lib/api/index';
 import styles from '../styles/Profile.module.css';
 import { StringNullableChain } from 'lodash';
 import { safeStorage } from '../lib/storage';
+import { clearDeviceId, ensureAnonymousSession } from '../lib/anonymousAuth';
 
 interface User {
   _id: string;
@@ -42,6 +43,7 @@ interface User {
   languages?: string[];
   bio?:StringNullableChain;
   profileVisible?: boolean;
+  gender?: string;
   socials?: {
     instagram?: string;
     twitter?: string;
@@ -93,6 +95,7 @@ export default function ProfilePage() {
   const [instagram, setInstagram] = useState('');
   const [twitter, setTwitter] = useState('');
   const [profileVisible, setProfileVisible] = useState(true);
+  const [gender, setGender] = useState('');
   const [notifications, setNotifications] = useState({
     success: '',
     error: '',
@@ -116,7 +119,8 @@ export default function ProfilePage() {
     (async () => {
       try {
         setLoading(true);
-        const userId = safeStorage.getItem('userId') || '';
+        const session = await ensureAnonymousSession();
+        const userId = session.userId || '';
 
         const [userRes, convRes] = await Promise.all([
           api.get(`/users/preferences/${userId}`), // Original endpoint
@@ -129,6 +133,7 @@ export default function ProfilePage() {
         setInstagram(userRes.data.socials?.instagram || '');
         setTwitter(userRes.data.socials?.twitter || '');
         setProfileVisible(userRes.data.profileVisible ?? true);
+        setGender(userRes.data.gender || '');
         setConversations(convRes.data);
 
         const newSocket = io(process.env.NEXT_PUBLIC_SOCKET_URL || '', {
@@ -164,6 +169,7 @@ export default function ProfilePage() {
         travelPrefs,
         languages,
         profileVisible,
+        gender,
         socials: { instagram, twitter },
       });
       setNotifications({
@@ -181,6 +187,20 @@ export default function ProfilePage() {
 
   const closeNotification = () => {
     setNotifications({ success: '', error: '' });
+  };
+
+  const handleDeleteAccount = async () => {
+    try {
+      await api.delete('/auth/me');
+      safeStorage.removeItem('token');
+      safeStorage.removeItem('userId');
+      safeStorage.removeItem('username');
+      clearDeviceId();
+      window.location.href = '/';
+    } catch (error) {
+      console.error('delete account error', error);
+      setNotifications({ success: '', error: t('profileDeleteError') });
+    }
   };
 
   return (
@@ -243,6 +263,27 @@ export default function ProfilePage() {
                 />
                 <p className={styles.helperText}>
                   {t('profileVisibilityHelp')}
+                </p>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label htmlFor="gender" className={styles.formLabel}>
+                  {t('profileGenderLabel')}
+                </label>
+                <Select
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value as string)}
+                  input={<OutlinedInput id="gender" />}
+                  fullWidth
+                >
+                  <MenuItem value="">{t('profileGenderUndisclosed')}</MenuItem>
+                  <MenuItem value="female">{t('profileGenderFemale')}</MenuItem>
+                  <MenuItem value="male">{t('profileGenderMale')}</MenuItem>
+                  <MenuItem value="nonbinary">{t('profileGenderNonBinary')}</MenuItem>
+                  <MenuItem value="other">{t('profileGenderOther')}</MenuItem>
+                </Select>
+                <p className={styles.helperText}>
+                  {t('profileGenderHelp')}
                 </p>
               </div>
 
@@ -323,6 +364,22 @@ export default function ProfilePage() {
                   {t('profileLanguagesHelp')}
                 </p>
               </div>
+            </section>
+
+            <section className={styles.section} aria-labelledby="account-danger">
+              <h2 id="account-danger" className={styles.sectionTitle}>
+                {t('profileDeleteTitle')}
+              </h2>
+              <Typography className={styles.helperText}>
+                {t('profileDeleteDescription')}
+              </Typography>
+              <Button
+                variant="outlined"
+                color="error"
+                onClick={handleDeleteAccount}
+              >
+                {t('profileDeleteAction')}
+              </Button>
             </section>
 
             {/* Social Media Section */}

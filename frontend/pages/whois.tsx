@@ -28,6 +28,7 @@ import PlaceIcon from '@mui/icons-material/Place';
 import styles from '../styles/whois.module.css';
 import funNames from '../lib/data/funNames.json';
 import { safeStorage } from '../lib/storage';
+import { ensureAnonymousSession } from '../lib/anonymousAuth';
 
 const getRandomFunName = () =>
   funNames[Math.floor(Math.random() * funNames.length)];
@@ -67,7 +68,6 @@ export default function WhoisPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userId, setUserId] = useState('');
-  const [guestLoading, setGuestLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -75,19 +75,17 @@ export default function WhoisPage() {
   const router = useRouter();
   const { t } = useTranslation('common');
 
-  const chatbotUser: User = {
-    _id: 'chatbot-id',
-    userId: 'chatbot',
-    username: 'Lola the Bot 🤖',
-    anonymous: false,
-    lastSeen: new Date().toISOString(),
-  };
   useEffect(() => {
     setHasMounted(true);
-    const token = safeStorage.getItem('token');
-    const storedUserId = safeStorage.getItem('userId');
-    setIsLoggedIn(!!token);
-    if (storedUserId) setUserId(storedUserId);
+    (async () => {
+      try {
+        const session = await ensureAnonymousSession();
+        setIsLoggedIn(!!session?.token);
+        if (session?.userId) setUserId(session.userId);
+      } catch (error) {
+        console.warn('Anonymous session failed', error);
+      }
+    })();
   }, []);
 
   const fetchNearby = useCallback(
@@ -112,9 +110,9 @@ export default function WhoisPage() {
 
         if (pageNum === 1) {
           console.log({ ...res.data });
-          setUsers([chatbotUser, ...res.data]);
+          setUsers(res.data);
         } else {
-          setUsers((prev) => [chatbotUser, ...prev, ...res.data]);
+          setUsers((prev) => [...prev, ...res.data]);
         }
 
         setHasMore(res.data.length === 15);
@@ -129,35 +127,20 @@ export default function WhoisPage() {
     [userId, t]
   );
 
-  const createGuestSession = useCallback(async () => {
-    const res = await api.post('/auth/guest');
-    safeStorage.setItem('token', res.data.token);
-    safeStorage.setItem('userId', res.data.userId);
-    safeStorage.setItem('username', res.data.username);
-    setIsLoggedIn(true);
-    setUserId(res.data.userId);
-    return res.data;
-  }, []);
-
   const handleStartChat = useCallback(
     async (targetUserId: string) => {
       try {
-        if (!isLoggedIn) {
-          setGuestLoading(true);
-          await createGuestSession();
-        }
-
         router.push(
-          targetUserId === 'chatbot' ? 'chatbot' : `/chat/${targetUserId}`
+          `/chat/${targetUserId}`
         );
       } catch (err) {
         console.error('Failed to start chat:', err);
         setError(t('whoisChatStartError'));
       } finally {
-        setGuestLoading(false);
+        // no-op
       }
     },
-    [isLoggedIn, createGuestSession, router]
+    [router]
   );
 
   const pingPresence = async (targetCity: string) => {
@@ -341,75 +324,7 @@ export default function WhoisPage() {
               {t('whoisSafetyWarning')}
             </Alert>
 
-            {isLoggedIn ? (
-              <>
-              {/* <Box className={styles.visibilityToggle}> */}
-                {/* <Box display="flex" alignItems="center" width="100%">
-                  <Typography variant="body1" mr={2}>
-                    {t('visibility')}:
-                  </Typography>
-                  <Switch
-                    checked={visible}
-                    onChange={togglePresence}
-                    color="primary"
-                    inputProps={{ 'aria-label': t('toggleVisibility') }}
-                  />
-                  <Typography
-                    ml={1}
-                    color={visible ? 'primary.main' : 'text.secondary'}
-                  >
-                    {visible ? t('visibleToOthers') : t('hidden')}
-                  </Typography>
-                </Box>
-                <Typography variant="caption" mt={1} color="text.secondary">
-                  {visible
-                    ? t('visibilityDescription')
-                    : t('hiddenDescription')}
-                </Typography> */}
-              {/* </Box> */}
-              </>
-            ) : (
-              <Box mb={3} textAlign="center">
-                {/* <Typography variant="body1" className={styles.subtitle}>
-                  {t('connectPrompt')}
-                </Typography> */}
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={() => router.push('/login')}
-                  size="large"
-                  sx={{ mt: 1 }}
-                  className={styles.ctaButton}
-                >
-                  {t('loginToConnect')}
-                </Button>
-                <Button
-                  variant="outlined"
-                  color="primary"
-                  onClick={async () => {
-                    try {
-                      setGuestLoading(true);
-                      await createGuestSession();
-                      if (city) {
-                        await pingPresence(city);
-                        await fetchNearby(city);
-                      }
-                    } catch (err) {
-                      console.error('Guest session failed:', err);
-                      setError(t('whoisGuestError'));
-                    } finally {
-                      setGuestLoading(false);
-                    }
-                  }}
-                  size="large"
-                  sx={{ mt: 1, ml: 1 }}
-                  className={styles.secondaryButton}
-                  disabled={guestLoading}
-                >
-                  {t('continueAsGuest')}
-                </Button>
-              </Box>
-            )}
+            {/* Anonymous sessions are created automatically on page load. */}
 
             {loading ? (
               <Box className={styles.loadingContainer}>
@@ -471,11 +386,9 @@ export default function WhoisPage() {
                               className={styles.chatButton}
                               onClick={() => handleStartChat(user.userId!)}
                               aria-label={
-                                user.userId === 'chatbot'
-                                  ? t('chatWithAssistant')
-                                  : t('chatWith', {
-                                      username: user.username || t('traveler'),
-                                    })
+                                t('chatWith', {
+                                  username: user.username || t('traveler'),
+                                })
                               }
                               startIcon={<span>💬</span>}
                             >
@@ -503,18 +416,8 @@ export default function WhoisPage() {
             ) : (
               <Box className={styles.emptyState}>
                 <Typography variant="body1" mb={2}>
-                  {isLoggedIn ? t('noUsersFound') : t('loginPrompt')}
+                  {t('noUsersFound')}
                 </Typography>
-                {!isLoggedIn && (
-                  <Button
-                    variant="outlined"
-                    color="primary"
-                    onClick={() => router.push('/login')}
-                    className={styles.secondaryButton}
-                  >
-                    {t('signIn')}
-                  </Button>
-                )}
               </Box>
             )}
           </div>

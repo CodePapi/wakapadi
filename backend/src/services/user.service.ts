@@ -10,7 +10,7 @@ export class UsersService {
   async getPreferences(userId: string) {
     return this.userModel
       .findById(userId)
-      .select('travelPrefs languages socials bio avatarUrl username profileVisible')
+      .select('travelPrefs languages socials bio avatarUrl username profileVisible gender')
       .lean();
   }
 
@@ -27,6 +27,10 @@ export class UsersService {
 
     if (typeof data.profileVisible === 'boolean') {
       update.profileVisible = data.profileVisible;
+    }
+
+    if (data.gender) {
+      update.gender = data.gender;
     }
   
     return this.userModel.findByIdAndUpdate(userId, update, { new: true }).lean();

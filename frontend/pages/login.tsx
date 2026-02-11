@@ -1,21 +1,28 @@
 // pages/login.tsx
-import { Container } from '@mui/material';
-import AuthForm from '../components/AuthForm';
+import { useEffect } from 'react';
+import { Container, Typography } from '@mui/material';
 import Layout from '../components/Layout';
 import PageHeader from '../components/PageHeader';
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
+import { useRouter } from 'next/router';
 
 export default function LoginPage() {
   const { t } = useTranslation('common');
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace('/');
+  }, [router]);
+
   return (
-    <Layout title={t('loginPageTitle')}>
+    <Layout title={t('authDeprecatedTitle')}>
       <PageHeader
-        title={t('loginTitle')}
-        subtitle={t('loginSubtitle')}
+        title={t('authDeprecatedTitle')}
+        subtitle={t('authDeprecatedSubtitle')}
       />
       <Container sx={{ mt: 6 }}>
-        <AuthForm />
+        <Typography>{t('authDeprecatedBody')}</Typography>
       </Container>
     </Layout>
   );

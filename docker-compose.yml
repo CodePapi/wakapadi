@@ -13,16 +13,10 @@ services:
       - THROTTLE_TTL=${THROTTLE_TTL}
       - THROTTLE_LIMIT=${THROTTLE_LIMIT}
       - FRONTEND_URL=${FRONTEND_URL}
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - QDRANTURL=${QDRANTURL}
       - QDRANTAPIKEYS=${QDRANTAPIKEYS}
-      - MAILGUN_API_KEY=${MAILGUN_API_KEY}
-      - MAILGUN_DOMAIN=${MAILGUN_DOMAIN}
       - NODE_ENV=${NODE_ENV}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
     depends_on:
-      - embed_service
       - mongo
       # - qdrant
     #   - ollama
@@ -45,12 +39,6 @@ services:
   #   volumes:
   #     - ollama_models:/root/.ollama
   #   restart: always
-  embed_service:
-    build: ./embed_service
-    container_name: embed_service
-    ports:
-      - '5050:5050'
-
   mongo:
     image: mongo:6
     container_name: mongo

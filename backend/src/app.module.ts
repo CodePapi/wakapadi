@@ -14,15 +14,6 @@ import { WhoisMessageModule } from './modules/whois-message.module';
 import { PresenceModule } from './modules/PresenceModule';
 import { ConfigModule } from '@nestjs/config';
 import { CityModule } from './modules/city.module';
-import { QdrantService } from './services/qdrant.service';
-import { EmbeddingService } from './services/embedding.service';
-import { BotGateway } from './gateways/bot.gateway';
-import { NLPService } from './services/nlp.service';
-import { ResponseService } from './services/response.service';
-import { ConversationService } from './services/conversation.service';
-import { FeedbackModule } from './modules/feedback.module';
-import { TrainingModule } from './modules/training.module';
-import { LLMService } from './services/llm.service';
 import { ContactModule } from './modules/contact.module';
 import { GeolocationModule } from './modules/geolocation..module';
 
@@ -35,7 +26,6 @@ import { GeolocationModule } from './modules/geolocation..module';
     MongooseModule.forRoot(process.env.MONGODB_URI!),
     AssistantModule,
     TourModule,
-    FeedbackModule,
     ScraperModule,
     WhoisMessageModule,
     AuthModule,
@@ -43,21 +33,11 @@ import { GeolocationModule } from './modules/geolocation..module';
     UserModule,
     CityModule,
     PresenceModule,
-    TrainingModule,
     WhoisModule,
     ContactModule,
     GeolocationModule
   ],
   controllers: [AppController],
-  providers: [
-    AppService,
-    EmbeddingService,
-    QdrantService,
-    BotGateway,
-    NLPService,
-    ResponseService,
-    ConversationService,
-    LLMService,
-  ],
+  providers: [AppService],
 })
 export class AppModule {}

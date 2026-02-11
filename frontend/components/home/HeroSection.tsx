@@ -40,11 +40,7 @@ export default function HeroSection({
   const isMobile = useMediaQuery('(max-width:768px)');
 
   const handleScrollToTours = () => {
-    if (typeof window === 'undefined') return;
-    const target = document.getElementById('tours-section-title');
-    if (target) {
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    router.push('/tours');
   };
 
   // ✅ Update input when suggestion changes

@@ -4,17 +4,19 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { AuthService } from '../services/auth.service';
 import { User, UserSchema } from '../schemas/user.schema';
 import { AuthController } from '../controllers/auth.controller';
-import { GoogleStrategy } from '../strategies/google.strategy';
 import { ConfigModule } from '@nestjs/config';
-import { MailService } from 'src/services/mail.service';
+import { DailyVisit, DailyVisitSchema } from '../schemas/daily-visit.schema';
 
 @Module({
   imports: [
     ConfigModule, // ⬅️ Make sure this is here
-    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+    MongooseModule.forFeature([
+      { name: User.name, schema: UserSchema },
+      { name: DailyVisit.name, schema: DailyVisitSchema },
+    ]),
   ],
   controllers: [AuthController],
-  providers: [AuthService, GoogleStrategy, MailService],
+  providers: [AuthService],
   exports: [AuthService],
 })
 export class AuthModule {}

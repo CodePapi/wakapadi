@@ -25,6 +25,12 @@ export class User extends Document {
   @Prop({ required: true })
   username: string;
 
+  @Prop({ unique: true, sparse: true })
+  deviceIdHash?: string;
+
+  @Prop()
+  gender?: string;
+
   @Prop({ default: 'traveller' }) // or 'assistant'
   role: string;
 
@@ -49,8 +55,11 @@ export class User extends Document {
   @Prop({ default: true })
   profileVisible: boolean;
 
-  @Prop({ default: 'local' }) // 'google' or 'guest'
-  authProvider: 'local' | 'google' | 'guest';
+  @Prop({ default: 'anonymous' }) // 'local' or 'anonymous'
+  authProvider: 'local' | 'anonymous';
+
+  @Prop()
+  lastSeenAt?: Date;
   
   updatedAt: Date;
 }

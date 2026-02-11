@@ -19,17 +19,20 @@ import {
   ListItemIcon,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
+import LogoutIcon from '@mui/icons-material/Logout';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import NextLink from 'next/link';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import i18nextConfig from '../next-i18next.config';
 import { useTranslation } from 'next-i18next';
 import NotificationsDropdown from './NotificationsDropdown';
 import styles from './Layout.module.css';
 import ReactCountryFlag from 'react-country-flag';
 import { safeStorage } from '../lib/storage';
+import { clearDeviceId, ensureAnonymousSession } from '../lib/anonymousAuth';
+import { api } from '../lib/api/index';
 
 const languages = [
   { code: 'en', name: 'English', flag: 'US' },
@@ -59,9 +62,15 @@ export default function Layout({
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   useEffect(() => {
-    const userId = safeStorage.getItem('userId');
-    setIsLoggedIn(!!safeStorage.getItem('token'));
-    if (userId) setCurrentUserId(userId);
+    (async () => {
+      try {
+        const session = await ensureAnonymousSession();
+        setIsLoggedIn(!!session?.token);
+        if (session?.userId) setCurrentUserId(session.userId);
+      } catch (error) {
+        console.warn('Anonymous session failed', error);
+      }
+    })();
   }, []);
 
   const handleLanguageMenu = (event: React.MouseEvent<HTMLElement>) => {
@@ -77,11 +86,19 @@ export default function Layout({
     router.push(router.pathname, router.asPath, { locale });
   };
 
-  const handleLogout = () => {
-    safeStorage.removeItem('token');
-    safeStorage.removeItem('userId');
-    setIsLoggedIn(false);
-    router.push('/');
+  const handleLogout = async () => {
+    try {
+      await api.delete('/auth/me');
+    } catch (error) {
+      console.warn('Failed to delete anonymous account', error);
+    } finally {
+      safeStorage.removeItem('token');
+      safeStorage.removeItem('userId');
+      safeStorage.removeItem('username');
+      clearDeviceId();
+      setIsLoggedIn(false);
+      router.push('/');
+    }
   };
 
   const currentLanguage =
@@ -152,24 +169,7 @@ export default function Layout({
                     >
                       {t('logout')}
                     </Button>
-                  ) : (
-                    <>
-                      <Button
-                        href="/login"
-                        className={styles.loginButton}
-                        variant="outlined"
-                      >
-                        {t('login')}
-                      </Button>
-                      {/* <Button
-                        href="/register"
-                        className={styles.registerButton}
-                        variant="contained"
-                      >
-                        {t('register')}
-                      </Button> */}
-                    </>
-                  )}
+                  ) : null}
                 </Box>
 
                 <Button
@@ -200,17 +200,19 @@ export default function Layout({
                     <MenuItem
                       key={language.code}
                       onClick={() => changeLanguage(language.code)}
-                      selected={language.code === currentLocale}
-                      className={styles.languageMenuItem}
                     >
                       <ListItemIcon className={styles.languageListItemIcon}>
                         <ReactCountryFlag
                           countryCode={language.flag}
                           svg
-                          style={{ width: '1.5em', height: '1.5em' }}
+                          style={{
+                            width: '1.5em',
+                            height: '1.5em',
+                            lineHeight: '1.5em',
+                          }}
                         />
                       </ListItemIcon>
-                      <ListItemText>{language.name}</ListItemText>
+                      <ListItemText primary={language.name} />
                     </MenuItem>
                   ))}
                 </Menu>
@@ -306,45 +308,18 @@ export default function Layout({
               ))}
             </List>
             <Divider className={styles.drawerDivider} />
-            {isLoggedIn ? (
-              <ListItem
-                onClick={() => {
-                  handleLogout();
-                  setDrawerOpen(false);
-                }}
-                className={`${styles.drawerItem} ${styles.logoutDrawerItem}`}
-              >
-                <ListItemText
-                  primary={t('logout')}
-                  className={styles.drawerItemText}
-                />
-              </ListItem>
-            ) : (
-              <>
-                <ListItem
-                  component={NextLink}
-                  href="/login"
-                  onClick={() => setDrawerOpen(false)}
-                  className={`${styles.drawerItem} ${styles.loginDrawerItem}`}
-                >
-                  <ListItemText
-                    primary={t('login')}
-                    className={styles.drawerItemText}
-                  />
-                </ListItem>
-                {/* <ListItem
-                  component={NextLink}
-                  href="/register"
-                  onClick={() => setDrawerOpen(false)}
-                  className={`${styles.drawerItem} ${styles.registerDrawerItem}`}
-                >
-                  <ListItemText
-                    primary={t('register')}
-                    className={styles.drawerItemText}
-                  />
-                </ListItem> */}
-              </>
-            )}
+            <ListItem
+              onClick={() => {
+                handleLogout();
+                setDrawerOpen(false);
+              }}
+              className={`${styles.drawerItem} ${styles.logoutDrawerItem}`}
+            >
+              <ListItemText
+                primary={t('logout')}
+                className={styles.drawerItemText}
+              />
+            </ListItem>
           </Box>
         </Box>
       </Drawer>

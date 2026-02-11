@@ -31,6 +31,7 @@ import styles from '../../styles/chat.module.css';
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import { safeStorage } from '../../lib/storage';
+import { ensureAnonymousSession } from '../../lib/anonymousAuth';
 
 const Picker = dynamic(() => import('@emoji-mart/react'), { ssr: false });
 
@@ -99,33 +100,20 @@ export default function ChatPage() {
   useEffect(() => {
     if (!router.isReady) return;
 
-    const token = safeStorage.getItem('token') || '';
-    const userId = safeStorage.getItem('userId') || '';
-
-    if (token && userId) {
-      setAuthToken(token);
-      setCurrentUserId(userId);
-      setSessionReady(true);
-      return;
-    }
-
-    const initGuest = async () => {
+    const initAnonymous = async () => {
       try {
-        const res = await api.post('/auth/guest');
-        safeStorage.setItem('token', res.data.token);
-        safeStorage.setItem('userId', res.data.userId);
-        safeStorage.setItem('username', res.data.username);
-        setAuthToken(res.data.token);
-        setCurrentUserId(res.data.userId);
+        const session = await ensureAnonymousSession();
+        setAuthToken(session.token);
+        setCurrentUserId(session.userId);
         setSessionReady(true);
       } catch (err) {
-        console.error('Failed to start guest session:', err);
+        console.error('Failed to start anonymous session:', err);
         setConnectionError(t('chatGuestError'));
         setSessionReady(false);
       }
     };
 
-    initGuest();
+    initAnonymous();
   }, [router.isReady]);
 
   useEffect(() => {

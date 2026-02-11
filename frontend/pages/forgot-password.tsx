@@ -37,57 +37,41 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <Layout title={t('forgotPageTitle')}>
-      <PageHeader
-        title={t('forgotTitle')}
-        subtitle={t('forgotSubtitle')}
-      />
-      <Container
-        maxWidth="sm"
-        sx={{ mt: 6, p: 4, boxShadow: 3, borderRadius: 3, bgcolor: 'background.paper' }}
-      >
-        <Typography variant="h5" gutterBottom>
-          {t('forgotTitle')}
-        </Typography>
-        <Typography variant="body2" color="text.secondary" mb={3}>
-          {t('forgotBody')}
-        </Typography>
+    // pages/forgot-password.tsx
+    import { useEffect } from 'react';
+    import { Container, Typography } from '@mui/material';
+    import Layout from '../components/Layout';
+    import PageHeader from '../components/PageHeader';
+    import { useTranslation } from 'next-i18next';
+    import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
+    import { useRouter } from 'next/router';
 
-        <form onSubmit={handleSubmit}>
-          <TextField
-            fullWidth
-            label={t('forgotEmailLabel')}
-            type="email"
-            value={email}
-            onChange={(e: { target: { value: SetStateAction<string>; }; }) => setEmail(e.target.value)}
-            margin="normal"
-            required
+    export default function ForgotPasswordPage() {
+      const { t } = useTranslation('common');
+      const router = useRouter();
+
+      useEffect(() => {
+        router.replace('/');
+      }, [router]);
+
+      return (
+        <Layout title={t('authDeprecatedTitle')}>
+          <PageHeader
+            title={t('authDeprecatedTitle')}
+            subtitle={t('authDeprecatedSubtitle')}
           />
+          <Container maxWidth="sm" sx={{ mt: 6 }}>
+            <Typography>{t('authDeprecatedBody')}</Typography>
+          </Container>
+        </Layout>
+      );
+    }
 
-          {error && (
-            <Alert severity="error" sx={{ mt: 2 }}>
-              {error}
-            </Alert>
-          )}
-          {message && (
-            <Alert severity="success" sx={{ mt: 2 }}>
-              {message}
-            </Alert>
-          )}
+    export async function getStaticProps({ locale }: { locale: string }) {
+      return {
+        props: {
+          ...(await serverSideTranslations(locale, ['common'])),
+        },
+      };
+    }
 
-          <Button type="submit" variant="contained" fullWidth sx={{ mt: 3 }}>
-            {t('forgotSubmit')}
-          </Button>
-        </form>
-      </Container>
-    </Layout>
-  );
-}
-
-export async function getStaticProps({ locale }: { locale: string }) {
-  return {
-    props: {
-      ...(await serverSideTranslations(locale, ['common'])),
-    },
-  };
-}

@@ -18,6 +18,8 @@ import { useRouter } from 'next/router';
 import debounce from 'lodash.debounce';
 import styles from '../../styles/HomePage.module.css';
 import HeroSection from '../../components/home/HeroSection';
+import { safeStorage } from '../../lib/storage';
+import { formatCityName, normalizeCityKey } from '../../lib/cityFormat';
 
 const PER_PAGE = 12;
 
@@ -32,7 +34,7 @@ export type Tour = {
   altText?: string;
 };
 
-export default function HomePage() {
+export default function ToursPage() {
   const { t } = useTranslation('common');
   const [tours, setTours] = useState<Tour[]>([]);
   const [search, setSearch] = useState('');
@@ -47,10 +49,11 @@ export default function HomePage() {
 
   const filteredTours = useMemo(() => {
     if (!tours.length) return [];
+    const normalizedSearch = normalizeCityKey(search);
     return search
       ? tours.filter(
           (t) =>
-            t.location.toLowerCase().includes(search.toLowerCase()) ||
+            normalizeCityKey(t.location).includes(normalizedSearch) ||
             t.title.toLowerCase().includes(search.toLowerCase())
         )
       : tours;
@@ -61,7 +64,12 @@ export default function HomePage() {
       setLoading(true);
       setError(null);
       const res = await api.get('/tours');
-      setTours(res.data);
+      setTours(
+        res.data.map((tour: Tour) => ({
+          ...tour,
+          location: formatCityName(tour.location),
+        }))
+      );
     } catch (err) {
       console.error('Error fetching tours:', err);
       setError(t('fetchError'));
@@ -122,10 +130,17 @@ export default function HomePage() {
     []
   );
 
-  const locations = useMemo(
-    () => [...new Set(tours.map((t) => t.location))],
-    [tours]
-  );
+  const locations = useMemo(() => {
+    const map = new Map<string, string>();
+    tours.forEach((tour) => {
+      const key = normalizeCityKey(tour.location);
+      if (!key) return;
+      if (!map.has(key)) {
+        map.set(key, formatCityName(tour.location));
+      }
+    });
+    return Array.from(map.values());
+  }, [tours]);
 
   useEffect(() => {
     const detectAndScrapeCity = async () => {
@@ -144,9 +159,20 @@ export default function HomePage() {
         const city = (geocode.address.city || geocode.address.town || '')
           .trim()
           .toLowerCase();
-        await api.post('/scraper/new/city', { city });
-        const result = await res.data;
-        if (result) await fetchTours();
+
+        if (!city) return;
+
+        const lastScraped = safeStorage.getItem('lastScrapedCity') || '';
+        if (lastScraped === city) return;
+
+        const scrapeRes = await api.post('/scraper/new/city', { city });
+        const added = Boolean(scrapeRes.data?.added);
+
+        safeStorage.setItem('lastScrapedCity', city);
+
+        if (added) {
+          await fetchTours();
+        }
       } catch (err) {
         console.warn('Skipping geolocation-based scraping', err);
       }
