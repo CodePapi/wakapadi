@@ -1,0 +1,140 @@
+.hero {
+  background: var(--surface-alt);
+  padding: 3.5rem 0 2.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.heroInner {
+  display: flex;
+  align-items: center;
+}
+
+.heroCopy {
+  max-width: 720px;
+}
+
+.heroTitle {
+  font-size: clamp(2rem, 3.5vw, 3rem);
+  font-weight: 700;
+  color: var(--text-color-dark);
+  margin-bottom: var(--space-3);
+}
+
+.heroSubtitle {
+  color: var(--text-color-light);
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 4rem;
+}
+
+.contentCard {
+  background: #ffffff;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-light);
+  padding: 2.5rem;
+}
+
+.pageTitle {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-color-dark);
+  margin-bottom: 1.5rem;
+}
+
+.sectionTitle {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text-color-dark);
+  margin: 2rem 0 0.75rem;
+}
+
+.bodyText {
+  color: var(--text-color-light);
+  font-size: 1rem;
+  line-height: 1.7;
+  margin-bottom: 1rem;
+}
+
+.list {
+  margin: 0 0 1.5rem;
+  padding-left: 1.25rem;
+  color: var(--text-color-light);
+}
+
+.listItem {
+  margin-bottom: 0.5rem;
+  line-height: 1.6;
+}
+
+.summaryCard {
+  background: var(--surface-alt);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  margin: 1.5rem 0 2rem;
+}
+
+.summaryTitle {
+  font-weight: 600;
+  color: var(--text-color-dark);
+  margin-bottom: 0.5rem;
+}
+
+.summaryText {
+  color: var(--text-color-light);
+  line-height: 1.7;
+}
+
+.callout {
+  margin: 2rem 0;
+  padding: 1.5rem;
+  border-radius: var(--radius-lg);
+  background: var(--surface-alt);
+  border: 1px solid var(--border-color);
+}
+
+.calloutTitle {
+  font-weight: 600;
+  color: var(--text-color-dark);
+  margin-bottom: 0.5rem;
+}
+
+.metaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  font-size: 0.95rem;
+  color: var(--text-color-light);
+  margin-top: 1rem;
+}
+
+.contactEmail {
+  color: var(--color-primary-600);
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .contentCard {
+    padding: 2rem 1.5rem;
+  }
+
+  .pageTitle {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 2rem 1rem 3rem;
+  }
+
+  .contentCard {
+    padding: 1.5rem 1.25rem;
+  }
+}

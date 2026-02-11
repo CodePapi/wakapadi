@@ -16,6 +16,7 @@ import { ConfigModule } from '@nestjs/config';
 import { CityModule } from './modules/city.module';
 import { ContactModule } from './modules/contact.module';
 import { GeolocationModule } from './modules/geolocation..module';
+import { FeedbackModule } from './modules/feedback.module';
 
 @Module({
   imports: [
@@ -35,7 +36,8 @@ import { GeolocationModule } from './modules/geolocation..module';
     PresenceModule,
     WhoisModule,
     ContactModule,
-    GeolocationModule
+    GeolocationModule,
+    FeedbackModule
   ],
   controllers: [AppController],
   providers: [AppService],

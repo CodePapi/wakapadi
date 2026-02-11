@@ -1,10 +1,9 @@
-import { Typography, Container, Paper, Box } from '@mui/material';
+import { Typography, Container, Box } from '@mui/material';
 import Head from 'next/head';
 import Layout from '../components/Layout';
-import PageHeader from '../components/PageHeader';
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
-import styles from '../styles/FooterPages.module.css';
+import styles from '../styles/StaticPage.module.css';
 
 export default function AboutPage() {
   const { t } = useTranslation('common');
@@ -18,13 +17,21 @@ export default function AboutPage() {
         />
       </Head>
 
-      <PageHeader
-        title={t('aboutTitle')}
-        subtitle={t('aboutSubtitle')}
-      />
+      <section className={styles.hero}>
+        <Container maxWidth="lg" className={styles.heroInner}>
+          <Box className={styles.heroCopy}>
+            <Typography variant="h1" className={styles.heroTitle}>
+              {t('aboutTitle')}
+            </Typography>
+            <Typography className={styles.heroSubtitle}>
+              {t('aboutSubtitle')}
+            </Typography>
+          </Box>
+        </Container>
+      </section>
 
       <Container className={styles.container}>
-        <Paper className={styles.contentPaper}>
+        <div className={styles.contentCard}>
           <Typography variant="h2" className={styles.pageTitle}>
             {t('ourStory')}
           </Typography>
@@ -99,7 +106,7 @@ export default function AboutPage() {
             {t('aboutJoinBody')}{' '}
             <span className={styles.contactEmail}>hello@wakapadi.com</span>.
           </Typography>
-        </Paper>
+        </div>
       </Container>
     </Layout>
   );

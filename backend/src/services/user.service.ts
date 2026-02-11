@@ -1,11 +1,17 @@
 import { Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
-import { Model } from "mongoose";
+import { Model, Types } from "mongoose";
 import { User } from "../schemas/user.schema";
+import { UserReport } from "../schemas/user-report.schema";
+import { UserBlock } from "../schemas/user-block.schema";
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(User.name) private userModel: Model<User>) {}
+  constructor(
+    @InjectModel(User.name) private userModel: Model<User>,
+    @InjectModel(UserReport.name) private reportModel: Model<UserReport>,
+    @InjectModel(UserBlock.name) private blockModel: Model<UserBlock>,
+  ) {}
 
   async getPreferences(userId: string) {
     return this.userModel
@@ -38,14 +44,42 @@ export class UsersService {
   
 
   async blockUser(currentUserId: string, targetUserId: string) {
-    // Add actual block logic here (e.g., storing blocks in a collection or user schema array)
-    console.log(`User ${currentUserId} blocked ${targetUserId}`);
+    const blockerId = new Types.ObjectId(currentUserId);
+    const blockedId = new Types.ObjectId(targetUserId);
+
+    const existing = await this.blockModel.findOne({ blockerId, blockedId });
+    if (existing) {
+      return { success: true, alreadyBlocked: true };
+    }
+
+    await this.blockModel.create({ blockerId, blockedId });
     return { success: true };
   }
 
   async reportUser(reporterId: string, reportedId: string, reason: string) {
-    console.log(`Report: ${reporterId} → ${reportedId}: ${reason}`);
-    // Save to a Report collection or alert admin
+    await this.reportModel.create({
+      reporterId: new Types.ObjectId(reporterId),
+      reportedId: new Types.ObjectId(reportedId),
+      reason,
+    });
     return { success: true };
+  }
+
+  async getReports() {
+    return this.reportModel
+      .find()
+      .sort({ createdAt: -1 })
+      .populate('reporterId', 'username email')
+      .populate('reportedId', 'username email')
+      .lean();
+  }
+
+  async getBlocks() {
+    return this.blockModel
+      .find()
+      .sort({ createdAt: -1 })
+      .populate('blockerId', 'username email')
+      .populate('blockedId', 'username email')
+      .lean();
   }
 }

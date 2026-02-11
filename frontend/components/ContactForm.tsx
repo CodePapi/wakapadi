@@ -20,7 +20,7 @@ const initialForm = {
   message: '',
 };
 
-export default function ContactForm() {
+export default function ContactForm({ className }: { className?: string }) {
   const [form, setForm] = useState(initialForm);
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
   const { t } = useTranslation('common');
@@ -45,8 +45,9 @@ export default function ContactForm() {
 
   return (
     <Paper
-      elevation={3}
-      sx={{ maxWidth: 560, mx: 'auto', p: { xs: 3, sm: 4 }, borderRadius: 3 }}
+      elevation={0}
+      className={className}
+      sx={{ maxWidth: 640, mx: 'auto', p: { xs: 3, sm: 4 } }}
     >
       <Box component="form" onSubmit={handleSubmit} noValidate>
         <Stack spacing={2.5}>

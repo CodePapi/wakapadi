@@ -1,4 +1,221 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap');
+.hero {
+  background: var(--surface-alt);
+  padding: 3.5rem 0 2.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.heroInner {
+  display: flex;
+  align-items: center;
+}
+
+.heroCopy {
+  max-width: 680px;
+}
+
+.heroTitle {
+  font-size: clamp(2rem, 3.5vw, 3rem) !important;
+  font-weight: 700 !important;
+  color: var(--text-color-dark);
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.3px;
+}
+
+.heroSubtitle {
+  font-size: 1.05rem !important;
+  color: var(--text-color-light);
+  line-height: 1.7;
+}
+
+.heroMeta {
+  margin-top: 1rem;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 4rem;
+  font-family: var(--font-sans);
+}
+
+.content {
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+}
+
+.locationChip {
+  background: #ffffff !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-color-dark) !important;
+  font-weight: 600 !important;
+  box-shadow: var(--shadow-light);
+}
+
+.errorAlert {
+  margin-bottom: 1rem;
+  border-radius: 12px !important;
+}
+
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: #ffffff;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-light);
+}
+
+.userList {
+  margin-top: 1rem;
+  background: #ffffff;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-light);
+  overflow: hidden;
+}
+
+.userItemContainer {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.userContent {
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.userItem {
+  padding: 1.1rem 1.25rem;
+  transition: background-color 0.2s ease;
+}
+
+.userItem:hover {
+  background-color: var(--surface-alt);
+}
+
+.userAvatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  margin-right: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-accent);
+  color: var(--color-primary-600);
+  font-weight: 600;
+  flex-shrink: 0;
+  font-size: 1.15rem;
+  border: 1px solid var(--border-color);
+}
+
+.userName {
+  font-weight: 600;
+  color: var(--text-color-dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+  font-size: 1rem;
+}
+
+.lastSeen {
+  font-size: 0.85rem;
+  color: var(--text-color-light);
+  margin-top: 4px;
+}
+
+.distance {
+  font-size: 0.85rem;
+  color: var(--text-color-light);
+  margin-top: 4px;
+}
+
+.chatButton {
+  border-radius: 999px !important;
+  padding: 8px 18px !important;
+  font-weight: 600 !important;
+  flex-shrink: 0;
+  transition: box-shadow 0.2s ease !important;
+  border: 1px solid rgba(43, 111, 166, 0.25) !important;
+  background: #ffffff !important;
+  color: var(--color-primary-600) !important;
+}
+
+.chatButton:hover {
+  box-shadow: var(--shadow-light) !important;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 2.5rem;
+  background: #ffffff;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-light);
+}
+
+.statusIndicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-left: 8px;
+  display: inline-block;
+}
+
+.userDivider {
+  margin: 0 1.25rem !important;
+  background-color: rgba(203, 213, 225, 0.4) !important;
+}
+
+.infiniteScrollLoader {
+  display: flex;
+  justify-content: center;
+  padding: 1.5rem;
+  margin: 0;
+}
+
+@media (max-width: 600px) {
+  .hero {
+    padding: 2.5rem 0 2rem;
+  }
+
+  .container {
+    padding: 2rem 1rem 3rem;
+  }
+
+  .userName {
+    max-width: 160px;
+  }
+
+  .userItem {
+    padding: 1rem;
+  }
+
+  .userAvatar {
+    width: 40px;
+    height: 40px;
+  }
+
+  .userItemContainer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .chatButton {
+    align-self: flex-end;
+  }
+}
 
 .container {
   max-width: 800px;

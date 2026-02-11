@@ -26,4 +26,14 @@ export class UsersController {
   async reportUser(@Req() req, @Param('userId') targetId: string, @Body() body: { reason: string }) {
     return this.usersService.reportUser(req.user.id, targetId, body.reason);
   }
+
+  @Get('reports')
+  async getReports() {
+    return this.usersService.getReports();
+  }
+
+  @Get('blocks')
+  async getBlocks() {
+    return this.usersService.getBlocks();
+  }
 }

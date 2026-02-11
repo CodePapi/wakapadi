@@ -127,19 +127,30 @@ export class WhoisMessageService implements OnModuleInit {
     );
 
     const readMessageIds = messages
-      .filter(msg => msg.fromUserId._id.toString() === otherUserId && msg.toUserId._id.toString() === userId && msg.read === false)
-      .map(msg => msg._id.toString());
+      .filter(
+        (msg) =>
+          msg.fromUserId?._id &&
+          msg.toUserId?._id &&
+          msg.fromUserId._id.toString() === otherUserId &&
+          msg.toUserId._id.toString() === userId &&
+          msg.read === false
+      )
+      .map((msg) => msg._id.toString());
 
     if (readMessageIds.length > 0) {
       this.gateway.emitToUser(otherUserId, 'message:read:confirm', { messageIds: readMessageIds });
     }
+
+    const safeMessages = messages.filter(
+      (msg) => msg.fromUserId?._id && msg.toUserId?._id
+    );
 
     return {
       page,
       limit,
       total,
       totalPages: Math.ceil(total / limit),
-      messages: messages.map((msg) => ({
+      messages: safeMessages.map((msg) => ({
         _id: msg._id.toString(),
         message: msg.message,
         fromUserId: msg.fromUserId._id.toString(),

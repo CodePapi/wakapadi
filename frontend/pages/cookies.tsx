@@ -1,20 +1,9 @@
-import { Typography, Container, Paper, List, ListItem } from '@mui/material';
+import { Typography, Container, List, ListItem, Box } from '@mui/material';
 import Head from 'next/head';
 import Layout from '../components/Layout';
-import PageHeader from '../components/PageHeader';
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
-import { motion } from 'framer-motion';
-import styles from '../styles/FooterPages.module.css';
-
-const fadeInUp = {
-  hidden: { opacity: 0, y: 30 },
-  visible: (i = 1) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: i * 0.15, duration: 0.5 },
-  }),
-};
+import styles from '../styles/StaticPage.module.css';
 
 export default function CookiePolicy() {
   const { t } = useTranslation('common');
@@ -25,73 +14,67 @@ export default function CookiePolicy() {
         <meta name="robots" content="noindex, nofollow" />
       </Head>
 
-      <PageHeader
-        title={t('cookiePolicy')}
-        subtitle={t('cookieSubtitle')}
-      />
+      <section className={styles.hero}>
+        <Container maxWidth="lg" className={styles.heroInner}>
+          <Box className={styles.heroCopy}>
+            <Typography variant="h1" className={styles.heroTitle}>
+              {t('cookiePolicy')}
+            </Typography>
+            <Typography className={styles.heroSubtitle}>
+              {t('cookieSubtitle')}
+            </Typography>
+          </Box>
+        </Container>
+      </section>
 
       <Container className={styles.container}>
-        <motion.div initial="hidden" animate="visible" variants={fadeInUp}>
-          <Paper className={styles.contentPaper}>
-            <motion.div variants={fadeInUp} custom={1}>
-              <Typography variant="h3" className={styles.pageTitle}>
-                {t('cookiePolicy')}
-              </Typography>
-            </motion.div>
+        <div className={styles.contentCard}>
+          <Typography variant="h3" className={styles.pageTitle}>
+            {t('cookiePolicy')}
+          </Typography>
 
-            <motion.div variants={fadeInUp} custom={2}>
-              <Typography className={styles.bodyText}>
-                {t('cookieIntro')}
-              </Typography>
-            </motion.div>
+          <Typography className={styles.bodyText}>
+            {t('cookieIntro')}
+          </Typography>
 
-            <motion.div variants={fadeInUp} custom={2.5}>
-              <div className={styles.summaryCard}>
-                <Typography variant="h4" className={styles.summaryTitle}>
-                  {t('cookieSummaryTitle')}
-                </Typography>
-                <Typography className={styles.summaryText}>
-                  {t('cookieSummaryBody')}
-                </Typography>
-              </div>
-            </motion.div>
+          <div className={styles.summaryCard}>
+            <Typography variant="h4" className={styles.summaryTitle}>
+              {t('cookieSummaryTitle')}
+            </Typography>
+            <Typography className={styles.summaryText}>
+              {t('cookieSummaryBody')}
+            </Typography>
+          </div>
 
-            <motion.div variants={fadeInUp} custom={3}>
-              <Typography variant="h5" className={styles.sectionTitle}>
-                {t('cookieTypesTitle')}
-              </Typography>
-              <List className={styles.list}>
-                <ListItem className={styles.listItem}>
-                  {t('cookieEssential')}
-                </ListItem>
-                <ListItem className={styles.listItem}>
-                  {t('cookieAnalytics')}
-                </ListItem>
-                <ListItem className={styles.listItem}>
-                  {t('cookieFunctional')}
-                </ListItem>
-              </List>
-            </motion.div>
+          <Typography variant="h5" className={styles.sectionTitle}>
+            {t('cookieTypesTitle')}
+          </Typography>
+          <List className={styles.list}>
+            <ListItem className={styles.listItem}>
+              {t('cookieEssential')}
+            </ListItem>
+            <ListItem className={styles.listItem}>
+              {t('cookieAnalytics')}
+            </ListItem>
+            <ListItem className={styles.listItem}>
+              {t('cookieFunctional')}
+            </ListItem>
+          </List>
 
-            <motion.div variants={fadeInUp} custom={4}>
-              <Typography variant="h5" className={styles.sectionTitle}>
-                {t('cookieManageTitle')}
-              </Typography>
-              <Typography className={styles.bodyText}>
-                {t('cookieManageBody')}
-              </Typography>
-            </motion.div>
+          <Typography variant="h5" className={styles.sectionTitle}>
+            {t('cookieManageTitle')}
+          </Typography>
+          <Typography className={styles.bodyText}>
+            {t('cookieManageBody')}
+          </Typography>
 
-            <motion.div variants={fadeInUp} custom={5}>
-              <Typography variant="h5" className={styles.sectionTitle}>
-                {t('cookieRetentionTitle')}
-              </Typography>
-              <Typography className={styles.bodyText}>
-                {t('cookieRetentionBody')}
-              </Typography>
-            </motion.div>
-          </Paper>
-        </motion.div>
+          <Typography variant="h5" className={styles.sectionTitle}>
+            {t('cookieRetentionTitle')}
+          </Typography>
+          <Typography className={styles.bodyText}>
+            {t('cookieRetentionBody')}
+          </Typography>
+        </div>
       </Container>
     </Layout>
   );

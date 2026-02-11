@@ -14,15 +14,15 @@
   background: #ffffff !important;
   color: var(--text-color-dark) !important;
   backdrop-filter: none;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  border-bottom: 1px solid rgba(31, 42, 55, 0.08);
 }
 
 .toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.75rem 0 !important;
-  min-height: 72px !important;
+  padding: 0.5rem 0 !important;
+  min-height: 64px !important;
 }
 
 /* Logo */
@@ -82,13 +82,13 @@
   font-size: 0.95rem;
   letter-spacing: 0.01em;
   transition: color 0.2s ease, background-color 0.2s ease;
-  padding: 0.4rem 0.75rem;
+  padding: 0.35rem 0.75rem;
   border-radius: 999px;
 }
 
 .navLink:hover {
   color: var(--text-color-dark) !important;
-  background-color: #eef5fb;
+  background-color: var(--surface-accent);
 }
 
 /* Auth buttons */
@@ -101,15 +101,15 @@
 
 .loginButton {
   color: var(--text-color-dark) !important;
-  border-color: rgba(15, 23, 42, 0.12) !important;
+  border-color: rgba(31, 42, 55, 0.12) !important;
   font-weight: 600 !important;
   padding: 0.5rem 1.25rem !important;
   transition: all 0.3s ease !important;
 }
 
 .loginButton:hover {
-  border-color: rgba(15, 23, 42, 0.2) !important;
-  background-color: #f1f5f9 !important;
+  border-color: rgba(31, 42, 55, 0.2) !important;
+  background-color: var(--surface-alt) !important;
 }
 
 .registerButton {
@@ -123,7 +123,7 @@
 .registerButton:hover {
   background-color: var(--color-primary-700) !important;
   transform: translateY(-1px);
-  box-shadow: 0 10px 20px rgba(31, 120, 193, 0.25);
+  box-shadow: 0 10px 20px rgba(43, 111, 166, 0.2);
 }
 
 .logoutButton {
@@ -160,7 +160,7 @@
   width: 360px !important;
   max-width: 100vw !important;
   background-color: #ffffff !important;
-  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.08) !important;
+  box-shadow: -4px 0 20px rgba(31, 42, 55, 0.08) !important;
   border-top-left-radius: 24px !important;
   border-bottom-left-radius: 24px !important;
 }
@@ -319,10 +319,10 @@
 
 /* Footer */
 .footer {
-  background: #f8fafc;
+  background: var(--surface-alt);
   color: var(--text-color-dark);
   padding: 3rem 1rem 2rem;
-  border-top: 1px solid rgba(15, 23, 42, 0.08);
+  border-top: 1px solid rgba(31, 42, 55, 0.08);
 }
 
 .footerContent {
@@ -355,7 +355,7 @@
 }
 
 .footerTagline {
-  color: #6b7280 !important;
+  color: var(--text-color-light) !important;
   font-size: 0.95rem !important;
   line-height: 1.6 !important;
 }
@@ -387,7 +387,7 @@
 }
 
 .footerLink {
-  color: #6b7280 !important;
+  color: var(--text-color-light) !important;
   font-size: 0.95rem !important;
   text-decoration: none !important;
   transition: color 0.3s ease !important;
@@ -398,7 +398,7 @@
 }
 
 .footerDivider {
-  border-color: rgba(15, 23, 42, 0.08) !important;
+  border-color: rgba(31, 42, 55, 0.08) !important;
   margin: 1.5rem 0 !important;
 }
 
@@ -417,7 +417,7 @@
 }
 
 .copyright {
-  color: #9aa5b1 !important;
+  color: #8a97a6 !important;
   font-size: 0.85rem !important;
 }
 
@@ -433,12 +433,12 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background-color: #eef5fb;
+  background-color: var(--surface-accent);
   transition: all 0.3s ease;
 }
 
 .socialLink:hover {
-  background-color: #e3eef9;
+  background-color: #e9f1f7;
   transform: translateY(-2px);
 }
 

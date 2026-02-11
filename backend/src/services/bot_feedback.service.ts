@@ -41,4 +41,13 @@ export class FeedbackService {
       helpfulPercentage: (helpfulCount / (helpfulCount + unhelpfulCount)) * 100,
     };
   }
+
+  async getRecentFeedback(limit = 20) {
+    const safeLimit = Number.isFinite(limit) && limit > 0 ? Math.min(limit, 100) : 20;
+    return this.feedbackModel
+      .find()
+      .sort({ timestamp: -1 })
+      .limit(safeLimit)
+      .lean();
+  }
 }

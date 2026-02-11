@@ -19,7 +19,7 @@
 .card:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-medium) !important;
-  border-color: #dddddd;
+  border-color: #d8e2ea;
 }
 
 .card:focus-within {
@@ -72,8 +72,8 @@
 }
 
 .cardTitle {
-  font-size: 1.2rem;
-  font-weight: 700;
+  font-size: 1.15rem;
+  font-weight: 600;
   margin-bottom: 8px;
   line-height: 1.4;
   display: -webkit-box;
@@ -84,19 +84,19 @@
 }
 
 .cardLocation {
-  color: #1f2937;
+  color: var(--text-color-dark);
   font-weight: 600;
   margin-bottom: 4px;
 }
 
 .cardSchedule {
-  color: #334155;
+  color: var(--text-color-light);
   margin-bottom: 4px;
   flex-grow: 1;
 }
 
 .cardSource {
-  color: #334155;
+  color: var(--text-color-light);
   margin-bottom: 12px;
 }
 
@@ -107,13 +107,13 @@
 }
 
 .keyLabel {
-  font-weight: 700;
-  color: #0f172a;
+  font-weight: 600;
+  color: var(--text-color-dark);
   margin-right: 0.25rem;
 }
 
 .keyValue {
-  color: #475569;
+  color: var(--text-color-light);
   font-weight: 600;
 }
 

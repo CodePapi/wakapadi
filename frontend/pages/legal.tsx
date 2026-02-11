@@ -1,10 +1,9 @@
-import { Typography, Container, Paper, Box } from '@mui/material';
+import { Typography, Container, Box } from '@mui/material';
 import Head from 'next/head';
 import Layout from '../components/Layout';
-import PageHeader from '../components/PageHeader';
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
-import styles from '../styles/FooterPages.module.css';
+import styles from '../styles/StaticPage.module.css';
 
 export default function LegalPage() {
   const { t } = useTranslation('common');
@@ -15,10 +14,21 @@ export default function LegalPage() {
         <meta name="description" content={t('legalMetaDescription')} />
       </Head>
 
-      <PageHeader title={t('legalTitle')} subtitle={t('legalSubtitle')} />
+      <section className={styles.hero}>
+        <Container maxWidth="lg" className={styles.heroInner}>
+          <Box className={styles.heroCopy}>
+            <Typography variant="h1" className={styles.heroTitle}>
+              {t('legalTitle')}
+            </Typography>
+            <Typography className={styles.heroSubtitle}>
+              {t('legalSubtitle')}
+            </Typography>
+          </Box>
+        </Container>
+      </section>
 
       <Container className={styles.container}>
-        <Paper className={styles.contentPaper}>
+        <div className={styles.contentCard}>
           <Typography variant="h2" className={styles.pageTitle}>
             {t('legalTitle')}
           </Typography>
@@ -66,7 +76,7 @@ export default function LegalPage() {
           <div className={styles.metaRow}>
             <span>{t('legalEffectiveDate')}</span>
           </div>
-        </Paper>
+        </div>
       </Container>
     </Layout>
   );

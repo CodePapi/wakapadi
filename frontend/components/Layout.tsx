@@ -27,6 +27,7 @@ import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import LoginIcon from '@mui/icons-material/Login';
 import PersonAddAltIcon from '@mui/icons-material/PersonAddAlt';
 import LogoutIcon from '@mui/icons-material/Logout';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import NextLink from 'next/link';
@@ -161,6 +162,9 @@ export default function Layout({
                 </Link>
                 <Link href="/contact-us" className={styles.navLink}>
                   {t('contactUs')}
+                </Link>
+                <Link href="/admin" className={styles.navLink}>
+                  Admin
                 </Link>
                 {isLoggedIn && (
                   <>
@@ -326,6 +330,18 @@ export default function Layout({
                 primary={t('contactUs')}
                 className={styles.drawerItemText}
               />
+            </ListItem>
+
+            <ListItem
+              component={NextLink}
+              href="/admin"
+              onClick={() => setDrawerOpen(false)}
+              className={styles.drawerItem}
+            >
+              <ListItemIcon className={styles.drawerItemIcon}
+                ><AdminPanelSettingsIcon />
+              </ListItemIcon>
+              <ListItemText primary="Admin" className={styles.drawerItemText} />
             </ListItem>
 
             {isLoggedIn && (

@@ -7,9 +7,9 @@
   margin: 1.5rem auto;
   border-radius: 20px;
   overflow: hidden;
-  background: radial-gradient(circle at top, #eef2ff 0%, #f8fafc 45%, #ffffff 100%);
-  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.12);
-  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: var(--surface-alt);
+  box-shadow: var(--shadow-medium);
+  border: 1px solid var(--border-color);
   }
   
   .chatHeader {
@@ -64,6 +64,7 @@
     display: flex;
     align-items: center;
     gap: 0.35rem;
+    color: var(--text-color-light);
   }
 
   .statusDot {
@@ -301,8 +302,8 @@
     padding: 12px 16px;
     border-radius: 20px;
     word-break: break-word;
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
-    border: 1px solid rgba(148, 163, 184, 0.15);
+    box-shadow: var(--shadow-light);
+    border: 1px solid var(--border-color);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
 
@@ -320,9 +321,9 @@
   
   .messageBubbleOther {
     background-color: rgba(255, 255, 255, 0.98);
-    color: #1e293b;
+    color: var(--text-color-dark);
     border-top-left-radius: 8px;
-    border-color: rgba(226, 232, 240, 0.9);
+    border-color: var(--border-color);
   }
   
   .messageText {
@@ -349,7 +350,7 @@
     align-items: center;
     gap: 4px;
     margin-top: 4px;
-    color: #64748b;
+    color: var(--text-color-light);
     font-size: 0.75rem;
   }
 

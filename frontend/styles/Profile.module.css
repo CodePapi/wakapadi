@@ -77,8 +77,8 @@
 }
 
 .username {
-  font-size: 1.9rem;
-  font-weight: 700;
+  font-size: 1.8rem;
+  font-weight: 600;
   color: var(--text-color-dark);
   margin: 0;
 }
@@ -103,9 +103,9 @@
   gap: 0.35rem;
   padding: 0.35rem 0.75rem;
   border-radius: 999px;
-  font-size: 0.85rem;
+  font-size: 0.84rem;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--text-color-dark);
   background: var(--surface-alt);
   border: 1px solid rgba(148, 163, 184, 0.25);
 }
@@ -144,8 +144,8 @@
 }
 
 .sectionTitle {
-  font-size: 1.35rem;
-  font-weight: 700;
+  font-size: 1.2rem;
+  font-weight: 600;
   margin-bottom: 1rem;
   color: var(--text-color-dark);
 }
@@ -164,7 +164,7 @@
 }
 
 .helperText {
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   color: var(--text-color-light);
   margin-top: 0.4rem;
 }
@@ -238,7 +238,7 @@
 
 .conversationItem:hover {
   background-color: var(--surface-alt);
-  transform: translateX(3px);
+  transform: translateX(2px);
 }
 
 .MuiListItemText-primary {
