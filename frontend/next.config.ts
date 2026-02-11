@@ -25,7 +25,8 @@ const nextConfig = {
       'www.guruwalk.com',
       'media.guruwalk.com',
       'imagedelivery.net',
-      'www.venicefreewalkingtour.com'
+      'www.venicefreewalkingtour.com',
+      'www.neweuropetours.eu'
     ]
   ,
     // This is the critical part

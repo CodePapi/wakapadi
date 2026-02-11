@@ -45,6 +45,17 @@ export default function PrivacyPolicy() {
               </Typography>
             </motion.div>
 
+            <motion.div variants={fadeInUp} custom={2.5}>
+              <div className={styles.summaryCard}>
+                <Typography variant="h4" className={styles.summaryTitle}>
+                  {t('privacySummaryTitle')}
+                </Typography>
+                <Typography className={styles.summaryText}>
+                  {t('privacySummaryBody')}
+                </Typography>
+              </div>
+            </motion.div>
+
             <motion.div variants={fadeInUp} custom={3}>
               <Typography variant="h5" className={styles.sectionTitle}>
                 {t('privacyGdprTitle')}
@@ -76,6 +87,66 @@ export default function PrivacyPolicy() {
                   {t('privacyRightWithdraw')}
                 </ListItem>
               </List>
+            </motion.div>
+
+            <motion.div variants={fadeInUp} custom={5}>
+              <Typography variant="h5" className={styles.sectionTitle}>
+                {t('privacyDataTitle')}
+              </Typography>
+              <Typography className={styles.bodyText}>
+                {t('privacyDataBody')}
+              </Typography>
+            </motion.div>
+
+            <motion.div variants={fadeInUp} custom={6}>
+              <Typography variant="h5" className={styles.sectionTitle}>
+                {t('privacyUseTitle')}
+              </Typography>
+              <Typography className={styles.bodyText}>
+                {t('privacyUseBody')}
+              </Typography>
+            </motion.div>
+
+            <motion.div variants={fadeInUp} custom={7}>
+              <Typography variant="h5" className={styles.sectionTitle}>
+                {t('privacySharingTitle')}
+              </Typography>
+              <Typography className={styles.bodyText}>
+                {t('privacySharingBody')}
+              </Typography>
+            </motion.div>
+
+            <motion.div variants={fadeInUp} custom={8}>
+              <Typography variant="h5" className={styles.sectionTitle}>
+                {t('privacyRetentionTitle')}
+              </Typography>
+              <Typography className={styles.bodyText}>
+                {t('privacyRetentionBody')}
+              </Typography>
+            </motion.div>
+
+            <motion.div variants={fadeInUp} custom={9}>
+              <Typography variant="h5" className={styles.sectionTitle}>
+                {t('privacySecurityTitle')}
+              </Typography>
+              <Typography className={styles.bodyText}>
+                {t('privacySecurityBody')}
+              </Typography>
+            </motion.div>
+
+            <motion.div variants={fadeInUp} custom={10}>
+              <div className={styles.callout}>
+                <Typography variant="h4" className={styles.calloutTitle}>
+                  {t('privacyContactTitle')}
+                </Typography>
+                <Typography className={styles.bodyText}>
+                  {t('privacyContactBody')}{' '}
+                  <span className={styles.contactEmail}>privacy@wakapadi.com</span>.
+                </Typography>
+                <div className={styles.metaRow}>
+                  <span>{t('privacyEffectiveDate')}</span>
+                </div>
+              </div>
             </motion.div>
           </Paper>
         </motion.div>

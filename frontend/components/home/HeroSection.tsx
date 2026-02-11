@@ -13,7 +13,7 @@ import {
 } from '@mui/icons-material';
 import { useTranslation } from 'next-i18next';
 import { useRouter } from 'next/router';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import debounce from 'lodash.debounce';
 import { motion } from 'framer-motion';
 import styles from './HeroSection.module.css';
@@ -33,9 +33,7 @@ export default function HeroSection({
 }: HeroSectionProps) {
   const { t } = useTranslation('common');
   const [input, setInput] = useState(initialValue);
-  const [isFixed, setIsFixed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const heroRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const isMobile = useMediaQuery('(max-width:768px)');
 
@@ -60,119 +58,108 @@ export default function HeroSection({
     return () => debounced.cancel();
   }, [input, onSearch]);
 
-  // Scroll effect
-  useEffect(() => {
-    const handleScroll = () => {
-      if (heroRef.current) {
-        setIsFixed(window.scrollY > heroRef.current.offsetHeight / 2);
-      }
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
   return (
-    <div className={styles.heroContainer} ref={heroRef}>
-      {/* Hero Banner with Background Image */}
-      <div className={styles.heroBanner}>
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-        >
-          <h1 className={styles.heroTitle}>{t('homeTitle')}</h1>
-        </motion.div>
-        <motion.p
-          className={styles.heroSubtitle}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-        >
-          {t('homeSubtitle')}
-        </motion.p>
-
-        <div className={styles.heroActions}>
-          <Button
-            variant="contained"
-            className={styles.primaryCta}
-            onClick={handleScrollToTours}
+    <>
+      <div className={styles.heroContainer}>
+        {/* Hero Banner with Background Image */}
+        <div className={styles.heroBanner}>
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
           >
-            {t('heroCtaExplore')}
-          </Button>
-          <Button
-            variant="outlined"
-            className={styles.secondaryCta}
-            onClick={() => router.push('/whois')}
+            <h1 className={styles.heroTitle}>{t('homeTitle')}</h1>
+          </motion.div>
+          <motion.p
+            className={styles.heroSubtitle}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
           >
-            {t('heroCtaMeet')}
-          </Button>
-        </div>
+            {t('homeSubtitle')}
+          </motion.p>
 
-        <div className={styles.heroHighlights}>
-          <Chip label={t('heroChipFree')} className={styles.heroChip} />
-          <Chip label={t('heroChipFriendly')} className={styles.heroChip} />
-          <Chip label={t('heroChipSafeChat')} className={styles.heroChip} />
+          <div className={styles.heroActions}>
+            <Button
+              variant="contained"
+              className={styles.primaryCta}
+              onClick={handleScrollToTours}
+            >
+              {t('heroCtaExplore')}
+            </Button>
+            <Button
+              variant="outlined"
+              className={styles.secondaryCta}
+              onClick={() => router.push('/whois')}
+            >
+              {t('heroCtaMeet')}
+            </Button>
+          </div>
+
+          <div className={styles.heroHighlights}>
+            <Chip label={t('heroChipFree')} className={styles.heroChip} />
+            <Chip label={t('heroChipFriendly')} className={styles.heroChip} />
+            <Chip label={t('heroChipSafeChat')} className={styles.heroChip} />
+          </div>
         </div>
       </div>
 
       {/* Search Container */}
-      <div 
-        style={{ zIndex: '1200' }}
-        className={`${styles.searchContainer} ${isFixed ? styles.fixed : ''}`}
-        aria-live="polite"
-      >
-        <div className={styles.searchContent}>
-          <div className={styles.searchInput}>
-            <SearchIcon className={styles.searchIcon} />
-            <Autocomplete
-              freeSolo
-              fullWidth
-              options={locations}
-              getOptionLabel={(option) => option}
-              inputValue={input}
-              onInputChange={(_, value) => setInput(value)}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  placeholder={t('searchPlaceholder')}
-                  variant="standard"
-                  fullWidth
-                  InputProps={{
-                    ...params.InputProps,
-                    disableUnderline: true,
-                    className: styles.inputField,
-                    'aria-label': t('searchToursAria')
-                  }}
-                />
+      <div className={styles.searchStickyWrap} aria-live="polite">
+        <div className={styles.searchContainer}>
+          <div className={styles.searchContent}>
+            <div className={styles.searchInput}>
+              <SearchIcon className={styles.searchIcon} />
+              <Autocomplete
+                freeSolo
+                fullWidth
+                options={locations}
+                getOptionLabel={(option) => option}
+                inputValue={input}
+                onInputChange={(_, value) => setInput(value)}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    placeholder={t('searchPlaceholder')}
+                    variant="standard"
+                    fullWidth
+                    InputProps={{
+                      ...params.InputProps,
+                      disableUnderline: true,
+                      className: styles.inputField,
+                      'aria-label': t('searchToursAria')
+                    }}
+                  />
+                )}
+                noOptionsText={t('noResults')}
+              />
+              {isMobile && (
+                <IconButton
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className={styles.mobileMenuButton}
+                  aria-label={
+                    mobileMenuOpen ? t('closeMenu') : t('openMenu')
+                  }
+                >
+                  <MenuIcon />
+                </IconButton>
               )}
-              noOptionsText={t('noResults')}
-            />
-            {isMobile && (
-              <IconButton
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className={styles.mobileMenuButton}
-                aria-label={
-                  mobileMenuOpen ? t('closeMenu') : t('openMenu')
-                }
-              >
-                <MenuIcon />
-              </IconButton>
-            )}
-          </div>
+            </div>
 
-          <div className={`${styles.searchButtons} ${mobileMenuOpen || !isMobile ? styles.visible : ''}`}>
-            <Button
-              variant="outlined"
-              startIcon={<NearMeIcon />}
-              onClick={() => router.push('/whois')}
-              className={styles.searchButton}
-              fullWidth={isMobile}
-            >
-              {isMobile ? t('whoisNearby') : t('whoisNearby')}
-            </Button>
+            <div className={`${styles.searchButtons} ${mobileMenuOpen || !isMobile ? styles.visible : ''}`}>
+              <Button
+                variant="outlined"
+                startIcon={<NearMeIcon />}
+                onClick={() => router.push('/whois')}
+                className={styles.searchButton}
+                fullWidth={isMobile}
+              >
+                {isMobile ? t('whoisNearby') : t('whoisNearby')}
+              </Button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

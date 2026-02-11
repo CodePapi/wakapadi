@@ -115,6 +115,14 @@ export default function ProfilePage() {
         )
       : value;
 
+  const getGenderLabel = (value?: string) => {
+    if (!value) return t('profileGenderUndisclosed');
+    if (value === 'female') return t('profileGenderFemale');
+    if (value === 'male') return t('profileGenderMale');
+    if (value === 'nonbinary') return t('profileGenderNonBinary');
+    return t('profileGenderOther');
+  };
+
   useEffect(() => {
     (async () => {
       try {
@@ -209,22 +217,48 @@ export default function ProfilePage() {
         title={t('profileTitle')}
         subtitle={t('profileSubtitle')}
       />
-      <Container maxWidth="md" className={styles.container}>
-        {/* Profile Header */}
-        <header className={styles.header}>
-          {user && (
-            <div className={styles.userInfo}>
+      <Container maxWidth="lg" className={styles.container}>
+        {user && !loading && (
+          <section className={styles.profileHero}>
+            <div className={styles.profileIdentity}>
               <Avatar
                 src={user.avatarUrl || `/default-avatar.png`}
                 alt={`${user.username}'s avatar`}
                 className={styles.avatar}
               />
-              <h2 className={styles.username}>{user.username}</h2>
-              {/* Add a short bio or tagline here if available from API */}
-              {/* {user.bio && <div><p className={styles.userBio}>{user.bio}.</p></div>} */}
+              <div className={styles.profileIdentityText}>
+                <h2 className={styles.username}>{user.username}</h2>
+                <p className={styles.userBio}>{t('profileSubtitle')}</p>
+                <div className={styles.metaRow}>
+                  <span className={styles.metaChip}>
+                    {profileVisible
+                      ? t('profileVisibilityOn')
+                      : t('profileVisibilityOff')}
+                  </span>
+                  <span className={styles.metaChip}>
+                    {t('profileGenderLabel')}: {getGenderLabel(gender)}
+                  </span>
+                  <span className={styles.metaChip}>
+                    {t('profileTravelInterestsLabel')}: {travelPrefs.length}
+                  </span>
+                  <span className={styles.metaChip}>
+                    {t('profileLanguagesLabel')}: {languages.length}
+                  </span>
+                </div>
+              </div>
             </div>
-          )}
-        </header>
+            <div className={styles.profileHeroActions}>
+              <Button
+                variant="contained"
+                onClick={handleSave}
+                className={styles.primaryAction}
+                aria-label={t('profileSaveAria')}
+              >
+                {t('profileSaveButton')}
+              </Button>
+            </div>
+          </section>
+        )}
 
         {/* Main Content */}
         {loading ? (
@@ -233,7 +267,8 @@ export default function ProfilePage() {
             <p>{t('profileLoading')}</p>
           </div>
         ) : user ? (
-          <main>
+          <main className={styles.profileGrid}>
+            <div className={styles.mainColumn}>
             {/* Preferences Section */}
             <section
               className={styles.section}
@@ -366,22 +401,6 @@ export default function ProfilePage() {
               </div>
             </section>
 
-            <section className={styles.section} aria-labelledby="account-danger">
-              <h2 id="account-danger" className={styles.sectionTitle}>
-                {t('profileDeleteTitle')}
-              </h2>
-              <Typography className={styles.helperText}>
-                {t('profileDeleteDescription')}
-              </Typography>
-              <Button
-                variant="outlined"
-                color="error"
-                onClick={handleDeleteAccount}
-              >
-                {t('profileDeleteAction')}
-              </Button>
-            </section>
-
             {/* Social Media Section */}
             <section
               className={styles.section}
@@ -415,19 +434,6 @@ export default function ProfilePage() {
                 placeholder={t('profileTwitterPlaceholder')}
               />
             </section>
-
-            {/* Save Button */}
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleSave}
-              className={styles.saveButton}
-              aria-label={t('profileSaveAria')}
-            >
-              {t('profileSaveButton')}
-            </Button>
-
-            {/* Conversations Section */}
             <section
               className={styles.section}
               aria-labelledby="recent-chats-heading"
@@ -487,6 +493,39 @@ export default function ProfilePage() {
                 )}
               </List>
             </section>
+            </div>
+
+            <aside className={styles.sideColumn}>
+              <section className={`${styles.section} ${styles.actionCard}`}>
+                <h2 className={styles.sectionTitle}>{t('profileSaveButton')}</h2>
+                <Button
+                  variant="contained"
+                  onClick={handleSave}
+                  className={styles.primaryAction}
+                  aria-label={t('profileSaveAria')}
+                  fullWidth
+                >
+                  {t('profileSaveButton')}
+                </Button>
+              </section>
+
+              <section className={`${styles.section} ${styles.dangerCard}`} aria-labelledby="account-danger">
+                <h2 id="account-danger" className={styles.sectionTitle}>
+                  {t('profileDeleteTitle')}
+                </h2>
+                <Typography className={styles.helperText}>
+                  {t('profileDeleteDescription')}
+                </Typography>
+                <Button
+                  variant="outlined"
+                  color="error"
+                  onClick={handleDeleteAccount}
+                  fullWidth
+                >
+                  {t('profileDeleteAction')}
+                </Button>
+              </section>
+            </aside>
           </main>
         ) : (
           <div className={styles.errorMessage} role="alert">

@@ -45,6 +45,17 @@ export default function CookiePolicy() {
               </Typography>
             </motion.div>
 
+            <motion.div variants={fadeInUp} custom={2.5}>
+              <div className={styles.summaryCard}>
+                <Typography variant="h4" className={styles.summaryTitle}>
+                  {t('cookieSummaryTitle')}
+                </Typography>
+                <Typography className={styles.summaryText}>
+                  {t('cookieSummaryBody')}
+                </Typography>
+              </div>
+            </motion.div>
+
             <motion.div variants={fadeInUp} custom={3}>
               <Typography variant="h5" className={styles.sectionTitle}>
                 {t('cookieTypesTitle')}
@@ -60,6 +71,24 @@ export default function CookiePolicy() {
                   {t('cookieFunctional')}
                 </ListItem>
               </List>
+            </motion.div>
+
+            <motion.div variants={fadeInUp} custom={4}>
+              <Typography variant="h5" className={styles.sectionTitle}>
+                {t('cookieManageTitle')}
+              </Typography>
+              <Typography className={styles.bodyText}>
+                {t('cookieManageBody')}
+              </Typography>
+            </motion.div>
+
+            <motion.div variants={fadeInUp} custom={5}>
+              <Typography variant="h5" className={styles.sectionTitle}>
+                {t('cookieRetentionTitle')}
+              </Typography>
+              <Typography className={styles.bodyText}>
+                {t('cookieRetentionBody')}
+              </Typography>
             </motion.div>
           </Paper>
         </motion.div>

@@ -33,6 +33,15 @@ export default function AboutPage() {
             {t('aboutBodyIntro')}
           </Typography>
 
+          <Box className={styles.summaryCard}>
+            <Typography variant="h4" className={styles.summaryTitle}>
+              {t('aboutSummaryTitle')}
+            </Typography>
+            <Typography className={styles.summaryText}>
+              {t('aboutSummaryBody')}
+            </Typography>
+          </Box>
+
           <Typography variant="h3" className={styles.sectionTitle}>
             {t('aboutVisionTitle')}
           </Typography>
@@ -50,6 +59,35 @@ export default function AboutPage() {
             </Typography>
             <Typography component="li" className={styles.listItem}>
               {t('aboutVisionListThree')}
+            </Typography>
+          </Box>
+
+          <Typography variant="h3" className={styles.sectionTitle}>
+            {t('aboutHowTitle')}
+          </Typography>
+
+          <Typography className={styles.bodyText}>
+            {t('aboutHowBody')}
+          </Typography>
+
+          <Box component="ul" className={styles.list}>
+            <Typography component="li" className={styles.listItem}>
+              {t('aboutHowListOne')}
+            </Typography>
+            <Typography component="li" className={styles.listItem}>
+              {t('aboutHowListTwo')}
+            </Typography>
+            <Typography component="li" className={styles.listItem}>
+              {t('aboutHowListThree')}
+            </Typography>
+          </Box>
+
+          <Box className={styles.callout}>
+            <Typography variant="h4" className={styles.calloutTitle}>
+              {t('aboutSafetyTitle')}
+            </Typography>
+            <Typography className={styles.bodyText}>
+              {t('aboutSafetyBody')}
             </Typography>
           </Box>
 

@@ -19,6 +19,13 @@ import {
   ListItemIcon,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
+import CloseIcon from '@mui/icons-material/Close';
+import ExploreIcon from '@mui/icons-material/Explore';
+import TourIcon from '@mui/icons-material/Tour';
+import SupportAgentIcon from '@mui/icons-material/SupportAgent';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import LoginIcon from '@mui/icons-material/Login';
+import PersonAddAltIcon from '@mui/icons-material/PersonAddAlt';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
@@ -149,6 +156,9 @@ export default function Layout({
                 <Link href="/whois" className={styles.navLink}>
                   {t('whoisNearby')}
                 </Link>
+                <Link href="/tours" className={styles.navLink}>
+                  {t('availableTours')}
+                </Link>
                 <Link href="/contact-us" className={styles.navLink}>
                   {t('contactUs')}
                 </Link>
@@ -169,7 +179,26 @@ export default function Layout({
                     >
                       {t('logout')}
                     </Button>
-                  ) : null}
+                  ) : (
+                    <>
+                      <Button
+                        component={NextLink}
+                        href="/login"
+                        className={styles.loginButton}
+                        variant="outlined"
+                      >
+                        {t('login')}
+                      </Button>
+                      <Button
+                        component={NextLink}
+                        href="/register"
+                        className={styles.registerButton}
+                        variant="contained"
+                      >
+                        {t('register')}
+                      </Button>
+                    </>
+                  )}
                 </Box>
 
                 <Button
@@ -229,7 +258,7 @@ export default function Layout({
         classes={{ paper: styles.drawerPaper }}
       >
         <Box className={styles.drawerContainer}>
-          <Box className={styles.drawerLogoWrapper}>
+          <Box className={styles.drawerHeader}>
             <Link
               href="/"
               className={styles.logoImageWrapper}
@@ -241,8 +270,18 @@ export default function Layout({
                 className={styles.logoImage1}
               />
             </Link>
+            <IconButton
+              onClick={() => setDrawerOpen(false)}
+              className={styles.drawerCloseButton}
+              aria-label="close menu"
+            >
+              <CloseIcon />
+            </IconButton>
           </Box>
           <Divider className={styles.drawerDivider} />
+          <Typography className={styles.drawerSectionTitle}>
+            {t('explore')}
+          </Typography>
           <List className={styles.drawerList}>
             <ListItem
               component={NextLink}
@@ -250,8 +289,26 @@ export default function Layout({
               onClick={() => setDrawerOpen(false)}
               className={styles.drawerItem}
             >
+              <ListItemIcon className={styles.drawerItemIcon}
+                ><ExploreIcon />
+              </ListItemIcon>
               <ListItemText
                 primary={t('whoisNearby')}
+                className={styles.drawerItemText}
+              />
+            </ListItem>
+
+            <ListItem
+              component={NextLink}
+              href="/tours"
+              onClick={() => setDrawerOpen(false)}
+              className={styles.drawerItem}
+            >
+              <ListItemIcon className={styles.drawerItemIcon}
+                ><TourIcon />
+              </ListItemIcon>
+              <ListItemText
+                primary={t('availableTours')}
                 className={styles.drawerItemText}
               />
             </ListItem>
@@ -262,6 +319,9 @@ export default function Layout({
               onClick={() => setDrawerOpen(false)}
               className={styles.drawerItem}
             >
+              <ListItemIcon className={styles.drawerItemIcon}
+                ><SupportAgentIcon />
+              </ListItemIcon>
               <ListItemText
                 primary={t('contactUs')}
                 className={styles.drawerItemText}
@@ -275,6 +335,9 @@ export default function Layout({
                 onClick={() => setDrawerOpen(false)}
                 className={styles.drawerItem}
               >
+                <ListItemIcon className={styles.drawerItemIcon}
+                  ><AccountCircleIcon />
+                </ListItemIcon>
                 <ListItemText
                   primary={t('profile')}
                   className={styles.drawerItemText}
@@ -285,7 +348,65 @@ export default function Layout({
 
           <Box className={styles.drawerFooter}>
             <Divider className={styles.drawerDivider} />
-            <List>
+            <Typography className={styles.drawerSectionTitle}>
+              {t('account')}
+            </Typography>
+            <List className={styles.drawerListCompact}>
+              {!isLoggedIn && (
+                <>
+                  <ListItem
+                    component={NextLink}
+                    href="/login"
+                    onClick={() => setDrawerOpen(false)}
+                    className={`${styles.drawerItem} ${styles.drawerActionItem}`}
+                  >
+                    <ListItemIcon className={styles.drawerItemIcon}
+                      ><LoginIcon />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={t('login')}
+                      className={styles.drawerItemText}
+                    />
+                  </ListItem>
+                  <ListItem
+                    component={NextLink}
+                    href="/register"
+                    onClick={() => setDrawerOpen(false)}
+                    className={`${styles.drawerItem} ${styles.drawerPrimaryAction}`}
+                  >
+                    <ListItemIcon className={styles.drawerItemIcon}
+                      ><PersonAddAltIcon />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={t('register')}
+                      className={styles.drawerItemText}
+                    />
+                  </ListItem>
+                </>
+              )}
+              {isLoggedIn && (
+                <ListItem
+                  onClick={() => {
+                    handleLogout();
+                    setDrawerOpen(false);
+                  }}
+                  className={`${styles.drawerItem} ${styles.logoutDrawerItem}`}
+                >
+                  <ListItemIcon className={styles.drawerItemIcon}
+                    ><LogoutIcon />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={t('logout')}
+                    className={styles.drawerItemText}
+                  />
+                </ListItem>
+              )}
+            </List>
+            <Divider className={styles.drawerDivider} />
+            <Typography className={styles.drawerSectionTitle}>
+              {t('language')}
+            </Typography>
+            <List className={styles.drawerListCompact}>
               {languages.map((language) => (
                 <MenuItem
                   key={language.code}
@@ -307,19 +428,6 @@ export default function Layout({
                 </MenuItem>
               ))}
             </List>
-            <Divider className={styles.drawerDivider} />
-            <ListItem
-              onClick={() => {
-                handleLogout();
-                setDrawerOpen(false);
-              }}
-              className={`${styles.drawerItem} ${styles.logoutDrawerItem}`}
-            >
-              <ListItemText
-                primary={t('logout')}
-                className={styles.drawerItemText}
-              />
-            </ListItem>
           </Box>
         </Box>
       </Drawer>
@@ -354,9 +462,6 @@ export default function Layout({
                 <Link href="/tours" className={styles.footerLink}>
                   {t('availableTours')}
                 </Link>
-                <Link href="/featured" className={styles.footerLink}>
-                  {t('featuredTours')}
-                </Link>
               </Box>
 
               <Box className={styles.footerLinkGroup}>
@@ -368,9 +473,6 @@ export default function Layout({
                 </Typography>
                 <Link href="/about" className={styles.footerLink}>
                   {t('aboutUs')}
-                </Link>
-                <Link href="/blog" className={styles.footerLink}>
-                  {t('blog')}
                 </Link>
                 <Link href="/contact-us" className={styles.footerLink}>
                   {t('contactUs')}
@@ -384,6 +486,9 @@ export default function Layout({
                 >
                   {t('legal')}
                 </Typography>
+                <Link href="/legal" className={styles.footerLink}>
+                  {t('legalNotice')}
+                </Link>
                 <Link href="/privacy" className={styles.footerLink}>
                   {t('privacyPolicy')}
                 </Link>

@@ -8,9 +8,14 @@ import {
   CircularProgress,
   Container,
   Divider,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   IconButton,
   ListItem,
   Popover,
+  Snackbar,
   TextField,
   Typography,
   Alert,
@@ -20,6 +25,7 @@ import {
 import Head from 'next/head';
 import InsertEmoticonIcon from '@mui/icons-material/InsertEmoticon';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import Layout from '../../components/Layout';
 import io, { Socket } from 'socket.io-client';
 import { api } from '../../lib/api/index';
@@ -88,6 +94,15 @@ export default function ChatPage() {
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(
     null
   );
+  const [headerMenuAnchorEl, setHeaderMenuAnchorEl] =
+    useState<null | HTMLElement>(null);
+  const [blockDialogOpen, setBlockDialogOpen] = useState(false);
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [actionNotice, setActionNotice] = useState<{
+    type: 'success' | 'error';
+    message: string;
+  } | null>(null);
   const [toName, setToName] = useState<string>('');
   const [toAvatar, setToAvatar] = useState<string>('');
 
@@ -373,7 +388,6 @@ export default function ChatPage() {
         socket.off('connect', onConnect);
         socket.off('disconnect', onDisconnect);
         socket.off('connect_error', onConnectError);
-              setConnectionError(t('chatLoadMessagesError'));
         socket.off('message:read:confirm', onReadConfirm);
         socket.off('message:reaction', onReaction);
         socket.off('message:new', onNewMessage);
@@ -472,6 +486,43 @@ export default function ChatPage() {
     setSelectedMessageId(null);
   };
 
+  const handleHeaderMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setHeaderMenuAnchorEl(event.currentTarget);
+  };
+
+  const handleHeaderMenuClose = () => {
+    setHeaderMenuAnchorEl(null);
+  };
+
+  const handleBlockUser = async () => {
+    if (!otherUserId) return;
+    try {
+      await api.post(`/users/block/${otherUserId}`);
+      setActionNotice({ type: 'success', message: t('chatBlockSuccess') });
+      setBlockDialogOpen(false);
+      handleHeaderMenuClose();
+    } catch (error) {
+      console.error('Block failed', error);
+      setActionNotice({ type: 'error', message: t('chatBlockError') });
+    }
+  };
+
+  const handleReportUser = async () => {
+    if (!otherUserId) return;
+    try {
+      await api.post(`/users/report/${otherUserId}`, {
+        reason: reportReason.trim() || t('chatReportDefaultReason'),
+      });
+      setActionNotice({ type: 'success', message: t('chatReportSuccess') });
+      setReportDialogOpen(false);
+      setReportReason('');
+      handleHeaderMenuClose();
+    } catch (error) {
+      console.error('Report failed', error);
+      setActionNotice({ type: 'error', message: t('chatReportError') });
+    }
+  };
+
   const handleReaction = useCallback(
     (emoji: string) => {
       if (selectedMessageId && socketRef.current && otherUserId) {
@@ -521,8 +572,32 @@ export default function ChatPage() {
               {t('chatWithName', { name: toName })}
             </Typography>
             <Typography variant="body2" className={styles.chatSubtitle}>
+              <span
+                className={`${styles.statusDot} ${
+                  socketConnected ? styles.statusOnline : styles.statusOffline
+                }`}
+                aria-hidden="true"
+              />
               {socketConnected ? t('chatOnline') : t('chatOffline')}
             </Typography>
+          </Box>
+          <Box className={styles.chatHeaderActions}>
+            <IconButton
+              className={styles.profileButton}
+              aria-label={t('chatViewProfileAria', { name: toName || t('traveler') })}
+              onClick={() => otherUserId && router.push(`/peer/${otherUserId}`)}
+              disabled={!otherUserId}
+            >
+              <AccountCircleIcon />
+            </IconButton>
+            <IconButton
+              className={styles.profileButton}
+              aria-label={t('chatActionsAria')}
+              onClick={handleHeaderMenuOpen}
+              disabled={!otherUserId}
+            >
+              <MoreVertIcon />
+            </IconButton>
           </Box>
         </Box>
 
@@ -586,6 +661,7 @@ export default function ChatPage() {
                 <Box className={styles.typingIndicator}>
                   <Typography variant="caption">
                     {t('chatTyping', { name: toName })}
+                    <span className={styles.typingPill}>typing...</span>
                   </Typography>
                 </Box>
               )}
@@ -607,6 +683,35 @@ export default function ChatPage() {
           <MenuItem onClick={() => handleReaction('😮')}>😮 {t('chatReactionWow')}</MenuItem>
           <MenuItem onClick={() => handleReaction('😢')}>😢 {t('chatReactionSad')}</MenuItem>
           <MenuItem onClick={() => handleReaction('😡')}>😡 {t('chatReactionAngry')}</MenuItem>
+        </Menu>
+
+        <Menu
+          anchorEl={headerMenuAnchorEl}
+          open={Boolean(headerMenuAnchorEl)}
+          onClose={handleHeaderMenuClose}
+        >
+          <MenuItem
+            onClick={() => {
+              handleHeaderMenuClose();
+              otherUserId && router.push(`/peer/${otherUserId}`);
+            }}
+          >
+            {t('chatViewProfile')}
+          </MenuItem>
+          <MenuItem
+            onClick={() => {
+              setBlockDialogOpen(true);
+            }}
+          >
+            {t('chatBlockUser')}
+          </MenuItem>
+          <MenuItem
+            onClick={() => {
+              setReportDialogOpen(true);
+            }}
+          >
+            {t('chatReportUser')}
+          </MenuItem>
         </Menu>
 
         {/* Input Area */}
@@ -648,6 +753,58 @@ export default function ChatPage() {
             {t('chatSend')}
           </Button>
         </Box>
+
+        <Dialog open={blockDialogOpen} onClose={() => setBlockDialogOpen(false)}>
+          <DialogTitle>{t('chatBlockTitle')}</DialogTitle>
+          <DialogContent>
+            <Typography>{t('chatBlockPrompt', { name: toName || t('traveler') })}</Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setBlockDialogOpen(false)}>
+              {t('chatBlockCancel')}
+            </Button>
+            <Button color="warning" variant="contained" onClick={handleBlockUser}>
+              {t('chatBlockConfirm')}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog open={reportDialogOpen} onClose={() => setReportDialogOpen(false)}>
+          <DialogTitle>{t('chatReportTitle')}</DialogTitle>
+          <DialogContent>
+            <Typography>{t('chatReportPrompt', { name: toName || t('traveler') })}</Typography>
+            <TextField
+              fullWidth
+              margin="normal"
+              label={t('chatReportReasonLabel')}
+              placeholder={t('chatReportReasonPlaceholder')}
+              value={reportReason}
+              onChange={(e) => setReportReason(e.target.value)}
+              minRows={3}
+              multiline
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setReportDialogOpen(false)}>
+              {t('chatReportCancel')}
+            </Button>
+            <Button color="error" variant="contained" onClick={handleReportUser}>
+              {t('chatReportSubmit')}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Snackbar
+          open={Boolean(actionNotice)}
+          autoHideDuration={4000}
+          onClose={() => setActionNotice(null)}
+        >
+          {actionNotice ? (
+            <Alert severity={actionNotice.type} onClose={() => setActionNotice(null)}>
+              {actionNotice.message}
+            </Alert>
+          ) : null}
+        </Snackbar>
       </Container>
     </Layout>
   );

@@ -1,7 +1,6 @@
 // pages/reset-password.tsx
-// pages/reset-password.tsx
 import { useEffect } from 'react';
-import { Container, Typography } from '@mui/material';
+import { Container, Paper, Typography } from '@mui/material';
 import { useRouter } from 'next/router';
 import Layout from '../components/Layout';
 import PageHeader from '../components/PageHeader';
@@ -22,20 +21,16 @@ export default function ResetPasswordPage() {
         title={t('authDeprecatedTitle')}
         subtitle={t('authDeprecatedSubtitle')}
       />
-      <Container maxWidth="sm" sx={{ mt: 6 }}>
-        <Typography>{t('authDeprecatedBody')}</Typography>
+      <Container maxWidth="sm" sx={{ mt: 6, mb: 8 }}>
+        <Paper sx={{ p: 3, borderRadius: 3, boxShadow: 3 }}>
+          <Typography>{t('authDeprecatedBody')}</Typography>
+        </Paper>
       </Container>
     </Layout>
   );
 }
 
 export async function getStaticProps({ locale }: { locale: string }) {
-  return {
-    props: {
-      ...(await serverSideTranslations(locale, ['common'])),
-    },
-  };
-}
   return {
     props: {
       ...(await serverSideTranslations(locale, ['common'])),

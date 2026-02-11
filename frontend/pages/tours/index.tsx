@@ -184,14 +184,14 @@ export default function ToursPage() {
   return (
     <>
       <Head>
-        <title>{t('homePageTitle')}</title>
-        <meta name="description" content={t('homePageDescription')} />
+        <title>{t('toursBrowseTitle')}</title>
+        <meta name="description" content={t('toursBrowseSubtitle')} />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="robots" content="index, follow" />
-        <meta property="og:title" content={t('homePageTitle')} />
-        <meta property="og:description" content={t('homePageDescription')} />
+        <meta property="og:title" content={t('toursBrowseTitle')} />
+        <meta property="og:description" content={t('toursBrowseSubtitle')} />
       </Head>
-      <Layout title={t('homePageTitle')}>
+      <Layout title={t('toursBrowseTitle')}>
         <div ref={topRef} className={styles.anchor} aria-hidden="true" />
         <PageHeader
           title={t('toursBrowseTitle')}

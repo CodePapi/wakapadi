@@ -192,18 +192,37 @@ export default function WhoisPage() {
             clearTimeout(timeout);
 
             try {
+              const { latitude, longitude } = pos.coords;
+              if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+                throw new Error('Invalid coordinates');
+              }
+
               const res = await api.get(
-                `/geolocation/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`
+                `/geolocation/reverse?lat=${encodeURIComponent(latitude)}&lon=${encodeURIComponent(longitude)}`,
+                { validateStatus: () => true }
               );
+
+              if (res.status >= 400) {
+                console.warn('Reverse geocoding failed:', res.status, res.data);
+                setError(t('whoisGeoError'));
+                return;
+              }
 
               const geocode = res.data;
               const detectedCity = (
-                geocode.address.city ||
-                geocode.address.town ||
+                geocode?.address?.city ||
+                geocode?.address?.town ||
+                geocode?.address?.village ||
                 ''
               )
                 .trim()
                 .toLowerCase();
+
+              if (!detectedCity) {
+                setError(t('whoisGeoError'));
+                return;
+              }
+
               setCity(detectedCity);
               if (isLoggedIn) await pingPresence(detectedCity);
               await fetchNearby(detectedCity);

@@ -3,26 +3,26 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background-color: #f9fafb; /* Slightly lighter background */
-  font-family: 'Poppins', sans-serif;
+  background-color: var(--bg-color-light);
+  font-family: var(--font-sans);
   /* overflow-x: hidden; */
   width: 100%;
 }
 
 /* AppBar / Header */
 .appBar {
-  background: linear-gradient(135deg, #1f78c1 0%, #4c8b3b 100%) !important;
-  color: white !important;
-  backdrop-filter: blur(10px);
-  /* Removed border-bottom as the gradient provides enough separation */
+  background: #ffffff !important;
+  color: var(--text-color-dark) !important;
+  backdrop-filter: none;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
 }
 
 .toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.5rem 0 !important;
-  min-height: 70px !important;
+  padding: 0.75rem 0 !important;
+  min-height: 72px !important;
 }
 
 /* Logo */
@@ -42,8 +42,7 @@
   height: 100%;
   max-height: 42px;
   object-fit: contain;
-  /* Assuming logo is dark and needs to be inverted for the light background */
-  filter: brightness(0) invert(1);
+  filter: none;
 }
 .logoImage1 {
   height: 100%;
@@ -57,6 +56,18 @@
   gap: 1rem;
 }
 
+.menuButton {
+  background-color: #f1f5f9 !important;
+  border-radius: 12px !important;
+  padding: 0.4rem !important;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.menuButton:hover {
+  background-color: #e5edf6 !important;
+  transform: translateY(-1px);
+}
+
 /* Navbar */
 .desktopNav {
   display: flex;
@@ -65,18 +76,19 @@
 }
 
 .navLink {
-  color: rgba(255, 255, 255, 0.9) !important;
-  font-weight: 500 !important;
+  color: var(--text-color-dark) !important;
+  font-weight: 600 !important;
   text-decoration: none !important;
   font-size: 0.95rem;
-  transition: all 0.3s ease;
-  padding: 0.5rem 0.75rem;
-  border-radius: 8px;
+  letter-spacing: 0.01em;
+  transition: color 0.2s ease, background-color 0.2s ease;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
 }
 
 .navLink:hover {
-  color: white !important;
-  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--text-color-dark) !important;
+  background-color: #eef5fb;
 }
 
 /* Auth buttons */
@@ -88,42 +100,42 @@
 }
 
 .loginButton {
-  color: white !important;
-  border-color: rgba(255, 255, 255, 0.3) !important;
-  font-weight: 500 !important;
+  color: var(--text-color-dark) !important;
+  border-color: rgba(15, 23, 42, 0.12) !important;
+  font-weight: 600 !important;
   padding: 0.5rem 1.25rem !important;
   transition: all 0.3s ease !important;
 }
 
 .loginButton:hover {
-  border-color: white !important;
-  background-color: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(15, 23, 42, 0.2) !important;
+  background-color: #f1f5f9 !important;
 }
 
 .registerButton {
-  background-color: white !important;
-  color: #1f78c1 !important;
-  font-weight: 500 !important;
+  background-color: var(--color-primary-600) !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
   padding: 0.5rem 1.25rem !important;
   transition: all 0.3s ease !important;
 }
 
 .registerButton:hover {
-  background-color: rgba(255, 255, 255, 0.9) !important;
+  background-color: var(--color-primary-700) !important;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 20px rgba(31, 120, 193, 0.25);
 }
 
 .logoutButton {
-  color: white !important;
-  font-weight: 500 !important;
+  color: var(--text-color-dark) !important;
+  font-weight: 600 !important;
   padding: 0.5rem 1rem !important;
 }
 
 /* Language selector */
 .languageButton {
-  color: white !important;
-  font-weight: 500 !important;
+  color: var(--text-color-dark) !important;
+  font-weight: 600 !important;
   text-transform: uppercase;
   padding: 0.5rem 0.75rem !important;
   margin-left: 0.5rem;
@@ -145,24 +157,37 @@
 
 /* Drawer */
 .drawerPaper {
-  width: 320px !important;
+  width: 360px !important;
   max-width: 100vw !important;
   background-color: #ffffff !important;
   box-shadow: -4px 0 20px rgba(0, 0, 0, 0.08) !important;
+  border-top-left-radius: 24px !important;
+  border-bottom-left-radius: 24px !important;
 }
 
 .drawerContainer {
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: 1.5rem;
+  padding: 1.25rem 1.5rem 1.75rem;
 }
 
-.drawerLogoWrapper {
-  margin-bottom: 1rem;
+.drawerHeader {
   display: flex;
-  justify-content: center;
-  padding: 1rem 0;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0 0.75rem;
+}
+
+.drawerCloseButton {
+  background-color: #f3f4f6 !important;
+  border-radius: 12px !important;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.drawerCloseButton:hover {
+  background-color: #e5e7eb !important;
+  transform: translateY(-1px);
 }
 
 .drawerDivider {
@@ -176,6 +201,19 @@
   flex-direction: column;
   gap: 0.25rem;
   padding: 1rem 0;
+}
+
+.drawerListCompact {
+  padding: 0.5rem 0 0.75rem;
+}
+
+.drawerSectionTitle {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0.25rem 0 0.5rem;
 }
 
 .drawerItem {
@@ -194,13 +232,35 @@
 }
 
 .drawerItem.Mui-selected .drawerItemText {
-  color: #1f78c1 !important;
+  color: var(--color-primary-600) !important;
 }
 
 .drawerItemText {
   font-size: 0.95rem !important;
   font-weight: 500 !important;
   color: #374151 !important;
+}
+
+.drawerItemIcon {
+  min-width: 36px !important;
+  color: #6b7280 !important;
+}
+
+.drawerActionItem {
+  background-color: #e8f2fb !important;
+}
+
+.drawerPrimaryAction {
+  background-color: var(--color-primary-600) !important;
+}
+
+.drawerPrimaryAction .drawerItemText {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}
+
+.drawerPrimaryAction .drawerItemIcon {
+  color: #ffffff !important;
 }
 
 .drawerFooter {
@@ -244,7 +304,7 @@
 .mainContent {
   flex: 1;
   padding: 2rem 1rem;
-  background-color: #ffffff; /* Keeping white for now, can adjust to light grey if preferred */
+  background-color: var(--bg-color-light);
 }
 
 @media (min-width: 900px) {
@@ -259,9 +319,10 @@
 
 /* Footer */
 .footer {
-  background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
-  color: white;
+  background: #f8fafc;
+  color: var(--text-color-dark);
   padding: 3rem 1rem 2rem;
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
 }
 
 .footerContent {
@@ -290,12 +351,12 @@
 .footerLogoImage {
   height: 40px;
   margin-bottom: 1rem;
-  filter: brightness(0) invert(1); /* Invert for dark footer background */
+  filter: none;
 }
 
 .footerTagline {
-  color: #d1d5db !important;
-  font-size: 0.9rem !important;
+  color: #6b7280 !important;
+  font-size: 0.95rem !important;
   line-height: 1.6 !important;
 }
 
@@ -319,25 +380,25 @@
 }
 
 .footerLinkTitle {
-  color: white !important;
-  font-weight: 600 !important;
+  color: var(--text-color-dark) !important;
+  font-weight: 700 !important;
   margin-bottom: 0.5rem !important;
-  font-size: 1rem !important;
+  font-size: 0.95rem !important;
 }
 
 .footerLink {
-  color: #d1d5db !important;
-  font-size: 0.9rem !important;
+  color: #6b7280 !important;
+  font-size: 0.95rem !important;
   text-decoration: none !important;
   transition: color 0.3s ease !important;
 }
 
 .footerLink:hover {
-  color: white !important;
+  color: var(--text-color-dark) !important;
 }
 
 .footerDivider {
-  border-color: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(15, 23, 42, 0.08) !important;
   margin: 1.5rem 0 !important;
 }
 
@@ -356,7 +417,7 @@
 }
 
 .copyright {
-  color: #9ca3af !important;
+  color: #9aa5b1 !important;
   font-size: 0.85rem !important;
 }
 
@@ -372,19 +433,19 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: #eef5fb;
   transition: all 0.3s ease;
 }
 
 .socialLink:hover {
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: #e3eef9;
   transform: translateY(-2px);
 }
 
 .socialLink img {
   width: 18px;
   height: 18px;
-  filter: brightness(0) invert(1);
+  filter: none;
 }
 
 /* Responsive */
@@ -394,7 +455,7 @@
   }
 
   .menuButton {
-    color: white !important;
+    color: var(--text-color-dark) !important;
   }
 
   .footer {

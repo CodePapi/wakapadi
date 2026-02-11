@@ -1,6 +1,6 @@
 // pages/login.tsx
 import { useEffect } from 'react';
-import { Container, Typography } from '@mui/material';
+import { Container, Paper, Typography } from '@mui/material';
 import Layout from '../components/Layout';
 import PageHeader from '../components/PageHeader';
 import { useTranslation } from 'next-i18next';
@@ -21,8 +21,10 @@ export default function LoginPage() {
         title={t('authDeprecatedTitle')}
         subtitle={t('authDeprecatedSubtitle')}
       />
-      <Container sx={{ mt: 6 }}>
-        <Typography>{t('authDeprecatedBody')}</Typography>
+      <Container maxWidth="sm" sx={{ mt: 6, mb: 8 }}>
+        <Paper sx={{ p: 3, borderRadius: 3, boxShadow: 3 }}>
+          <Typography>{t('authDeprecatedBody')}</Typography>
+        </Paper>
       </Container>
     </Layout>
   );
