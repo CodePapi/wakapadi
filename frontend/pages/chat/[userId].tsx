@@ -28,6 +28,9 @@ import dynamic from 'next/dynamic';
 import ChatBubble from '../../components/ChatBubbles';
 import { useNotifications } from '../../hooks/useNotifications';
 import styles from '../../styles/chat.module.css';
+import { useTranslation } from 'next-i18next';
+import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
+import { safeStorage } from '../../lib/storage';
 
 const Picker = dynamic(() => import('@emoji-mart/react'), { ssr: false });
 
@@ -60,6 +63,7 @@ const isValidObjectId = (id: string): boolean => {
 };
 
 export default function ChatPage() {
+  const { t } = useTranslation('common');
   const router = useRouter();
   const { userId: otherUserIdParam } = router.query;
   const otherUserId =
@@ -67,8 +71,9 @@ export default function ChatPage() {
       ? otherUserIdParam
       : '';
 
-  const currentUserId =
-    typeof window !== 'undefined' ? localStorage.getItem('userId') || '' : '';
+  const [currentUserId, setCurrentUserId] = useState('');
+  const [authToken, setAuthToken] = useState('');
+  const [sessionReady, setSessionReady] = useState(false);
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState('');
@@ -90,6 +95,38 @@ export default function ChatPage() {
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const messageDedupeMap = useRef<Set<string>>(new Set());
   const { clearNotificationsFromUser } = useNotifications(currentUserId);
+
+  useEffect(() => {
+    if (!router.isReady) return;
+
+    const token = safeStorage.getItem('token') || '';
+    const userId = safeStorage.getItem('userId') || '';
+
+    if (token && userId) {
+      setAuthToken(token);
+      setCurrentUserId(userId);
+      setSessionReady(true);
+      return;
+    }
+
+    const initGuest = async () => {
+      try {
+        const res = await api.post('/auth/guest');
+        safeStorage.setItem('token', res.data.token);
+        safeStorage.setItem('userId', res.data.userId);
+        safeStorage.setItem('username', res.data.username);
+        setAuthToken(res.data.token);
+        setCurrentUserId(res.data.userId);
+        setSessionReady(true);
+      } catch (err) {
+        console.error('Failed to start guest session:', err);
+        setConnectionError(t('chatGuestError'));
+        setSessionReady(false);
+      }
+    };
+
+    initGuest();
+  }, [router.isReady]);
 
   useEffect(() => {
     if (otherUserId) {
@@ -116,16 +153,12 @@ export default function ChatPage() {
 
   // Main socket effect
   useEffect(() => {
-    if (!router.isReady || !currentUserId) {
-      if (router.isReady && !currentUserId) {
-        setConnectionError('User not logged in. Please log in to chat.');
-        setLoading(false);
-      }
+    if (!router.isReady || !sessionReady) {
       return;
     }
 
     if (!otherUserId) {
-      setConnectionError('Invalid chat partner ID. Please check the URL.');
+      setConnectionError(t('chatInvalidPartner'));
       setLoading(false);
       return;
     }
@@ -138,7 +171,7 @@ export default function ChatPage() {
     const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL!, {
       path: '/socket.io',
       transports: ['websocket'],
-      auth: { token: localStorage.getItem('token') || '' },
+      auth: { token: authToken || safeStorage.getItem('token') || '' },
       withCredentials: true,
     });
 
@@ -157,13 +190,13 @@ export default function ChatPage() {
 
     const onDisconnect = (reason: string) => {
       setSocketConnected(false);
-      setConnectionError(`Disconnected: ${reason}. Please refresh.`);
+      setConnectionError(t('chatDisconnected', { reason }));
       setLoading(false);
     };
 
     const onConnectError = (error: Error) => {
       console.error('Connection error:', error);
-      setConnectionError('Connection failed. Retrying...');
+      setConnectionError(t('chatConnectError'));
       setLoading(false);
     };
 
@@ -341,7 +374,7 @@ export default function ChatPage() {
         }
       } catch (err) {
         console.error('Failed to load messages:', err);
-        setConnectionError('Failed to load messages.');
+        setConnectionError(t('chatLoadMessagesError'));
       } finally {
         setLoading(false);
       }
@@ -352,7 +385,7 @@ export default function ChatPage() {
         socket.off('connect', onConnect);
         socket.off('disconnect', onDisconnect);
         socket.off('connect_error', onConnectError);
-        socket.off('typing', onTyping);
+              setConnectionError(t('chatLoadMessagesError'));
         socket.off('message:read:confirm', onReadConfirm);
         socket.off('message:reaction', onReaction);
         socket.off('message:new', onNewMessage);
@@ -364,7 +397,7 @@ export default function ChatPage() {
       }
       messageDedupeMap.current.clear();
     };
-  }, [router.isReady, otherUserId, currentUserId]);
+  }, [router.isReady, sessionReady, otherUserId, currentUserId, authToken]);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -475,20 +508,20 @@ export default function ChatPage() {
 
   const getReadStatusText = (message: Message) => {
     if (message.fromSelf) {
-      if (message.status === 'sending') return 'Sending...';
-      if (message.status === 'failed') return 'Failed!';
-      if (message.read) return 'Read';
-      return 'Sent';
+      if (message.status === 'sending') return t('chatStatusSending');
+      if (message.status === 'failed') return t('chatStatusFailed');
+      if (message.read) return t('chatStatusRead');
+      return t('chatStatusSent');
     }
     return null;
   };
 
   // Render loading/error states
   return (
-    <Layout title={`Chat with ${toName}`}>
+    <Layout title={t('chatPageTitle', { name: toName })}>
       <Head>
-        <title>{`Chat with ${toName} | Wakapadi`}</title>
-        <meta name="description" content={`Chat with ${toName} on Wakapadi`} />
+        <title>{t('chatPageTitleMeta', { name: toName })}</title>
+        <meta name="description" content={t('chatMetaDescription', { name: toName })} />
       </Head>
 
       <Container className={styles.chatContainer}>
@@ -497,18 +530,17 @@ export default function ChatPage() {
           <Avatar className={styles.chatAvatar} src={toAvatar} alt={toName} />
           <Box className={styles.chatHeaderInfo}>
             <Typography variant="h6" className={styles.chatTitle}>
-              Chat with {toName}
+              {t('chatWithName', { name: toName })}
             </Typography>
             <Typography variant="body2" className={styles.chatSubtitle}>
-              {socketConnected ? 'Online' : 'Offline'}
+              {socketConnected ? t('chatOnline') : t('chatOffline')}
             </Typography>
           </Box>
         </Box>
 
         {/* Safety Alert */}
         <Alert severity="warning" className={styles.safetyAlert}>
-          Always meet in public and secure locations. Never share personal
-          information.
+          {t('chatSafetyWarning')}
         </Alert>
 
         {/* Connection Error */}
@@ -524,7 +556,7 @@ export default function ChatPage() {
             <Box className={styles.loadingContainer}>
               <CircularProgress />
               <Typography variant="body2" className={styles.loadingText}>
-                Loading messages...
+                {t('chatLoadingMessages')}
               </Typography>
             </Box>
           ) : (
@@ -565,7 +597,7 @@ export default function ChatPage() {
               {typingUsers.size > 0 && (
                 <Box className={styles.typingIndicator}>
                   <Typography variant="caption">
-                    {toName} is typing...
+                    {t('chatTyping', { name: toName })}
                   </Typography>
                 </Box>
               )}
@@ -581,12 +613,12 @@ export default function ChatPage() {
           onClose={handleMessageOptionsClose}
           className={styles.messageOptionsMenu}
         >
-          <MenuItem onClick={() => handleReaction('👍')}>👍 Like</MenuItem>
-          <MenuItem onClick={() => handleReaction('❤️')}>❤️ Love</MenuItem>
-          <MenuItem onClick={() => handleReaction('😂')}>😂 Laugh</MenuItem>
-          <MenuItem onClick={() => handleReaction('😮')}>😮 Wow</MenuItem>
-          <MenuItem onClick={() => handleReaction('😢')}>😢 Sad</MenuItem>
-          <MenuItem onClick={() => handleReaction('😡')}>😡 Angry</MenuItem>
+          <MenuItem onClick={() => handleReaction('👍')}>👍 {t('chatReactionLike')}</MenuItem>
+          <MenuItem onClick={() => handleReaction('❤️')}>❤️ {t('chatReactionLove')}</MenuItem>
+          <MenuItem onClick={() => handleReaction('😂')}>😂 {t('chatReactionLaugh')}</MenuItem>
+          <MenuItem onClick={() => handleReaction('😮')}>😮 {t('chatReactionWow')}</MenuItem>
+          <MenuItem onClick={() => handleReaction('😢')}>😢 {t('chatReactionSad')}</MenuItem>
+          <MenuItem onClick={() => handleReaction('😡')}>😡 {t('chatReactionAngry')}</MenuItem>
         </Menu>
 
         {/* Input Area */}
@@ -594,7 +626,7 @@ export default function ChatPage() {
           <IconButton
             className={styles.emojiButton}
             onClick={handleEmojiClick}
-            aria-label="Add emoji"
+            aria-label={t('chatAddEmoji')}
           >
             <InsertEmoticonIcon />
           </IconButton>
@@ -608,7 +640,7 @@ export default function ChatPage() {
           </Popover>
           <TextField
             fullWidth
-            placeholder="Type a message..."
+            placeholder={t('chatPlaceholder')}
             value={text}
             onChange={handleTyping}
             onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
@@ -625,10 +657,18 @@ export default function ChatPage() {
             }
             className={styles.sendButton}
           >
-            Send
+            {t('chatSend')}
           </Button>
         </Box>
       </Container>
     </Layout>
   );
+}
+
+export async function getServerSideProps({ locale }: { locale: string }) {
+  return {
+    props: {
+      ...(await serverSideTranslations(locale, ['common'])),
+    },
+  };
 }

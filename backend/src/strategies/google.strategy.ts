@@ -7,9 +7,14 @@ import { ConfigService } from '@nestjs/config';
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   constructor(configService: ConfigService) {
+    const clientID =
+      configService.get<string>('GOOGLE_CLIENT_ID') || 'disabled';
+    const clientSecret =
+      configService.get<string>('GOOGLE_CLIENT_SECRET') || 'disabled';
+
     super({
-      clientID: configService.get<string>('GOOGLE_CLIENT_ID'),
-      clientSecret: configService.get<string>('GOOGLE_CLIENT_SECRET'),
+      clientID,
+      clientSecret,
       callbackURL: 'http://localhost:5000/auth/google/callback',
       scope: ['email', 'profile'],
     });
@@ -22,7 +27,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       username: name.givenName,
       avatarUrl: photos[0].value,
       googleId: profile.id,
-      authProvider: 'local' 
+      authProvider: 'google' 
     };
     done(null, user);
   }

@@ -1,6 +1,7 @@
 import { Typography, Container, Paper, Box } from '@mui/material';
 import Head from 'next/head';
 import Layout from '../components/Layout';
+import PageHeader from '../components/PageHeader';
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import styles from '../styles/FooterPages.module.css';
@@ -9,13 +10,18 @@ export default function AboutPage() {
   const { t } = useTranslation('common');
 
   return (
-    <Layout title="About | Wakapadi">
+    <Layout title={t('aboutPageTitle')}>
       <Head>
         <meta
           name="description"
-          content="Learn about Wakapadi's mission to connect travelers worldwide"
+          content={t('aboutMetaDescription')}
         />
       </Head>
+
+      <PageHeader
+        title={t('aboutTitle')}
+        subtitle={t('aboutSubtitle')}
+      />
 
       <Container className={styles.container}>
         <Paper className={styles.contentPaper}>
@@ -24,42 +30,35 @@ export default function AboutPage() {
           </Typography>
 
           <Typography className={styles.bodyText}>
-            Wakapadi was born from a shared passion for authentic travel
-            experiences. Founded in 2023 by a team of globetrotters, we noticed
-            how technology was isolating travelers rather than connecting them.
+            {t('aboutBodyIntro')}
           </Typography>
 
           <Typography variant="h3" className={styles.sectionTitle}>
-            The Vision
+            {t('aboutVisionTitle')}
           </Typography>
 
           <Typography className={styles.bodyText}>
-            We believe travel should be about <strong>human connections</strong>
-            , not just checklists. Our platform bridges the gap between
-            travelers and local communities, creating meaningful interactions
-            that enrich both sides.
+            {t('aboutVisionBody')}
           </Typography>
 
           <Box component="ul" className={styles.list}>
             <Typography component="li" className={styles.listItem}>
-              Democratizing travel through free walking tours
+              {t('aboutVisionListOne')}
             </Typography>
             <Typography component="li" className={styles.listItem}>
-              Building trust through verified profiles
+              {t('aboutVisionListTwo')}
             </Typography>
             <Typography component="li" className={styles.listItem}>
-              Promoting sustainable tourism practices
+              {t('aboutVisionListThree')}
             </Typography>
           </Box>
 
           <Typography variant="h3" className={styles.sectionTitle}>
-            Join Our Journey
+            {t('aboutJoinTitle')}
           </Typography>
 
           <Typography className={styles.bodyText}>
-            Whether you&apos;re a traveler seeking authentic experiences or a
-            local wanting to share your city&apos;s hidden gems, we&apos;d love
-            to have you onboard. Connect with us at{' '}
+            {t('aboutJoinBody')}{' '}
             <span className={styles.contactEmail}>hello@wakapadi.com</span>.
           </Typography>
         </Paper>

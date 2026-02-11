@@ -18,16 +18,21 @@ import {
   Snackbar,
   Alert,
   IconButton,
+  Switch,
+  FormControlLabel,
 } from '@mui/material';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
+import { useTranslation } from 'next-i18next';
 import { Chat as ChatIcon } from '@mui/icons-material';
 import Link from 'next/link';
 import io, { Socket } from 'socket.io-client';
 import Layout from '../components/Layout';
+import PageHeader from '../components/PageHeader';
 import moment from 'moment';
 import { api } from '../lib/api/index';
 import styles from '../styles/Profile.module.css';
 import { StringNullableChain } from 'lodash';
+import { safeStorage } from '../lib/storage';
 
 interface User {
   _id: string;
@@ -36,6 +41,7 @@ interface User {
   travelPrefs?: string[];
   languages?: string[];
   bio?:StringNullableChain;
+  profileVisible?: boolean;
   socials?: {
     instagram?: string;
     twitter?: string;
@@ -57,26 +63,27 @@ interface Conversation {
 }
 
 const travelOptions = [
-  'Adventure',
-  'Culture',
-  'Food',
-  'Photography',
-  'Nature',
-  'Relaxation',
-  'City',
+  { value: 'Adventure', labelKey: 'travelOptionAdventure' },
+  { value: 'Culture', labelKey: 'travelOptionCulture' },
+  { value: 'Food', labelKey: 'travelOptionFood' },
+  { value: 'Photography', labelKey: 'travelOptionPhotography' },
+  { value: 'Nature', labelKey: 'travelOptionNature' },
+  { value: 'Relaxation', labelKey: 'travelOptionRelaxation' },
+  { value: 'City', labelKey: 'travelOptionCity' },
 ];
 const languageOptions = [
-  'English',
-  'French',
-  'Spanish',
-  'German',
-  'Italian',
-  'Portuguese',
-  'Japanese',
-  'Chinese',
+  { value: 'English', labelKey: 'languageEnglish' },
+  { value: 'French', labelKey: 'languageFrench' },
+  { value: 'Spanish', labelKey: 'languageSpanish' },
+  { value: 'German', labelKey: 'languageGerman' },
+  { value: 'Italian', labelKey: 'languageItalian' },
+  { value: 'Portuguese', labelKey: 'languagePortuguese' },
+  { value: 'Japanese', labelKey: 'languageJapanese' },
+  { value: 'Chinese', labelKey: 'languageChinese' },
 ];
 
 export default function ProfilePage() {
+  const { t } = useTranslation('common');
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -85,16 +92,31 @@ export default function ProfilePage() {
   const [languages, setLanguages] = useState<string[]>([]);
   const [instagram, setInstagram] = useState('');
   const [twitter, setTwitter] = useState('');
+  const [profileVisible, setProfileVisible] = useState(true);
   const [notifications, setNotifications] = useState({
     success: '',
     error: '',
   });
 
+  const getTravelLabel = (value: string) =>
+    travelOptions.find((option) => option.value === value)
+      ? t(
+          travelOptions.find((option) => option.value === value)!.labelKey
+        )
+      : value;
+
+  const getLanguageLabel = (value: string) =>
+    languageOptions.find((option) => option.value === value)
+      ? t(
+          languageOptions.find((option) => option.value === value)!.labelKey
+        )
+      : value;
+
   useEffect(() => {
     (async () => {
       try {
         setLoading(true);
-        const userId = localStorage.getItem('userId') || '';
+        const userId = safeStorage.getItem('userId') || '';
 
         const [userRes, convRes] = await Promise.all([
           api.get(`/users/preferences/${userId}`), // Original endpoint
@@ -106,10 +128,11 @@ export default function ProfilePage() {
         setLanguages(userRes.data.languages || []);
         setInstagram(userRes.data.socials?.instagram || '');
         setTwitter(userRes.data.socials?.twitter || '');
+        setProfileVisible(userRes.data.profileVisible ?? true);
         setConversations(convRes.data);
 
         const newSocket = io(process.env.NEXT_PUBLIC_SOCKET_URL || '', {
-          auth: { token: localStorage.getItem('token') },
+          auth: { token: safeStorage.getItem('token') },
         });
 
         newSocket.on('newMessage', () => {
@@ -121,7 +144,7 @@ export default function ProfilePage() {
         console.log('error', error);
         setNotifications((prev) => ({
           ...prev,
-          error: 'Failed to load profile data',
+          error: t('profileLoadError'),
         }));
       } finally {
         setLoading(false);
@@ -140,17 +163,18 @@ export default function ProfilePage() {
       await api.patch('/users/preferences', {
         travelPrefs,
         languages,
+        profileVisible,
         socials: { instagram, twitter },
       });
       setNotifications({
-        success: 'Profile updated successfully!',
+        success: t('profileSaveSuccess'),
         error: '',
       });
     } catch (error) {
       console.error('error', error);
       setNotifications({
         success: '',
-        error: 'Failed to update profile',
+        error: t('profileSaveError'),
       });
     }
   };
@@ -160,11 +184,14 @@ export default function ProfilePage() {
   };
 
   return (
-    <Layout title="My Profile">
+    <Layout title={t('profilePageTitle')}>
+      <PageHeader
+        title={t('profileTitle')}
+        subtitle={t('profileSubtitle')}
+      />
       <Container maxWidth="md" className={styles.container}>
         {/* Profile Header */}
         <header className={styles.header}>
-          <h1 className={styles.title}>My Profile</h1>
           {user && (
             <div className={styles.userInfo}>
               <Avatar
@@ -182,8 +209,8 @@ export default function ProfilePage() {
         {/* Main Content */}
         {loading ? (
           <div className={styles.loading} role="status" aria-live="polite">
-            <CircularProgress aria-label="Loading profile data" />
-            <p>Loading your profile...</p>
+            <CircularProgress aria-label={t('profileLoadingAria')} />
+            <p>{t('profileLoading')}</p>
           </div>
         ) : user ? (
           <main>
@@ -193,12 +220,35 @@ export default function ProfilePage() {
               aria-labelledby="preferences-heading"
             >
               <h2 id="preferences-heading" className={styles.sectionTitle}>
-                Preferences
+                {t('profilePreferencesTitle')}
               </h2>
 
               <div className={styles.formGroup}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={profileVisible}
+                      onChange={(e) => setProfileVisible(e.target.checked)}
+                      color="primary"
+                      inputProps={{
+                        'aria-label': t('profileVisibilityAria'),
+                      }}
+                    />
+                  }
+                  label={
+                    profileVisible
+                      ? t('profileVisibilityOn')
+                      : t('profileVisibilityOff')
+                  }
+                />
+                <p className={styles.helperText}>
+                  {t('profileVisibilityHelp')}
+                </p>
+              </div>
+
+              <div className={styles.formGroup}>
                 <label htmlFor="travel-interests" className={styles.formLabel}>
-                  Travel Interests
+                  {t('profileTravelInterestsLabel')}
                 </label>
                 <Select
                   multiple
@@ -210,13 +260,13 @@ export default function ProfilePage() {
                       {selected.map((value) => (
                         <Chip
                           key={value}
-                          label={value}
+                          label={getTravelLabel(value)}
                           onDelete={() =>
                             setTravelPrefs((prev) =>
                               prev.filter((item) => item !== value)
                             )
                           }
-                          aria-label={`Remove ${value}`}
+                          aria-label={t('removeItem', { item: getTravelLabel(value) })}
                         />
                       ))}
                     </Box>
@@ -225,19 +275,19 @@ export default function ProfilePage() {
                   aria-describedby="travel-interests-help"
                 >
                   {travelOptions.map((option) => (
-                    <MenuItem key={option} value={option}>
-                      {option}
+                    <MenuItem key={option.value} value={option.value}>
+                      {t(option.labelKey)}
                     </MenuItem>
                   ))}
                 </Select>
                 <p id="travel-interests-help" className={styles.helperText}>
-                  Select your preferred travel activities.
+                  {t('profileTravelInterestsHelp')}
                 </p>
               </div>
 
               <div className={styles.formGroup}>
                 <label htmlFor="languages" className={styles.formLabel}>
-                  Languages
+                  {t('profileLanguagesLabel')}
                 </label>
                 <Select
                   multiple
@@ -249,13 +299,13 @@ export default function ProfilePage() {
                       {selected.map((value) => (
                         <Chip
                           key={value}
-                          label={value}
+                          label={getLanguageLabel(value)}
                           onDelete={() =>
                             setLanguages((prev) =>
                               prev.filter((item) => item !== value)
                             )
                           }
-                          aria-label={`Remove ${value}`}
+                          aria-label={t('removeItem', { item: getLanguageLabel(value) })}
                         />
                       ))}
                     </Box>
@@ -264,13 +314,13 @@ export default function ProfilePage() {
                   aria-describedby="languages-help"
                 >
                   {languageOptions.map((lang) => (
-                    <MenuItem key={lang} value={lang}>
-                      {lang}
+                    <MenuItem key={lang.value} value={lang.value}>
+                      {t(lang.labelKey)}
                     </MenuItem>
                   ))}
                 </Select>
                 <p id="languages-help" className={styles.helperText}>
-                  Indicate the languages you speak.
+                  {t('profileLanguagesHelp')}
                 </p>
               </div>
             </section>
@@ -281,10 +331,10 @@ export default function ProfilePage() {
               aria-labelledby="social-media-heading"
             >
               <h2 id="social-media-heading" className={styles.sectionTitle}>
-                Social Media
+                {t('profileSocialTitle')}
               </h2>
               <TextField
-                label="Instagram"
+                label={t('profileInstagramLabel')}
                 value={instagram}
                 onChange={(e) => setInstagram(e.target.value)}
                 fullWidth
@@ -292,11 +342,11 @@ export default function ProfilePage() {
                 InputProps={{
                   startAdornment: <Typography mr={1}>@</Typography>,
                 }}
-                aria-label="Instagram username"
-                placeholder="yourinstagramhandle"
+                aria-label={t('profileInstagramAria')}
+                placeholder={t('profileInstagramPlaceholder')}
               />
               <TextField
-                label="Twitter"
+                label={t('profileTwitterLabel')}
                 value={twitter}
                 onChange={(e) => setTwitter(e.target.value)}
                 fullWidth
@@ -304,8 +354,8 @@ export default function ProfilePage() {
                 InputProps={{
                   startAdornment: <Typography mr={1}>@</Typography>,
                 }}
-                aria-label="Twitter username"
-                placeholder="yourtwitterhandle"
+                aria-label={t('profileTwitterAria')}
+                placeholder={t('profileTwitterPlaceholder')}
               />
             </section>
 
@@ -315,9 +365,9 @@ export default function ProfilePage() {
               color="primary"
               onClick={handleSave}
               className={styles.saveButton}
-              aria-label="Save all changes to profile"
+              aria-label={t('profileSaveAria')}
             >
-              Save Changes
+              {t('profileSaveButton')}
             </Button>
 
             {/* Conversations Section */}
@@ -326,7 +376,7 @@ export default function ProfilePage() {
               aria-labelledby="recent-chats-heading"
             >
               <h2 id="recent-chats-heading" className={styles.sectionTitle}>
-                Recent Chats
+                {t('profileRecentChats')}
               </h2>
               <List className={styles.conversationList}>
                 {conversations.length > 0 ? (
@@ -336,7 +386,7 @@ export default function ProfilePage() {
                       className={styles.conversationItem}
                       component={Link}
                       href={`/chat/${conv.otherUser._id}`}
-                      aria-label={`Chat with ${conv.otherUser.username}`}
+                      aria-label={t('chatWith', { username: conv.otherUser.username })}
                     >
                       <ListItemAvatar>
                         <Avatar
@@ -367,7 +417,7 @@ export default function ProfilePage() {
                       />
                       <IconButton
                         edge="end"
-                        aria-label={`Go to chat with ${conv.otherUser.username}`}
+                        aria-label={t('profileGoToChat', { username: conv.otherUser.username })}
                       >
                         <ChatIcon />
                       </IconButton>
@@ -375,8 +425,7 @@ export default function ProfilePage() {
                   ))
                 ) : (
                   <p className={styles.noConversations}>
-                    No conversations yet. Start exploring to connect with
-                    others!
+                    {t('profileNoConversations')}
                   </p>
                 )}
               </List>
@@ -385,7 +434,7 @@ export default function ProfilePage() {
         ) : (
           <div className={styles.errorMessage} role="alert">
             <Typography color="error">
-              Failed to load profile. Please try again later.
+              {t('profileLoadErrorFallback')}
             </Typography>
           </div>
         )}

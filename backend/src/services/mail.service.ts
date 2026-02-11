@@ -8,23 +8,31 @@ export class MailService {
 
   constructor() {
     const mailgun = new Mailgun(formData);
-    this.mg = mailgun.client({
-      username: 'api',
-      key: process.env.MAILGUN_API_KEY!, // store this in `.env`
-    });
+    const apiKey = process.env.MAILGUN_API_KEY;
+    if (apiKey) {
+      this.mg = mailgun.client({
+        username: 'api',
+        key: apiKey, // store this in `.env`
+      });
+    }
   }
 
   async sendPasswordResetEmail(to: string, token: string) {
+    if (!process.env.MAILGUN_API_KEY || !process.env.MAILGUN_DOMAIN) {
+      console.warn('MAILGUN is not configured; skipping password reset email');
+      return { skipped: true };
+    }
+
     const url = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
-    const mailgun = new Mailgun(FormData);
+    const mailgun = new Mailgun(formData);
     const mg = mailgun.client({
       username: 'api',
       key: process.env.MAILGUN_API_KEY!,
       url: 'https://api.eu.mailgun.net',
     });
     try {
-      const data = await mg.messages.create('mg.wakapadi.io', {
-        from: 'Wakapadi <postmaster@mg.wakapadi.io>',
+      const data = await mg.messages.create(process.env.MAILGUN_DOMAIN, {
+        from: `Wakapadi <postmaster@${process.env.MAILGUN_DOMAIN}>`,
         to: [`Samuel Egbajie <${to}>`],
         subject: 'Password Reset',
         text: `

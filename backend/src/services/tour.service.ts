@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Tour, TourDocument } from '../schemas/tour.schema';
@@ -8,6 +8,7 @@ import { QdrantService } from './qdrant.service';
 @Injectable()
 export class TourService {
     [x: string]: any;
+  private readonly logger = new Logger(TourService.name);
     constructor(
       @InjectModel(Tour.name) private tourModel: Model<TourDocument>,
       private readonly embeddingService: EmbeddingService,
@@ -35,6 +36,23 @@ console.log("tes",results)
   async create(data: Partial<Tour>): Promise<Tour> {
     const newTour = new this.tourModel(data);
     return newTour.save();
+  }
+
+  async upsertByExternalUrl(
+    externalPageUrl: string,
+    data: Partial<Tour>,
+  ): Promise<Tour> {
+    if (!externalPageUrl) {
+      return this.create(data);
+    }
+
+    return this.tourModel
+      .findOneAndUpdate(
+        { externalPageUrl },
+        { $set: data },
+        { new: true, upsert: true },
+      )
+      .exec();
   }
 
   async findAll(location?: string): Promise<Tour[]> {

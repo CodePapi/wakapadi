@@ -1,6 +1,7 @@
 // hooks/useNotifications.ts
 import { useEffect, useState } from 'react';
 import io from 'socket.io-client';
+import { safeStorage } from '../lib/storage';
 
 export interface Notification {
   fromUserId: string;
@@ -20,7 +21,7 @@ export function useNotifications(currentUserId: string) {
     const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL!, {
       path: '/socket.io',
       transports: ['websocket'],
-      auth: { token: localStorage.getItem('token') },
+      auth: { token: safeStorage.getItem('token') },
     });
 
     socket.emit('joinNotifications', { userId: currentUserId });

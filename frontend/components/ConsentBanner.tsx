@@ -1,16 +1,17 @@
 import { useEffect, useState } from 'react';
 import { Box, Typography, Button, Snackbar, Link } from '@mui/material';
+import { safeStorage } from '../lib/storage';
 
 export default function ConsentBanner() {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    const consent = localStorage.getItem('wakapadi-consent');
+    const consent = safeStorage.getItem('wakapadi-consent');
     if (!consent) setOpen(true);
   }, []);
 
   const handleAccept = () => {
-    localStorage.setItem('wakapadi-consent', 'accepted');
+    safeStorage.setItem('wakapadi-consent', 'accepted');
     setOpen(false);
   };
 

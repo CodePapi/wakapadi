@@ -1,6 +1,7 @@
 import { Typography, Container, Paper, List, ListItem } from '@mui/material';
 import Head from 'next/head';
 import Layout from '../components/Layout';
+import PageHeader from '../components/PageHeader';
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import { motion } from 'framer-motion';
@@ -24,6 +25,11 @@ export default function TermsOfUse() {
         <meta name="robots" content="noindex, nofollow" />
       </Head>
 
+      <PageHeader
+        title={t('termsOfUse')}
+        subtitle={t('termsSubtitle')}
+      />
+
       <Container className={styles.container}>
         <motion.div initial="hidden" animate="visible" variants={fadeInUp}>
           <Paper className={styles.contentPaper}>
@@ -35,55 +41,45 @@ export default function TermsOfUse() {
 
             <motion.div variants={fadeInUp} custom={2}>
               <Typography className={styles.bodyText}>
-                Welcome to Wakapadi — a platform that enables travelers and
-                explorers to discover local experiences, join free walking
-                tours, and connect with fellow adventurers in a secure, open
-                environment.
+                {t('termsIntroOne')}
               </Typography>
               <Typography className={styles.bodyText}>
-                By accessing or using Wakapadi, you agree to abide by our
-                community guidelines and platform terms. These terms may be
-                updated as our features and community evolve.
+                {t('termsIntroTwo')}
               </Typography>
             </motion.div>
 
             <motion.div variants={fadeInUp} custom={3}>
               <Typography variant="h5" className={styles.sectionTitle}>
-                Acceptable Use Policy
+                {t('termsAcceptableTitle')}
               </Typography>
               <Typography className={styles.bodyText}>
-                Wakapadi promotes a culture of respect, inclusiveness, and
-                exploration. As a user, you must not:
+                {t('termsAcceptableBody')}
               </Typography>
               <List className={styles.list}>
                 <ListItem className={styles.listItem}>
-                  • Harass or harm other users
+                  {t('termsAcceptableListOne')}
                 </ListItem>
                 <ListItem className={styles.listItem}>
-                  • Spam, mislead, or impersonate others
+                  {t('termsAcceptableListTwo')}
                 </ListItem>
                 <ListItem className={styles.listItem}>
-                  • Disrupt tours or public meet-ups
+                  {t('termsAcceptableListThree')}
                 </ListItem>
                 <ListItem className={styles.listItem}>
-                  • Use the platform for commercial solicitation without
-                  permission
+                  {t('termsAcceptableListFour')}
                 </ListItem>
               </List>
               <Typography className={styles.bodyText}>
-                Violating any of these rules may result in account suspension or
-                a permanent ban.
+                {t('termsAcceptableFooter')}
               </Typography>
             </motion.div>
 
             <motion.div variants={fadeInUp} custom={4}>
               <Typography variant="h5" className={styles.sectionTitle}>
-                Updates and Modifications
+                {t('termsUpdatesTitle')}
               </Typography>
               <Typography className={styles.bodyText}>
-                Wakapadi may revise these Terms of Use periodically. We will
-                notify users of major updates, but we recommend checking this
-                page regularly to stay informed.
+                {t('termsUpdatesBody')}
               </Typography>
             </motion.div>
           </Paper>

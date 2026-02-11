@@ -2,6 +2,7 @@
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import Layout from '../../../components/Layout';
+import PageHeader from '../../../components/PageHeader';
 import styles from '../../../styles/SingleTour.module.css';
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
@@ -95,11 +96,11 @@ export default function SingleTourPage() {
             setTour(res.data);
           } else {
             console.error('error', res);
-            setError('Failed to fetch tour');
+            setError(t('tourFetchError'));
           }
         } catch (err) {
           console.error('Failed to fetch tour:', err);
-          setError('Failed to connect to backend or invalid tour data.');
+          setError(t('tourConnectError'));
         } finally {
           setLoading(false);
         }
@@ -119,7 +120,7 @@ export default function SingleTourPage() {
       try {
         if (navigator.share) {
           await navigator.share({
-            title: `Check out this tour: ${tour.title}`,
+            title: t('tourShareTitle', { title: tour.title }),
             text: tour.description
               ? tour.description.substring(0, 100) + '...'
               : '',
@@ -127,13 +128,11 @@ export default function SingleTourPage() {
           });
         } else {
           await navigator.clipboard.writeText(window.location.href);
-          alert('Link copied to clipboard!');
+          alert(t('tourLinkCopied'));
         }
       } catch (error) {
         console.error('Error sharing tour:', error);
-        alert(
-          'Failed to share tour. Please try again or copy the URL manually.'
-        );
+        alert(t('tourShareError'));
       }
     }
   };
@@ -176,14 +175,18 @@ export default function SingleTourPage() {
 
   // SEO optimization
   const seoTitle = tour?.title
-    ? `${tour.title} - Wakapadi Tours`
-    : 'Tour Details - Wakapadi Tours';
+    ? t('tourSeoTitle', { title: tour.title })
+    : t('tourSeoTitleFallback');
   const seoDescription = tour?.description
-    ? `${tour.description.substring(
-        0,
-        160
-      )}... Explore this walking tour with Wakapadi.`
-    : 'Discover detailed information about exciting walking tours with Wakapadi.';
+    ? t('tourSeoDescription', {
+        description: tour.description.substring(0, 160),
+      })
+    : t('tourSeoDescriptionFallback');
+
+  const headerTitle = tour?.title || t('tourDetailsHeaderTitle');
+  const headerSubtitle = city
+    ? t('tourDetailsHeaderSubtitleCity', { city })
+    : t('tourDetailsHeaderSubtitle');
 
   return (
     <Layout title={seoTitle} description={seoDescription}>
@@ -213,6 +216,8 @@ export default function SingleTourPage() {
         )}
       </Head>
 
+      <PageHeader title={headerTitle} subtitle={headerSubtitle} />
+
       <Box
         sx={{
           px: { xs: 2, sm: 3, md: 4 },
@@ -226,10 +231,10 @@ export default function SingleTourPage() {
             startIcon={<ArrowBackIcon />}
             onClick={() => router.back()}
             sx={{ color: 'text.secondary' }}
-            aria-label="Go back to tour results"
+            aria-label={t('tourBackToResultsAria')}
             href={`/tours?q=${city}`}
           >
-            Back to results
+            {t('tourBackToResults')}
           </Button>
         </Box>
 
@@ -370,7 +375,7 @@ export default function SingleTourPage() {
               aria-hidden="true"
             />
             <Typography variant="h5" color="error" gutterBottom>
-              Failed to load tour: {t('failed')}
+              {t('tourLoadFailedTitle')}
             </Typography>
             <Typography variant="body1" sx={{ mb: 2 }}>
               {error}
@@ -380,17 +385,17 @@ export default function SingleTourPage() {
               color="primary"
               onClick={() => window.location.reload()}
               sx={{ mr: 2 }}
-              aria-label="Try again to load tour"
+              aria-label={t('tourTryAgainAria')}
             >
-              Try Again
+              {t('tourTryAgain')}
             </Button>
             <Button
               variant="outlined"
               color="primary"
               onClick={() => router.push('/')}
-              aria-label="Go back to home page"
+              aria-label={t('tourBackHomeAria')}
             >
-              Back to Home
+              {t('tourBackHome')}
             </Button>
           </Box>
         ) : tour ? (
@@ -427,7 +432,7 @@ export default function SingleTourPage() {
                       icon={<StarIcon fontSize="inherit" />}
                       emptyIcon={<StarIcon fontSize="inherit" />}
                       sx={{ color: 'secondary.main', mr: 1 }}
-                      aria-label={`Tour rating: ${tour.tourRating} out of 10`}
+                      aria-label={t('tourRatingAria', { rating: tour.tourRating })}
                     />
                     <Typography variant="subtitle1" color="text.secondary">
                       {tour.tourRating}/10
@@ -441,7 +446,7 @@ export default function SingleTourPage() {
                     variant="outlined"
                     color="secondary"
                     size="small"
-                    aria-label={`Tour type: ${tour.tourType}`}
+                    aria-label={t('tourTypeAria', { type: tour.tourType })}
                   />
                 )}
 
@@ -449,7 +454,7 @@ export default function SingleTourPage() {
                   <IconButton
                     onClick={handleShareTour}
                     color="primary"
-                    aria-label="Share this tour"
+                    aria-label={t('tourShareAria')}
                   >
                     <ShareIcon />
                   </IconButton>
@@ -502,7 +507,7 @@ export default function SingleTourPage() {
                     }}
                   >
                     <Typography variant="body2" color="white" sx={{ mb: 1 }}>
-                      {filteredImages.length - 1} more photos available
+                      {t('tourMorePhotos', { count: filteredImages.length - 1 })}
                     </Typography>
                     {/* <Button
                       variant="contained"
@@ -555,7 +560,7 @@ export default function SingleTourPage() {
                 >
                   <InfoIcon aria-hidden="true" />
                   <Typography variant="h5" component="h2">
-                    Tour Details
+                    {t('tourDetailsSectionTitle')}
                   </Typography>
                 </Box>
 
@@ -588,7 +593,7 @@ export default function SingleTourPage() {
                 >
                   <LocationOnIcon aria-hidden="true" />
                   <Typography variant="h5" component="h2">
-                    Highlights & Activities
+                    {t('tourHighlightsTitle')}
                   </Typography>
                 </Box>
 
@@ -636,7 +641,7 @@ export default function SingleTourPage() {
                   >
                     <WarningIcon aria-hidden="true" />
                     <Typography variant="h5" component="h2">
-                      Important Notes
+                      {t('tourImportantNotesTitle')}
                     </Typography>
                   </Box>
 
@@ -704,9 +709,9 @@ export default function SingleTourPage() {
                       href={`https://www.google.com/maps/search/?api=1&query=${tourLat},${tourLon}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      aria-label="Open tour location in Google Maps"
+                      aria-label={t('tourOpenMapsAria')}
                     >
-                      Open in Maps
+                      {t('tourOpenMaps')}
                     </Button>
                   </Box>
                 </Box>
@@ -735,7 +740,7 @@ export default function SingleTourPage() {
                         aria-hidden="true"
                       />
                       <Typography variant="body1" color="info.dark">
-                        Address: {tour.address}
+                        {t('tourAddressLabel', { address: tour.address })}
                       </Typography>
                     </Box>
                     <Button
@@ -747,9 +752,9 @@ export default function SingleTourPage() {
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      aria-label={`Find ${tour.address} on Google Maps`}
+                      aria-label={t('tourViewOnMapAria', { address: tour.address })}
                     >
-                      View on Map
+                      {t('tourViewOnMap')}
                     </Button>
                   </Box>
                 </>
@@ -772,7 +777,7 @@ export default function SingleTourPage() {
               >
                 <InfoIcon aria-hidden="true" />
                 <Typography variant="h5" component="h2">
-                  Tour Provider
+                  {t('tourProviderTitle')}
                 </Typography>
               </Box>
 
@@ -807,7 +812,7 @@ export default function SingleTourPage() {
                     color="text.secondary"
                     sx={{ mb: 2 }}
                   >
-                    Verified tour provider
+                    {t('tourProviderVerified')}
                   </Typography>
                   <Button
                     variant="contained"
@@ -817,9 +822,9 @@ export default function SingleTourPage() {
                     rel="noopener noreferrer"
                     sx={{ mr: 2 }}
                     endIcon={<OpenInNewIcon fontSize="small" />}
-                    aria-label={`Visit website for ${tour.provider.name}`}
+                    aria-label={t('tourProviderVisitAria', { provider: tour.provider.name })}
                   >
-                    Visit Website
+                    {t('tourProviderVisit')}
                   </Button>
                   {/* <Button
                     variant="outlined"
@@ -849,10 +854,10 @@ export default function SingleTourPage() {
                 sx={{ fontWeight: 600 }}
                 component="h2"
               >
-                Ready to Experience This Tour?
+                {t('tourCtaTitle')}
               </Typography>
               <Typography variant="body1" sx={{ mb: 3 }}>
-                Book now or contact the provider for more information
+                {t('tourCtaSubtitle')}
               </Typography>
               <Button
                 component="a"
@@ -867,9 +872,9 @@ export default function SingleTourPage() {
                   fontSize: '1.1rem',
                   fontWeight: 600,
                 }}
-                aria-label="Book this tour now"
+                aria-label={t('tourBookNowAria')}
               >
-                Book Now
+                {t('tourBookNow')}
               </Button>
               {/* <Button
                 variant="outlined"

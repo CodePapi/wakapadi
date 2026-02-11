@@ -29,6 +29,7 @@ import { useTranslation } from 'next-i18next';
 import NotificationsDropdown from './NotificationsDropdown';
 import styles from './Layout.module.css';
 import ReactCountryFlag from 'react-country-flag';
+import { safeStorage } from '../lib/storage';
 
 const languages = [
   { code: 'en', name: 'English', flag: 'US' },
@@ -58,8 +59,8 @@ export default function Layout({
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   useEffect(() => {
-    const userId = localStorage.getItem('userId');
-    setIsLoggedIn(!!localStorage.getItem('token'));
+    const userId = safeStorage.getItem('userId');
+    setIsLoggedIn(!!safeStorage.getItem('token'));
     if (userId) setCurrentUserId(userId);
   }, []);
 
@@ -77,8 +78,8 @@ export default function Layout({
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userId');
+    safeStorage.removeItem('token');
+    safeStorage.removeItem('userId');
     setIsLoggedIn(false);
     router.push('/');
   };
@@ -94,16 +95,6 @@ export default function Layout({
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta property="og:title" content={title} />
         <meta property="og:description" content={description} />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
-          rel="stylesheet"
-        />
         <link rel="icon" type="image/png" href="/favicon.png" />
       </Head>
 

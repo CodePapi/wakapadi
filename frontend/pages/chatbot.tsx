@@ -11,10 +11,14 @@ import {
 } from '@mui/material';
 import InsertEmoticonIcon from '@mui/icons-material/InsertEmoticon';
 import Layout from '../components/Layout';
+import PageHeader from '../components/PageHeader';
 import dynamic from 'next/dynamic';
 import io, { Socket } from 'socket.io-client';
 import styles from '../styles/bot.module.css';
 import TourCard from '../components/ChatTourCard';
+import { useTranslation } from 'next-i18next';
+import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
+import { safeStorage } from '../lib/storage';
 
 const Picker = dynamic(() => import('@emoji-mart/react'), { ssr: false });
 interface Result {
@@ -55,6 +59,7 @@ const ChatBubble = ({
   followUp?: boolean;
   onFeedback?: (helpful: boolean) => void;
 }) => {
+  const { t } = useTranslation('common');
   return (
     <div
       className={`${styles.messageItem} ${
@@ -62,7 +67,7 @@ const ChatBubble = ({
       }`}
     >
       {!fromSelf && avatar && (
-        <img src={avatar} className={styles.avatar} alt="Bot avatar" />
+        <img src={avatar} className={styles.avatar} alt={t('chatbotAvatarAlt')} />
       )}
       <div
         className={`${styles.messageBubble} ${
@@ -82,16 +87,16 @@ const ChatBubble = ({
         </div>
         {followUp && !fromSelf && (
           <Box sx={{ mt: 1 }}>
-            <Typography variant="caption">Was this helpful?</Typography>
+            <Typography variant="caption">{t('chatbotHelpfulPrompt')}</Typography>
             <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
               {onFeedback && (
                 <Button size="small" onClick={() => onFeedback(true)}>
-                  👍 Yes
+                  {t('chatbotHelpfulYes')}
                 </Button>
               )}
               {onFeedback && (
                 <Button size="small" onClick={() => onFeedback(false)}>
-                  👎 No
+                  {t('chatbotHelpfulNo')}
                 </Button>
               )}
             </Box>
@@ -103,6 +108,7 @@ const ChatBubble = ({
 };
 
 export default function ChatBotPage() {
+  const { t } = useTranslation('common');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [text, setText] = useState('');
   const [socketConnected, setSocketConnected] = useState(false);
@@ -115,7 +121,7 @@ export default function ChatBotPage() {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem('chatHistory');
+    const saved = safeStorage.getItem('chatHistory');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -128,7 +134,7 @@ export default function ChatBotPage() {
     } else {
       setMessages([
         {
-          text: "🤖 Hello! I'm your tour assistant. Ask me about tours in any city!",
+          text: t('chatbotWelcomeMessage'),
           fromSelf: false,
           timestamp: new Date(),
         },
@@ -138,7 +144,7 @@ export default function ChatBotPage() {
     const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL!, {
       path: '/socket.io',
       transports: ['websocket'],
-      auth: { token: localStorage.getItem('token') || '' },
+      auth: { token: safeStorage.getItem('token') || '' },
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
     });
@@ -156,7 +162,7 @@ export default function ChatBotPage() {
 
     socket.on('connect_error', (err: Error) => {
       console.error('Connection error:', err);
-      setError('Failed to connect to the bot service. Trying to reconnect...');
+      setError(t('chatbotConnectError'));
     });
 
     socket.on('bot:response', (response: string | BotResponse) => {
@@ -190,9 +196,9 @@ export default function ChatBotPage() {
 
       if (followUp) {
         setSuggestedFollowUps([
-          'Show more options',
-          'Find cheaper alternatives',
-          "What's the most popular?",
+          t('chatbotFollowUpMoreOptions'),
+          t('chatbotFollowUpCheaper'),
+          t('chatbotFollowUpPopular'),
         ]);
       }
     });
@@ -204,11 +210,11 @@ export default function ChatBotPage() {
     return () => {
       socket.disconnect();
     };
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     const trimmed = [...messages].slice(-100);
-    localStorage.setItem('chatHistory', JSON.stringify(trimmed));
+    safeStorage.setItem('chatHistory', JSON.stringify(trimmed));
   }, [messages]);
 
   useEffect(() => {
@@ -267,11 +273,15 @@ export default function ChatBotPage() {
   };
 
   return (
-    <Layout title="Tour Assistant Bot">
+    <Layout title={t('chatbotPageTitle')}>
+      <PageHeader
+        title={t('chatbotTitle')}
+        subtitle={t('chatbotSubtitle')}
+      />
       <Container className={styles.chatContainer}>
         <Box className={styles.chatHeader}>
           <Typography variant="h6" className={styles.chatTitle}>
-            Chat with Tour Assistant
+            {t('chatbotChatTitle')}
           </Typography>
           <Box display="flex" alignItems="center">
             <Box
@@ -282,7 +292,7 @@ export default function ChatBotPage() {
               mr={1}
             />
             <Typography variant="body2" className={styles.chatSubtitle}>
-              {socketConnected ? 'Online' : 'Offline'}
+              {socketConnected ? t('chatbotOnline') : t('chatbotOffline')}
             </Typography>
           </Box>
         </Box>
@@ -383,7 +393,7 @@ export default function ChatBotPage() {
           <TextField
             fullWidth
             placeholder={
-              socketConnected ? 'Ask me about tours...' : 'Connecting...'
+              socketConnected ? t('chatbotPlaceholderConnected') : t('chatbotPlaceholderConnecting')
             }
             value={text}
             onChange={handleTyping}
@@ -399,10 +409,18 @@ export default function ChatBotPage() {
             disabled={!text.trim() || !socketConnected || isBotTyping}
             className={styles.sendButton}
           >
-            Send
+            {t('chatbotSend')}
           </Button>
         </Box>
       </Container>
     </Layout>
   );
+}
+
+export async function getStaticProps({ locale }: { locale: string }) {
+  return {
+    props: {
+      ...(await serverSideTranslations(locale, ['common'])),
+    },
+  };
 }

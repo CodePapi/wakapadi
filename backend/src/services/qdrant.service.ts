@@ -13,16 +13,42 @@ globalThis.FormData = FormData as any;
 export class QdrantService implements OnModuleInit {
   private baseURL: string;
   private apiKey: string;
+  private enabled: boolean;
 
   constructor() {
-    this.baseURL = process.env.QDRANTURL!;
-    this.apiKey = process.env.QDRANTAPIKEYS!;
+    this.baseURL = process.env.QDRANTURL || '';
+    this.apiKey = process.env.QDRANTAPIKEYS || '';
+    this.enabled = Boolean(this.baseURL);
   }
 
-  onModuleInit() {
-    this.recreateToursCollection(); // recreates with correct payload_schema
-    this.createTrainingCollection();
+  async onModuleInit() {
+    if (!this.enabled) {
+      console.warn('⚠️ Qdrant is not configured; vector search is disabled.');
+      return;
+    }
 
+    const reachable = await this.pingQdrant();
+    if (!reachable) {
+      console.warn('⚠️ Qdrant is unreachable; vector search is disabled.');
+      this.enabled = false;
+      return;
+    }
+
+    await this.recreateToursCollection(); // recreates with correct payload_schema
+    await this.createTrainingCollection();
+  }
+
+  private async pingQdrant(): Promise<boolean> {
+    try {
+      await axios.get(`${this.baseURL}/collections`, {
+        headers: this.headers,
+        timeout: 5000,
+      });
+      return true;
+    } catch (err) {
+      console.warn('⚠️ Qdrant health check failed:', err.response?.data || err.message);
+      return false;
+    }
   }
 
   private get headers() {
@@ -34,6 +60,7 @@ export class QdrantService implements OnModuleInit {
   }
 
   async recreateToursCollection() {
+    if (!this.enabled) return;
     try {
     //   await axios.delete(`${this.baseURL}/collections/tours`, {
     //     headers: this.headers,
@@ -62,6 +89,7 @@ export class QdrantService implements OnModuleInit {
   }
 
   async upsertTour(originalId: string, vector: number[], payload: Record<string, any>) {
+    if (!this.enabled) return;
     try {
       const id = uuidv4();
       const enrichedPayload = {
@@ -89,6 +117,7 @@ export class QdrantService implements OnModuleInit {
     threshold: number = 0.7,
     city?: string
   ) {
+    if (!this.enabled) return [];
     try {
       const filter = city
         ? {
@@ -127,11 +156,12 @@ export class QdrantService implements OnModuleInit {
 
     } catch (error) {
       console.error('Qdrant search failed:', error.response?.data || error.message);
-      throw new Error(`Qdrant search error: ${error.message}`);
+      return [];
     }
   }
 
   async upsertTrainingPhrase(phrase: string, vector: number[], city: string) {
+    if (!this.enabled) return;
     try {
       await axios.put(
         `${this.baseURL}/collections/training_phrases/points`,
@@ -156,6 +186,7 @@ export class QdrantService implements OnModuleInit {
   }
 
   async findSimilarTrainingPhrases(vector: number[], limit = 3) {
+    if (!this.enabled) return [];
     try {
       const res = await axios.post(
         `${this.baseURL}/collections/training_phrases/points/search`,
@@ -174,6 +205,7 @@ export class QdrantService implements OnModuleInit {
   }
 
   async getTrainingPhraseCount() {
+    if (!this.enabled) return 0;
     try {
       const res = await axios.post(
         `${this.baseURL}/collections/training_phrases/points/count`,
@@ -192,6 +224,7 @@ export class QdrantService implements OnModuleInit {
   }
 
   async clearTrainingPhrases() {
+    if (!this.enabled) return;
     try {
       await axios.put(
         `${this.baseURL}/collections/training_phrases/points/delete`,
@@ -210,6 +243,7 @@ export class QdrantService implements OnModuleInit {
   }
 
   async createTrainingCollection() {
+    if (!this.enabled) return;
     try {
       await axios.put(`${this.baseURL}/collections/training_phrases`, {
         vectors: {

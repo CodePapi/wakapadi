@@ -1,0 +1,14 @@
+{
+  "name": "wakapadi",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "docker compose up -d mongo && concurrently -k -n backend,frontend,embed \"npm --prefix backend run start:dev\" \"npm --prefix frontend run dev\" \"./.venv/bin/python embed_service/embed_service.py\"",
+    "dev:web": "concurrently -k -n backend,frontend \"npm --prefix backend run start:dev\" \"npm --prefix frontend run dev\"",
+    "start:compose": "docker compose up --build",
+    "scrape:all": "curl -X POST http://localhost:3002/scraper/run"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}

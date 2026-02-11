@@ -3,7 +3,8 @@ import {
   TextField,
   Button,
   IconButton,
-  useMediaQuery
+  useMediaQuery,
+  Chip,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -37,6 +38,14 @@ export default function HeroSection({
   const heroRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const isMobile = useMediaQuery('(max-width:768px)');
+
+  const handleScrollToTours = () => {
+    if (typeof window === 'undefined') return;
+    const target = document.getElementById('tours-section-title');
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
   // ✅ Update input when suggestion changes
   useEffect(() => {
@@ -85,6 +94,29 @@ export default function HeroSection({
         >
           {t('homeSubtitle')}
         </motion.p>
+
+        <div className={styles.heroActions}>
+          <Button
+            variant="contained"
+            className={styles.primaryCta}
+            onClick={handleScrollToTours}
+          >
+            {t('heroCtaExplore')}
+          </Button>
+          <Button
+            variant="outlined"
+            className={styles.secondaryCta}
+            onClick={() => router.push('/whois')}
+          >
+            {t('heroCtaMeet')}
+          </Button>
+        </div>
+
+        <div className={styles.heroHighlights}>
+          <Chip label={t('heroChipFree')} className={styles.heroChip} />
+          <Chip label={t('heroChipFriendly')} className={styles.heroChip} />
+          <Chip label={t('heroChipSafeChat')} className={styles.heroChip} />
+        </div>
       </div>
 
       {/* Search Container */}
@@ -113,7 +145,7 @@ export default function HeroSection({
                     ...params.InputProps,
                     disableUnderline: true,
                     className: styles.inputField,
-                    'aria-label': 'Search tours'
+                    'aria-label': t('searchToursAria')
                   }}
                 />
               )}
@@ -123,7 +155,9 @@ export default function HeroSection({
               <IconButton
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 className={styles.mobileMenuButton}
-                aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+                aria-label={
+                  mobileMenuOpen ? t('closeMenu') : t('openMenu')
+                }
               >
                 <MenuIcon />
               </IconButton>

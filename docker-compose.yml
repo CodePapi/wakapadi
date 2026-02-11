@@ -8,7 +8,7 @@ services:
       - '3000:3000'
     env_file: .env
     environment:
-      - MONGODB_URI=${MONGODB_URI}
+      - MONGODB_URI=mongodb://mongo:27017/wakapadi
       - JWT_SECRET=${JWT_SECRET}
       - THROTTLE_TTL=${THROTTLE_TTL}
       - THROTTLE_LIMIT=${THROTTLE_LIMIT}
@@ -23,6 +23,7 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
     depends_on:
       - embed_service
+      - mongo
       # - qdrant
     #   - ollama
     restart: always
@@ -49,6 +50,16 @@ services:
     container_name: embed_service
     ports:
       - '5050:5050'
+
+  mongo:
+    image: mongo:6
+    container_name: mongo
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo_data:/data/db
+    restart: unless-stopped
 volumes:
   qdrant_data:
   ollama_models:
+  mongo_data:

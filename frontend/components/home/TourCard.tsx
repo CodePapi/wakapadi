@@ -5,14 +5,15 @@ import styles from './TourCard.module.css';
 import Image from 'next/image';
 import { useState } from 'react';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
+import { formatCityName } from '../../lib/cityFormat';
 
 const highlightText = (text: string = '', highlight: string = '') => {
   if (!highlight || !text) return text;
-  
+
   const regex = new RegExp(`(${highlight})`, 'gi');
   const parts = text.split(regex);
-  
-  return parts.map((part, i) => 
+
+  return parts.map((part, i) =>
     regex.test(part) ? (
       <mark key={i} className={styles.highlight}>
         {part}
@@ -22,16 +23,31 @@ const highlightText = (text: string = '', highlight: string = '') => {
     )
   );
 };
-function extractPath(url:string):string {
-  const parsed = new URL(url);
-  return `/tours${parsed.pathname}`;
-}
 
+const getSourceLabel = (sourceUrl?: string) => {
+  if (!sourceUrl) return '';
+  try {
+    return new URL(sourceUrl).hostname.replace(/^www\./, '');
+  } catch {
+    return '';
+  }
+};
 
-
-export default function TourCard({ tour, highlight = '' }: { tour: Tour; highlight?: string }) {
+export default function TourCard({
+  tour,
+  highlight,
+}: {
+  tour: Tour;
+  highlight?: string;
+}) {
   const { t } = useTranslation('common');
   const [imageLoading, setImageLoading] = useState(true);
+
+  const scheduleText =
+    tour.recurringSchedule && tour.recurringSchedule !== 'Recurring'
+      ? tour.recurringSchedule
+      : t('tourScheduleRecurring');
+  const sourceLabel = getSourceLabel(tour.sourceUrl);
 
   return (
     <article className={styles.cardWrapper}>
@@ -39,9 +55,9 @@ export default function TourCard({ tour, highlight = '' }: { tour: Tour; highlig
         {tour.image ? (
           <div className={styles.imageContainer}>
             {imageLoading && (
-              <Skeleton 
-                variant="rectangular" 
-                className={styles.imageSkeleton} 
+              <Skeleton
+                variant="rectangular"
+                className={styles.imageSkeleton}
               />
             )}
             <Image
@@ -62,41 +78,55 @@ export default function TourCard({ tour, highlight = '' }: { tour: Tour; highlig
         )}
 
         <CardContent className={styles.cardContent}>
-          <Typography 
-            variant="h3" 
+          <Typography
+            variant="h3"
             className={styles.cardTitle}
             component="h3"
           >
             {highlightText(tour.title, highlight)}
           </Typography>
-          
-          <Typography 
-            className={styles.cardLocation}
-            variant="body2"
-          >
-            {highlightText(tour.location, highlight)}
-          </Typography>
-          
-          {tour.recurringSchedule && (
-            <Typography 
+          <div className={styles.keyRow}>
+            <Typography
+              className={styles.cardLocation}
+              variant="body2"
+            >
+              <span className={styles.keyLabel}>{t('tourLocationLabel')}</span>
+              <span className={styles.keyValue}>
+                {highlightText(formatCityName(tour.location), highlight)}
+              </span>
+            </Typography>
+          </div>
+
+          <div className={styles.keyRow}>
+            <Typography
               className={styles.cardSchedule}
               variant="body2"
             >
-              <span className={styles.scheduleLabel}>{t('when')}:</span> {tour.recurringSchedule}
+              <span className={styles.keyLabel}>{t('tourScheduleLabel')}</span>
+              <span className={styles.keyValue}>{scheduleText}</span>
             </Typography>
-          )}
-          
+          </div>
+
+          <div className={styles.keyRow}>
+            <Typography className={styles.cardSource} variant="body2">
+              <span className={styles.keyLabel}>{t('tourSourceLabel')}</span>
+              <span className={styles.keyValue}>
+                {sourceLabel || t('tourSourceUnknown')}
+              </span>
+            </Typography>
+          </div>
+
           <Box className={styles.buttonContainer}>
             {tour.externalPageUrl && (
               <Button
                 variant="outlined"
-                href={extractPath(tour.externalPageUrl)}
+                href={tour.externalPageUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={styles.cardButton}
-                aria-label={`More info about ${tour.title}`}
+                aria-label={t('moreInfoAria', { title: tour.title })}
               >
-                {t('moreInfo')}
+                {t('tourOpenProvider')}
               </Button>
             )}
           </Box>

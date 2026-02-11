@@ -1,6 +1,7 @@
 import { Typography, Container, Paper, List, ListItem } from '@mui/material';
 import Head from 'next/head';
 import Layout from '../components/Layout';
+import PageHeader from '../components/PageHeader';
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import { motion } from 'framer-motion';
@@ -24,6 +25,11 @@ export default function PrivacyPolicy() {
         <meta name="robots" content="noindex, nofollow" />
       </Head>
 
+      <PageHeader
+        title={t('privacyPolicy')}
+        subtitle={t('privacySubtitle')}
+      />
+
       <Container className={styles.container}>
         <motion.div initial="hidden" animate="visible" variants={fadeInUp}>
           <Paper className={styles.contentPaper}>
@@ -35,22 +41,16 @@ export default function PrivacyPolicy() {
 
             <motion.div variants={fadeInUp} custom={2}>
               <Typography className={styles.bodyText}>
-                At Wakapadi, your privacy is a top priority. We collect only
-                essential information to enhance your experience as you discover
-                free walking tours, connect with fellow travelers, and plan
-                shared adventures around the world.
+                {t('privacyIntro')}
               </Typography>
             </motion.div>
 
             <motion.div variants={fadeInUp} custom={3}>
               <Typography variant="h5" className={styles.sectionTitle}>
-                GDPR Compliance
+                {t('privacyGdprTitle')}
               </Typography>
               <Typography className={styles.bodyText}>
-                In accordance with the General Data Protection Regulation
-                (GDPR), you have full control over your personal information. If
-                you wish to review, correct, or remove any data we hold, contact
-                us at{' '}
+                {t('privacyGdprBody')}{' '}
                 <span className={styles.contactEmail}>
                   privacy@wakapadi.com
                 </span>
@@ -60,20 +60,20 @@ export default function PrivacyPolicy() {
 
             <motion.div variants={fadeInUp} custom={4}>
               <Typography variant="h5" className={styles.sectionTitle}>
-                Your Data Rights
+                {t('privacyRightsTitle')}
               </Typography>
               <List className={styles.list}>
                 <ListItem className={styles.listItem}>
-                  • Request access to your personal data
+                  {t('privacyRightAccess')}
                 </ListItem>
                 <ListItem className={styles.listItem}>
-                  • Request correction of inaccurate data
+                  {t('privacyRightCorrection')}
                 </ListItem>
                 <ListItem className={styles.listItem}>
-                  • Request deletion of your data
+                  {t('privacyRightDeletion')}
                 </ListItem>
                 <ListItem className={styles.listItem}>
-                  • Withdraw your consent at any time
+                  {t('privacyRightWithdraw')}
                 </ListItem>
               </List>
             </motion.div>

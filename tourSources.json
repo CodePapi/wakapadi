@@ -1,0 +1,18 @@
+{
+  "sources": [
+    {
+      "name": "GuruWalk",
+      "sourceType": "guruwalk",
+      "urlTemplate": "https://www.guruwalk.com/{city}",
+      "linkIncludes": ["guruwalk.com", "/free-tour", "/tour-"],
+      "maxLinks": 20
+    },
+    {
+      "name": "Strawberry Tours",
+      "sourceType": "strawberrytours",
+      "urlTemplate": "https://strawberrytours.com/{city}",
+      "linkIncludes": ["strawberrytours.com"],
+      "maxLinks": 20
+    }
+  ]
+}

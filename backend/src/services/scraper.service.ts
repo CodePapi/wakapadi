@@ -4,10 +4,17 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { TourService } from '../services/tour.service';
 import { CityService } from '../services/city.services';
 import * as puppeteer from 'puppeteer';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class ScraperService {
   private readonly logger = new Logger(ScraperService.name);
+  private readonly extraSourcesPath = path.resolve(
+    __dirname,
+    '../../..',
+    'tourSources.json',
+  );
 
   constructor(
     private readonly tourService: TourService,
@@ -25,6 +32,165 @@ export class ScraperService {
   }
 
   async scrapeCity(city: string, shouldDelete: boolean): Promise<void> {
+    if (shouldDelete) {
+      await this.tourService.deleteAllBySource(city, 'scraper');
+      await this.tourService.deleteAllBySource(city, 'seed');
+      await this.tourService.deleteAllBySource(city, 'seed-live');
+      await this.tourService.deleteAllBySource(city, 'neweurope');
+      await this.tourService.deleteAllBySource(city, 'munichwalk');
+      for (const sourceType of this.getExtraSourceTypes()) {
+        await this.tourService.deleteAllBySource(city, sourceType);
+      }
+    }
+
+    await this.scrapeFreetourCity(city);
+    await this.scrapeSeededTours(city);
+    await this.scrapeSeededExternalPages(city);
+    await this.scrapeNewEuropeToursCity(city);
+    await this.scrapeMunichWalkToursCity(city);
+    await this.scrapeExternalCatalogSources(city);
+  }
+
+  private getExtraSourceTypes(): string[] {
+    try {
+      if (!fs.existsSync(this.extraSourcesPath)) return [];
+      const raw = fs.readFileSync(this.extraSourcesPath, 'utf-8');
+      const parsed = JSON.parse(raw) as { sources?: Array<{ sourceType?: string }> };
+      const types = (parsed.sources || [])
+        .map((source) => source.sourceType)
+        .filter((type): type is string => Boolean(type));
+      return Array.from(new Set(types));
+    } catch (err) {
+      this.logger.warn(`⚠️ Failed to read extra sources config: ${err.message}`);
+      return [];
+    }
+  }
+
+  private slugifyCity(city: string): string {
+    return city
+      .toLowerCase()
+      .replace(/\s*\(.*?\)\s*/g, '')
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '');
+  }
+
+  private async scrapeExternalCatalogSources(city: string): Promise<void> {
+    if (!fs.existsSync(this.extraSourcesPath)) return;
+
+    let config: {
+      sources?: Array<{
+        name: string;
+        sourceType: string;
+        urlTemplate: string;
+        linkIncludes?: string[];
+        linkExcludes?: string[];
+        maxLinks?: number;
+        cityAllowList?: string[];
+      }>;
+    };
+
+    try {
+      const raw = fs.readFileSync(this.extraSourcesPath, 'utf-8');
+      config = JSON.parse(raw);
+    } catch (err) {
+      this.logger.warn(`⚠️ Failed to parse extra sources config: ${err.message}`);
+      return;
+    }
+
+    const normalizedCity = city.trim().toLowerCase();
+    const citySlug = this.slugifyCity(city);
+    const sources = config.sources || [];
+
+    for (const source of sources) {
+      if (!source.urlTemplate || !source.sourceType) continue;
+      if (source.cityAllowList && !source.cityAllowList.includes(citySlug)) {
+        continue;
+      }
+
+      const listUrl = source.urlTemplate.replace('{city}', citySlug);
+      let browser: puppeteer.Browser | null = null;
+
+      try {
+        browser = await puppeteer.launch({
+          headless: true,
+          args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+          ],
+          executablePath: process.env.CHROME_PATH || undefined,
+        });
+
+        const page = await browser.newPage();
+        await page.goto(listUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+
+        const links = await page.evaluate((includes, excludes) => {
+          const anchors = Array.from(document.querySelectorAll('a')) as HTMLAnchorElement[];
+          return anchors
+            .map((a) => a.href)
+            .filter((href) => {
+              if (!href) return false;
+              if (includes?.length && !includes.some((needle) => href.includes(needle))) {
+                return false;
+              }
+              if (excludes?.length && excludes.some((needle) => href.includes(needle))) {
+                return false;
+              }
+              return true;
+            });
+        }, source.linkIncludes || [], source.linkExcludes || []);
+
+        const uniqueLinks = Array.from(new Set(links)).slice(0, source.maxLinks || 20);
+        if (!uniqueLinks.length) {
+          this.logger.log(`ℹ️ No ${source.name} tours found for ${normalizedCity}`);
+          continue;
+        }
+
+        for (const url of uniqueLinks) {
+          try {
+            await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+            const meta = await page.evaluate(() => {
+              const ogTitle =
+                document.querySelector('meta[property="og:title"]')?.getAttribute('content') ||
+                document.querySelector('meta[name="twitter:title"]')?.getAttribute('content') ||
+                document.title ||
+                '';
+              const ogImage =
+                document.querySelector('meta[property="og:image"]')?.getAttribute('content') ||
+                document.querySelector('meta[name="twitter:image"]')?.getAttribute('content') ||
+                '';
+              return { ogTitle, ogImage };
+            });
+
+            await this.tourService.upsertByExternalUrl(url, {
+              title: meta.ogTitle || `${source.name} Walking Tour`,
+              location: normalizedCity,
+              recurringSchedule: 'Recurring',
+              sourceUrl: listUrl,
+              externalPageUrl: url,
+              image: meta.ogImage || '',
+              sourceType: source.sourceType,
+            });
+          } catch (err) {
+            this.logger.warn(
+              `⚠️ Failed ${source.name} tour page ${url}: ${err.message}`,
+            );
+          }
+        }
+      } catch (err) {
+        this.logger.warn(
+          `⚠️ ${source.name} scraping skipped for ${normalizedCity}: ${err.message}`,
+        );
+      } finally {
+        if (browser) {
+          await browser.close();
+        }
+      }
+    }
+  }
+
+  private async scrapeFreetourCity(city: string): Promise<void> {
     const url = `https://www.freetour.com/${city}?price=0-0`;
     const browser = await puppeteer.launch({ 
       headless: true,
@@ -62,20 +228,22 @@ export class ScraperService {
         return data;
       });
 
-      if (shouldDelete) {
-        await this.tourService.deleteAllBySource(city, 'scraper');
-      }
-
       for (const tour of tours) {
-        await this.tourService.create({
-          title: tour.title,
-          location: city,
-          recurringSchedule: tour.time,
-          sourceUrl: url,
-          externalPageUrl: tour.externalPageUrl,
-          image: tour.image,
-          sourceType: 'scraper',
-        });
+        const exists = await this.tourService.findByTitleOrUrl(
+          tour.title,
+          tour.externalPageUrl,
+        );
+        if (!exists) {
+          await this.tourService.create({
+            title: tour.title,
+            location: city,
+            recurringSchedule: tour.time,
+            sourceUrl: url,
+            externalPageUrl: tour.externalPageUrl,
+            image: tour.image,
+            sourceType: 'scraper',
+          });
+        }
       }
 
       this.logger.log(`✔ ${tours.length} tours scraped for ${city}`);
@@ -83,6 +251,270 @@ export class ScraperService {
       this.logger.error(`❌ Failed to scrape ${city}: ${err.message}`);
     } finally {
       await browser.close();
+    }
+  }
+
+  private async scrapeSeededTours(city: string): Promise<void> {
+    try {
+      const seedPath = path.resolve(__dirname, '../../..', 'tourSeed.json');
+      const raw = fs.readFileSync(seedPath, 'utf-8');
+      const tours = JSON.parse(raw) as Array<{
+        title: string;
+        location: string;
+        recurringSchedule?: string;
+        sourceUrl?: string;
+        externalPageUrl?: string;
+        image?: string;
+      }>;
+
+      const normalizedCity = city.trim().toLowerCase();
+      const filtered = tours.filter(
+        (tour) => tour.location?.trim().toLowerCase() === normalizedCity,
+      );
+
+      for (const tour of filtered) {
+        const exists = await this.tourService.findByTitleOrUrl(
+          tour.title,
+          tour.externalPageUrl || '',
+        );
+        if (!exists) {
+          await this.tourService.create({
+            title: tour.title,
+            location: normalizedCity,
+            recurringSchedule: tour.recurringSchedule || 'Recurring',
+            sourceUrl: tour.sourceUrl || 'seed',
+            externalPageUrl: tour.externalPageUrl || '',
+            image: tour.image || '',
+            sourceType: 'seed',
+          });
+        }
+      }
+
+      if (filtered.length) {
+        this.logger.log(
+          `✔ ${filtered.length} seeded tours added for ${normalizedCity}`,
+        );
+      }
+    } catch (err) {
+      this.logger.error(`❌ Failed to load seeded tours: ${err.message}`);
+    }
+  }
+
+  private async scrapeSeededExternalPages(city: string): Promise<void> {
+    let browser: puppeteer.Browser | null = null;
+
+    try {
+      const seedPath = path.resolve(__dirname, '../../..', 'tourSeed.json');
+      const raw = fs.readFileSync(seedPath, 'utf-8');
+      const tours = JSON.parse(raw) as Array<{
+        title: string;
+        location: string;
+        recurringSchedule?: string;
+        sourceUrl?: string;
+        externalPageUrl?: string;
+        image?: string;
+      }>;
+
+      const normalizedCity = city.trim().toLowerCase();
+      const targets = tours.filter(
+        (tour) =>
+          tour.location?.trim().toLowerCase() === normalizedCity &&
+          tour.externalPageUrl,
+      );
+
+      if (!targets.length) return;
+
+      browser = await puppeteer.launch({
+        headless: true,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+        ],
+        executablePath: process.env.CHROME_PATH || undefined,
+      });
+
+      const page = await browser.newPage();
+
+      for (const tour of targets) {
+        try {
+          await page.goto(tour.externalPageUrl!, {
+            waitUntil: 'domcontentloaded',
+            timeout: 30000,
+          });
+
+          const meta = await page.evaluate(() => {
+            const ogTitle =
+              document.querySelector('meta[property="og:title"]')?.getAttribute('content') ||
+              document.querySelector('meta[name="twitter:title"]')?.getAttribute('content') ||
+              document.title ||
+              '';
+            const ogImage =
+              document.querySelector('meta[property="og:image"]')?.getAttribute('content') ||
+              document.querySelector('meta[name="twitter:image"]')?.getAttribute('content') ||
+              '';
+
+            return { ogTitle, ogImage };
+          });
+
+          const title = meta.ogTitle || tour.title;
+          const image = meta.ogImage || tour.image || '';
+          const sourceUrl = tour.sourceUrl || new URL(tour.externalPageUrl!).origin;
+
+          await this.tourService.upsertByExternalUrl(tour.externalPageUrl!, {
+            title,
+            location: normalizedCity,
+            recurringSchedule: tour.recurringSchedule || 'Recurring',
+            sourceUrl,
+            externalPageUrl: tour.externalPageUrl!,
+            image,
+            sourceType: 'seed-live',
+          });
+        } catch (err) {
+          this.logger.warn(
+            `⚠️ Failed to scrape seeded tour page ${tour.externalPageUrl}: ${err.message}`,
+          );
+        }
+      }
+
+      this.logger.log(`✔ Seeded live tours refreshed for ${normalizedCity}`);
+    } catch (err) {
+      this.logger.error(`❌ Failed seeded live scraping: ${err.message}`);
+    } finally {
+      if (browser) {
+        await browser.close();
+      }
+    }
+  }
+
+  private async scrapeNewEuropeToursCity(city: string): Promise<void> {
+    let browser: puppeteer.Browser | null = null;
+
+    try {
+      const normalizedCity = city.trim().toLowerCase();
+      const listUrl = `https://www.neweuropetours.eu/${normalizedCity}/en/`;
+
+      browser = await puppeteer.launch({
+        headless: true,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+        ],
+        executablePath: process.env.CHROME_PATH || undefined,
+      });
+
+      const page = await browser.newPage();
+      await page.goto(listUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+
+      const links = await page.evaluate(() => {
+        const anchors = Array.from(document.querySelectorAll('a')) as HTMLAnchorElement[];
+        return anchors
+          .map((a) => a.href)
+          .filter((href) =>
+            href &&
+            href.includes('neweuropetours.eu') &&
+            (href.includes('/free-tour-') || href.includes('/free-walking-tour')),
+          );
+      });
+
+      const uniqueLinks = Array.from(new Set(links)).slice(0, 20);
+
+      for (const url of uniqueLinks) {
+        try {
+          await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+          const meta = await page.evaluate(() => {
+            const ogTitle =
+              document.querySelector('meta[property="og:title"]')?.getAttribute('content') ||
+              document.querySelector('meta[name="twitter:title"]')?.getAttribute('content') ||
+              document.title ||
+              '';
+            const ogImage =
+              document.querySelector('meta[property="og:image"]')?.getAttribute('content') ||
+              document.querySelector('meta[name="twitter:image"]')?.getAttribute('content') ||
+              '';
+            return { ogTitle, ogImage };
+          });
+
+          const title = meta.ogTitle || 'Free Walking Tour';
+          const image = meta.ogImage || '';
+
+          await this.tourService.upsertByExternalUrl(url, {
+            title,
+            location: normalizedCity,
+            recurringSchedule: 'Recurring',
+            sourceUrl: listUrl,
+            externalPageUrl: url,
+            image,
+            sourceType: 'neweurope',
+          });
+        } catch (err) {
+          this.logger.warn(`⚠️ Failed NewEurope tour page ${url}: ${err.message}`);
+        }
+      }
+
+      if (!uniqueLinks.length) {
+        this.logger.log(`ℹ️ No NewEurope tours found for ${normalizedCity}`);
+      }
+    } catch (err) {
+      this.logger.warn(`⚠️ NewEurope scraping skipped for ${city}: ${err.message}`);
+    } finally {
+      if (browser) {
+        await browser.close();
+      }
+    }
+  }
+
+  private async scrapeMunichWalkToursCity(city: string): Promise<void> {
+    const normalizedCity = city.trim().toLowerCase();
+    if (normalizedCity !== 'munich') return;
+
+    let browser: puppeteer.Browser | null = null;
+
+    try {
+      const listUrl = 'https://www.munichwalktours.de/free-walking-tours-munich';
+
+      browser = await puppeteer.launch({
+        headless: true,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+        ],
+        executablePath: process.env.CHROME_PATH || undefined,
+      });
+
+      const page = await browser.newPage();
+      await page.goto(listUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+
+      const meta = await page.evaluate(() => {
+        const ogTitle =
+          document.querySelector('meta[property="og:title"]')?.getAttribute('content') ||
+          document.querySelector('meta[name="twitter:title"]')?.getAttribute('content') ||
+          document.title ||
+          '';
+        const ogImage =
+          document.querySelector('meta[property="og:image"]')?.getAttribute('content') ||
+          document.querySelector('meta[name="twitter:image"]')?.getAttribute('content') ||
+          '';
+        return { ogTitle, ogImage };
+      });
+
+      await this.tourService.upsertByExternalUrl(listUrl, {
+        title: meta.ogTitle || 'Munich Free Walking Tours',
+        location: normalizedCity,
+        recurringSchedule: 'Recurring',
+        sourceUrl: listUrl,
+        externalPageUrl: listUrl,
+        image: meta.ogImage || '',
+        sourceType: 'munichwalk',
+      });
+    } catch (err) {
+      this.logger.warn(`⚠️ Munich Walk Tours scraping skipped: ${err.message}`);
+    } finally {
+      if (browser) {
+        await browser.close();
+      }
     }
   }
 

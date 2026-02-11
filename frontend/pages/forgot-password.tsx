@@ -3,11 +3,15 @@ import { SetStateAction, useState } from 'react';
 import { Container, TextField, Typography, Button, Alert } from '@mui/material';
 import { api } from '../lib/api/index';
 import Layout from '../components/Layout';
+import PageHeader from '../components/PageHeader';
+import { useTranslation } from 'next-i18next';
+import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const { t } = useTranslation('common');
 
   const handleSubmit = async (e: { preventDefault: () => void; }) => {
     e.preventDefault();
@@ -15,7 +19,7 @@ export default function ForgotPasswordPage() {
     setMessage('');
 
     if (!email) {
-      setError('Please enter your email address.');
+      setError(t('forgotEmailRequired'));
       return;
     }
 
@@ -23,33 +27,36 @@ export default function ForgotPasswordPage() {
       const res = await api.post('/auth/forgot-password', { email });
       setMessage(
         res.data.message ||
-          'If your email exists, reset instructions have been sent.'
+          t('forgotEmailSent')
       );
       setEmail('');
     } catch (err) {
       console.error(err);
-      setError('Failed to send reset email. Try again.');
+      setError(t('forgotEmailError'));
     }
   };
 
   return (
-    <Layout title="Reset Password - Wakapadi">
+    <Layout title={t('forgotPageTitle')}>
+      <PageHeader
+        title={t('forgotTitle')}
+        subtitle={t('forgotSubtitle')}
+      />
       <Container
         maxWidth="sm"
-        sx={{ mt: 6, p: 4, boxShadow: 3, borderRadius: 2 }}
+        sx={{ mt: 6, p: 4, boxShadow: 3, borderRadius: 3, bgcolor: 'background.paper' }}
       >
         <Typography variant="h5" gutterBottom>
-          Forgot your password?
+          {t('forgotTitle')}
         </Typography>
         <Typography variant="body2" color="text.secondary" mb={3}>
-          Enter your email and we’ll send you instructions to reset your
-          password.
+          {t('forgotBody')}
         </Typography>
 
         <form onSubmit={handleSubmit}>
           <TextField
             fullWidth
-            label="Email"
+            label={t('forgotEmailLabel')}
             type="email"
             value={email}
             onChange={(e: { target: { value: SetStateAction<string>; }; }) => setEmail(e.target.value)}
@@ -69,10 +76,18 @@ export default function ForgotPasswordPage() {
           )}
 
           <Button type="submit" variant="contained" fullWidth sx={{ mt: 3 }}>
-            Send Reset Link
+            {t('forgotSubmit')}
           </Button>
         </form>
       </Container>
     </Layout>
   );
+}
+
+export async function getStaticProps({ locale }: { locale: string }) {
+  return {
+    props: {
+      ...(await serverSideTranslations(locale, ['common'])),
+    },
+  };
 }

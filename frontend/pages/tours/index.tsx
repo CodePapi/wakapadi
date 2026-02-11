@@ -9,6 +9,7 @@ import {
 } from '@mui/material';
 import Head from 'next/head';
 import Layout from '../../components/Layout';
+import PageHeader from '../../components/PageHeader';
 import { api } from '../../lib/api/index';
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
@@ -166,6 +167,10 @@ export default function HomePage() {
       </Head>
       <Layout title={t('homePageTitle')}>
         <div ref={topRef} className={styles.anchor} aria-hidden="true" />
+        <PageHeader
+          title={t('toursBrowseTitle')}
+          subtitle={t('toursBrowseSubtitle')}
+        />
         <HeroSection
           locations={locations}
           onSearch={handleSearchInput}
@@ -225,7 +230,7 @@ export default function HomePage() {
                         <TourCard
                           tour={tour}
                           highlight={search}
-                          aria-label={`Tour to ${tour.location}`}
+                          aria-label={t('tourCardAria', { location: tour.location })}
                         />
                       </div>
                     ))}

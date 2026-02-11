@@ -54,7 +54,7 @@ export class AuthService {
 
 
   async updateProfile(userId: string, updates: any) {
-    const allowedFields = ['travelPrefs', 'languages', 'socials'];
+    const allowedFields = ['travelPrefs', 'languages', 'socials', 'profileVisible'];
     const filtered: any = {};
   
     for (const key of allowedFields) {
@@ -73,6 +73,28 @@ export class AuthService {
   
     const updatedUser = await this.userModel.findByIdAndUpdate(userId, filtered, { new: true });
     return updatedUser;
+  }
+
+  async createGuest() {
+    const randomSuffix = Math.random().toString(36).slice(2, 8);
+    const username = `Guest ${Math.floor(1000 + Math.random() * 9000)}`;
+    const email = `guest-${Date.now()}-${randomSuffix}@wakapadi.local`;
+    const password = await bcrypt.hash(`${Date.now()}-${randomSuffix}`, 10);
+
+    const user = await this.userModel.create({
+      email,
+      password,
+      username,
+      authProvider: 'guest',
+      profileVisible: false,
+    });
+
+    return {
+      token: this.signToken(user._id, user.username),
+      userId: user._id.toString(),
+      username: user.username,
+      guest: true,
+    };
   }
 
   async findUserById(userId: string) {

@@ -12,13 +12,20 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  experimental: {
+    instrumentationHook: true,
+  },
   i18n: {
     locales: ['en', 'fr', 'es', 'de'], // Ensure these match your actual setup
     defaultLocale: 'en',
   },
   images: {
     domains: [
-      'www.freetour.com'
+      'www.freetour.com',
+      'www.guruwalk.com',
+      'media.guruwalk.com',
+      'imagedelivery.net',
+      'www.venicefreewalkingtour.com'
     ]
   ,
     // This is the critical part

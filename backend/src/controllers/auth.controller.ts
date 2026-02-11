@@ -24,6 +24,11 @@ async getProfile(@Req() req) {
     return this.authService.login(body);
   }
 
+  @Post('guest')
+  createGuest() {
+    return this.authService.createGuest();
+  }
+
   @Patch('profile')
   @UseGuards(AuthGuard)
   async updateProfile(@Req() req, @Body() body) {

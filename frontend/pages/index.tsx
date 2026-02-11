@@ -6,6 +6,7 @@ import {
   Pagination,
   Skeleton,
   Container,
+  Stack,
 } from '@mui/material';
 import Head from 'next/head';
 import Layout from '../components/Layout';
@@ -17,6 +18,8 @@ import TourCard from '../components/home/TourCard';
 import { useRouter } from 'next/router';
 import debounce from 'lodash.debounce';
 import styles from '../styles/HomePage.module.css';
+import { safeStorage } from '../lib/storage';
+import { formatCityName, normalizeCityKey } from '../lib/cityFormat';
 
 const PER_PAGE = 12;
 
@@ -46,10 +49,11 @@ export default function HomePage() {
 
   const filteredTours = useMemo(() => {
     if (!tours.length) return [];
+    const normalizedSearch = normalizeCityKey(search);
     return search
       ? tours.filter(
           (t) =>
-            t.location.toLowerCase().includes(search.toLowerCase()) ||
+            normalizeCityKey(t.location).includes(normalizedSearch) ||
             t.title.toLowerCase().includes(search.toLowerCase())
         )
       : tours;
@@ -60,7 +64,12 @@ export default function HomePage() {
       setLoading(true);
       setError(null);
       const res = await api.get('/tours');
-      setTours(res.data);
+      setTours(
+        res.data.map((tour: Tour) => ({
+          ...tour,
+          location: formatCityName(tour.location),
+        }))
+      );
     } catch (err) {
       console.error('Error fetching tours:', err);
       setError(t('fetchError'));
@@ -121,10 +130,57 @@ export default function HomePage() {
     []
   );
 
-  const locations = useMemo(
-    () => [...new Set(tours.map((t) => t.location))],
-    [tours]
-  );
+  const handleScrollToTop = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    const target = document.getElementById('tours-section-title');
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  const locations = useMemo(() => {
+    const map = new Map<string, string>();
+    tours.forEach((tour) => {
+      const key = normalizeCityKey(tour.location);
+      if (!key) return;
+      if (!map.has(key)) {
+        map.set(key, formatCityName(tour.location));
+      }
+    });
+    return Array.from(map.values());
+  }, [tours]);
+
+  const highlights = [
+    {
+      title: t('homeHighlightToursTitle'),
+      body: t('homeHighlightToursBody'),
+    },
+    {
+      title: t('homeHighlightMeetTitle'),
+      body: t('homeHighlightMeetBody'),
+    },
+    {
+      title: t('homeHighlightBotTitle'),
+      body: t('homeHighlightBotBody'),
+    },
+  ];
+
+  const steps = [
+    {
+      title: t('homeStepSearchTitle'),
+      body: t('homeStepSearchBody'),
+    },
+    {
+      title: t('homeStepConnectTitle'),
+      body: t('homeStepConnectBody'),
+    },
+    {
+      title: t('homeStepMeetTitle'),
+      body: t('homeStepMeetBody'),
+    },
+  ];
 
   useEffect(() => {
     const detectAndScrapeCity = async () => {
@@ -143,9 +199,20 @@ export default function HomePage() {
         const city = (geocode.address.city || geocode.address.town || '')
           .trim()
           .toLowerCase();
-        await api.post('/scraper/new/city', { city });
-        const result = await res.data;
-        if (result) await fetchTours();
+
+        if (!city) return;
+
+        const lastScraped = safeStorage.getItem('lastScrapedCity') || '';
+        if (lastScraped === city) return;
+
+        const scrapeRes = await api.post('/scraper/new/city', { city });
+        const added = Boolean(scrapeRes.data?.added);
+
+        safeStorage.setItem('lastScrapedCity', city);
+
+        if (added) {
+          await fetchTours();
+        }
       } catch (err) {
         console.warn('Skipping geolocation-based scraping', err);
       }
@@ -172,6 +239,87 @@ export default function HomePage() {
           initialValue={typeof q === 'string' ? q : ''}
           suggestion={suggestion}
         />
+
+        <section className={styles.introSection}>
+          <Container maxWidth="lg">
+            <div className={styles.introGrid}>
+              <div className={styles.introCopy}>
+                <Typography variant="h2" className={styles.introTitle}>
+                  {t('homeIntroTitle')}
+                </Typography>
+                <Typography className={styles.introText}>
+                  {t('homeIntroBody')}
+                </Typography>
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    className={styles.primaryAction}
+                    onClick={() => router.push('/whois')}
+                  >
+                    {t('homeIntroPrimaryCta')}
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    className={styles.secondaryAction}
+                    onClick={() => router.push('/chatbot')}
+                  >
+                    {t('homeIntroSecondaryCta')}
+                  </Button>
+                </Stack>
+              </div>
+              <div className={styles.introCard}>
+                <Typography variant="h3" className={styles.introCardTitle}>
+                  {t('homeSafetyTitle')}
+                </Typography>
+                <Typography className={styles.introCardText}>
+                  {t('homeSafetyBody')}
+                </Typography>
+              </div>
+            </div>
+          </Container>
+        </section>
+
+        <section className={styles.highlightsSection}>
+          <Container maxWidth="lg">
+            <Typography variant="h2" className={styles.sectionTitle}>
+              {t('homeHighlightsTitle')}
+            </Typography>
+            <div className={styles.highlightGrid}>
+              {highlights.map((item) => (
+                <div key={item.title} className={styles.highlightCard}>
+                  <Typography variant="h3" className={styles.highlightTitle}>
+                    {item.title}
+                  </Typography>
+                  <Typography className={styles.highlightText}>
+                    {item.body}
+                  </Typography>
+                </div>
+              ))}
+            </div>
+          </Container>
+        </section>
+
+        <section className={styles.stepsSection}>
+          <Container maxWidth="lg">
+            <Typography variant="h2" className={styles.sectionTitle}>
+              {t('homeStepsTitle')}
+            </Typography>
+            <div className={styles.stepsGrid}>
+              {steps.map((step, index) => (
+                <div key={step.title} className={styles.stepCard}>
+                  <div className={styles.stepNumber}>{index + 1}</div>
+                  <Typography variant="h3" className={styles.stepTitle}>
+                    {step.title}
+                  </Typography>
+                  <Typography className={styles.stepText}>
+                    {step.body}
+                  </Typography>
+                </div>
+              ))}
+            </div>
+          </Container>
+        </section>
 
         <Container
           maxWidth="lg"
@@ -225,7 +373,7 @@ export default function HomePage() {
                         <TourCard
                           tour={tour}
                           highlight={search}
-                          aria-label={`Tour to ${tour.location}`}
+                          aria-label={t('tourCardAria', { location: tour.location })}
                         />
                       </div>
                     ))}
@@ -271,6 +419,36 @@ export default function HomePage() {
             </Box>
           )}
         </Container>
+
+        <section className={styles.ctaSection}>
+          <Container maxWidth="lg" className={styles.ctaInner}>
+            <div>
+              <Typography variant="h2" className={styles.ctaTitle}>
+                {t('homeCtaTitle')}
+              </Typography>
+              <Typography className={styles.ctaText}>
+                {t('homeCtaBody')}
+              </Typography>
+            </div>
+            <div className={styles.ctaActions}>
+              <Button
+                variant="contained"
+                color="primary"
+                className={styles.primaryAction}
+                onClick={() => router.push('/whois')}
+              >
+                {t('homeCtaPrimary')}
+              </Button>
+              <Button
+                variant="outlined"
+                className={styles.secondaryAction}
+                onClick={handleScrollToTop}
+              >
+                {t('homeCtaSecondary')}
+              </Button>
+            </div>
+          </Container>
+        </section>
       </Layout>
     </>
   );

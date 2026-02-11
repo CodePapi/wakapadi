@@ -75,11 +75,26 @@ export class WhoisService {
         }
   
         const foundUser = await this.userModel.findById(user.userId).lean();
-  
+
+        if (!foundUser) {
+          return {
+            ...base,
+            anonymous: true,
+          };
+        }
+
+        if (foundUser.profileVisible === false) {
+          return {
+            ...base,
+            userId: foundUser._id.toString(),
+            anonymous: true,
+          };
+        }
+
         return {
           ...base,
-          userId: foundUser?._id.toString(),
-          username: foundUser?.username || 'User',
+          userId: foundUser._id.toString(),
+          username: foundUser.username || 'User',
         };
       }),
     );

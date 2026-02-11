@@ -9,6 +9,7 @@ import {
   Alert,
 } from '@mui/material';
 import { api } from '../lib/api/index';
+import { useTranslation } from 'next-i18next';
 
 const initialForm = {
   name: '',
@@ -19,7 +20,8 @@ const initialForm = {
 
 export default function ContactForm() {
   const [form, setForm] = useState(initialForm);
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+  const { t } = useTranslation('common');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -27,15 +29,15 @@ export default function ContactForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setStatus('Sending...');
+    setStatus('sending');
     try {
       await api.post(`/contact`, { ...form });
 
-      setStatus('Message sent!');
+      setStatus('success');
       setForm(initialForm);
     } catch (err) {
       console.error('error', err);
-      setStatus('Failed to send');
+      setStatus('error');
     }
   };
 
@@ -46,10 +48,10 @@ export default function ContactForm() {
       sx={{ maxWidth: 500, mx: 'auto', p: 3 }}
     >
       <Typography variant="h5" gutterBottom>
-        Contact Us
+        {t('contactFormTitle')}
       </Typography>
       <TextField
-        label="Name"
+        label={t('contactFormNameLabel')}
         name="name"
         fullWidth
         required
@@ -58,7 +60,7 @@ export default function ContactForm() {
         onChange={handleChange}
       />
       <TextField
-        label="Email"
+        label={t('contactFormEmailLabel')}
         name="email"
         fullWidth
         required
@@ -68,23 +70,27 @@ export default function ContactForm() {
       />
       <TextField
         select
-        label="Type"
+        label={t('contactFormTypeLabel')}
         name="type"
         fullWidth
         margin="normal"
         value={form.type}
         onChange={handleChange}
       >
-        {['inquiry', 'complaint', 'feedback', 'suggestion', 'other'].map(
-          (option) => (
-            <MenuItem key={option} value={option}>
-              {option}
-            </MenuItem>
-          )
-        )}
+        {[
+          { value: 'inquiry', label: t('contactFormTypeInquiry') },
+          { value: 'complaint', label: t('contactFormTypeComplaint') },
+          { value: 'feedback', label: t('contactFormTypeFeedback') },
+          { value: 'suggestion', label: t('contactFormTypeSuggestion') },
+          { value: 'other', label: t('contactFormTypeOther') },
+        ].map((option) => (
+          <MenuItem key={option.value} value={option.value}>
+            {option.label}
+          </MenuItem>
+        ))}
       </TextField>
       <TextField
-        label="Message"
+        label={t('contactFormMessageLabel')}
         name="message"
         fullWidth
         required
@@ -95,14 +101,18 @@ export default function ContactForm() {
         onChange={handleChange}
       />
       <Button variant="contained" type="submit" sx={{ mt: 2 }}>
-        Submit
+        {t('contactFormSubmit')}
       </Button>
-      {status && (
+      {status !== 'idle' && (
         <Alert
           sx={{ mt: 2 }}
-          severity={status.includes('fail') ? 'error' : 'success'}
+          severity={status === 'error' ? 'error' : 'success'}
         >
-          {status}
+          {status === 'sending'
+            ? t('contactFormStatusSending')
+            : status === 'success'
+              ? t('contactFormStatusSuccess')
+              : t('contactFormStatusError')}
         </Alert>
       )}
     </Box>

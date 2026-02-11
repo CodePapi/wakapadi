@@ -21,11 +21,13 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { formatDistanceToNow } from 'date-fns';
 import Layout from '../components/Layout';
+import PageHeader from '../components/PageHeader';
 import { api } from '../lib/api/index';
 import { motion } from 'framer-motion';
 import PlaceIcon from '@mui/icons-material/Place';
 import styles from '../styles/whois.module.css';
 import funNames from '../lib/data/funNames.json';
+import { safeStorage } from '../lib/storage';
 
 const getRandomFunName = () =>
   funNames[Math.floor(Math.random() * funNames.length)];
@@ -65,6 +67,7 @@ export default function WhoisPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userId, setUserId] = useState('');
+  const [guestLoading, setGuestLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -81,8 +84,8 @@ export default function WhoisPage() {
   };
   useEffect(() => {
     setHasMounted(true);
-    const token = localStorage.getItem('token');
-    const storedUserId = localStorage.getItem('userId');
+    const token = safeStorage.getItem('token');
+    const storedUserId = safeStorage.getItem('userId');
     setIsLoggedIn(!!token);
     if (storedUserId) setUserId(storedUserId);
   }, []);
@@ -103,7 +106,7 @@ export default function WhoisPage() {
             limit: 15,
           },
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
+            Authorization: `Bearer ${safeStorage.getItem('token') || ''}`,
           },
         });
 
@@ -124,6 +127,37 @@ export default function WhoisPage() {
       }
     },
     [userId, t]
+  );
+
+  const createGuestSession = useCallback(async () => {
+    const res = await api.post('/auth/guest');
+    safeStorage.setItem('token', res.data.token);
+    safeStorage.setItem('userId', res.data.userId);
+    safeStorage.setItem('username', res.data.username);
+    setIsLoggedIn(true);
+    setUserId(res.data.userId);
+    return res.data;
+  }, []);
+
+  const handleStartChat = useCallback(
+    async (targetUserId: string) => {
+      try {
+        if (!isLoggedIn) {
+          setGuestLoading(true);
+          await createGuestSession();
+        }
+
+        router.push(
+          targetUserId === 'chatbot' ? 'chatbot' : `/chat/${targetUserId}`
+        );
+      } catch (err) {
+        console.error('Failed to start chat:', err);
+        setError(t('whoisChatStartError'));
+      } finally {
+        setGuestLoading(false);
+      }
+    },
+    [isLoggedIn, createGuestSession, router]
   );
 
   const pingPresence = async (targetCity: string) => {
@@ -192,9 +226,7 @@ export default function WhoisPage() {
               await fetchNearby(detectedCity);
             } catch (geoErr) {
               console.error('Geocoding failed:', geoErr);
-              setError(
-                'Could not determine your location. Please try again or enter your city manually.'
-              );
+              setError(t('whoisGeoError'));
             } finally {
               setLoading(false);
             }
@@ -202,16 +234,14 @@ export default function WhoisPage() {
           (geoErr) => {
             clearTimeout(timeout);
             console.error('Geolocation error:', geoErr);
-            setError(
-              'Location access denied. Please enable location services to see nearby users.'
-            );
+            setError(t('whoisGeoDenied'));
             setLoading(false);
           }
         );
       } catch (err) {
         clearTimeout(timeout);
         console.error('Unexpected error in geolocation flow:', err);
-        setError('An unexpected error occurred. Please try again.');
+        setError(t('whoisUnexpectedError'));
         setLoading(false);
       }
     };
@@ -250,6 +280,11 @@ export default function WhoisPage() {
         <meta name="description" content={t('whoisDescription')} />
         {/* ... other meta tags ... */}
       </Head>
+
+      <PageHeader
+        title={t('whoisNearby')}
+        subtitle={t('whoisSubtitle')}
+      />
 
       <Container maxWidth="md" className={styles.container}>
         <motion.div initial="hidden" animate="visible" variants={fadeInUp}>
@@ -302,6 +337,10 @@ export default function WhoisPage() {
               </Alert>
             )}
 
+            <Alert severity="warning" className={styles.errorAlert}>
+              {t('whoisSafetyWarning')}
+            </Alert>
+
             {isLoggedIn ? (
               <>
               {/* <Box className={styles.visibilityToggle}> */}
@@ -343,6 +382,31 @@ export default function WhoisPage() {
                   className={styles.ctaButton}
                 >
                   {t('loginToConnect')}
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  onClick={async () => {
+                    try {
+                      setGuestLoading(true);
+                      await createGuestSession();
+                      if (city) {
+                        await pingPresence(city);
+                        await fetchNearby(city);
+                      }
+                    } catch (err) {
+                      console.error('Guest session failed:', err);
+                      setError(t('whoisGuestError'));
+                    } finally {
+                      setGuestLoading(false);
+                    }
+                  }}
+                  size="large"
+                  sx={{ mt: 1, ml: 1 }}
+                  className={styles.secondaryButton}
+                  disabled={guestLoading}
+                >
+                  {t('continueAsGuest')}
                 </Button>
               </Box>
             )}
@@ -400,21 +464,19 @@ export default function WhoisPage() {
                             </Box>
                           </Box>
 
-                          {isLoggedIn && !user.anonymous && user.userId && (
+                          {user.userId && (
                             <Button
                               variant="outlined"
                               color="primary"
                               className={styles.chatButton}
-                              onClick={() =>
-                                router.push(
-                                  user.userId === 'chatbot'
-                                    ? 'chatbot'
-                                    : `/chat/${user.userId}`
-                                )
+                              onClick={() => handleStartChat(user.userId!)}
+                              aria-label={
+                                user.userId === 'chatbot'
+                                  ? t('chatWithAssistant')
+                                  : t('chatWith', {
+                                      username: user.username || t('traveler'),
+                                    })
                               }
-                              aria-label={t('chatWith', {
-                                username: user.username,
-                              })}
                               startIcon={<span>💬</span>}
                             >
                               {t('chat')}

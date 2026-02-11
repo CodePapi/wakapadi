@@ -8,11 +8,14 @@ export class UsersService {
   constructor(@InjectModel(User.name) private userModel: Model<User>) {}
 
   async getPreferences(userId: string) {
-    return this.userModel.findById(userId).select('travelPrefs languages socials bio avatarUrl username').lean();
+    return this.userModel
+      .findById(userId)
+      .select('travelPrefs languages socials bio avatarUrl username profileVisible')
+      .lean();
   }
 
   async updatePreferences(userId: string, data: Partial<User>) {
-    const update = {
+    const update: any = {
       travelPrefs: data.travelPrefs,
       languages: data.languages,
       socials: {
@@ -21,6 +24,10 @@ export class UsersService {
         whatsapp: data.socials?.whatsapp || '',
       },
     };
+
+    if (typeof data.profileVisible === 'boolean') {
+      update.profileVisible = data.profileVisible;
+    }
   
     return this.userModel.findByIdAndUpdate(userId, update, { new: true }).lean();
   }

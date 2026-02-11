@@ -4,6 +4,10 @@ import { Container, TextField, Typography, Button, Alert } from '@mui/material';
 import { useRouter } from 'next/router';
 import { api } from '../lib/api/index';
 import Layout from '../components/Layout';
+import PageHeader from '../components/PageHeader';
+import { useTranslation } from 'next-i18next';
+import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
+import { safeStorage } from '../lib/storage';
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -12,6 +16,7 @@ export default function ResetPasswordPage() {
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const { t } = useTranslation('common');
 
   const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
@@ -19,17 +24,17 @@ export default function ResetPasswordPage() {
     setMessage('');
 
     if (!token) {
-      setError('Invalid or missing token.');
+      setError(t('resetInvalidToken'));
       return;
     }
 
     if (!password || password.length < 6) {
-      setError('Password must be at least 6 characters.');
+      setError(t('resetPasswordTooShort'));
       return;
     }
 
     if (password !== confirm) {
-      setError('Passwords do not match.');
+      setError(t('resetPasswordMismatch'));
       return;
     }
 
@@ -39,36 +44,40 @@ export default function ResetPasswordPage() {
         newPassword: password,
       });
       setMessage(
-        res.data.message || 'Password reset successful. You can now log in.'
+        res.data.message || t('resetSuccess')
       );
       setPassword('');
       setConfirm('');
-      localStorage.setItem('token', res.data.token);
-      localStorage.setItem('userId', res.data.userId);
+          safeStorage.setItem('token', res.data.token);
+          safeStorage.setItem('userId', res.data.userId);
       router.push('/');
     } catch (err) {
       console.error(err);
-      setError('Failed to reset password. The link may have expired.');
+      setError(t('resetError'));
     }
   };
 
   return (
-    <Layout title="Reset Password - Wakapadi">
+    <Layout title={t('resetPageTitle')}>
+      <PageHeader
+        title={t('resetTitle')}
+        subtitle={t('resetSubtitle')}
+      />
       <Container
         maxWidth="sm"
-        sx={{ mt: 6, p: 4, boxShadow: 3, borderRadius: 2 }}
+        sx={{ mt: 6, p: 4, boxShadow: 3, borderRadius: 3, bgcolor: 'background.paper' }}
       >
         <Typography variant="h5" gutterBottom>
-          Reset Password
+          {t('resetTitle')}
         </Typography>
         <Typography variant="body2" color="text.secondary" mb={3}>
-          Enter and confirm your new password.
+          {t('resetBody')}
         </Typography>
 
         <form onSubmit={handleSubmit}>
           <TextField
             fullWidth
-            label="New Password"
+            label={t('resetNewPasswordLabel')}
             type="password"
             margin="normal"
             value={password}
@@ -79,7 +88,7 @@ export default function ResetPasswordPage() {
           />
           <TextField
             fullWidth
-            label="Confirm Password"
+            label={t('resetConfirmPasswordLabel')}
             type="password"
             margin="normal"
             value={confirm}
@@ -101,10 +110,18 @@ export default function ResetPasswordPage() {
           )}
 
           <Button type="submit" variant="contained" fullWidth sx={{ mt: 3 }}>
-            Reset Password
+            {t('resetSubmit')}
           </Button>
         </form>
       </Container>
     </Layout>
   );
+}
+
+export async function getStaticProps({ locale }: { locale: string }) {
+  return {
+    props: {
+      ...(await serverSideTranslations(locale, ['common'])),
+    },
+  };
 }

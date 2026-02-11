@@ -46,8 +46,11 @@ export class User extends Document {
   @Prop({ type: [String], default: [] })
   languages: string[];
 
-  @Prop({ default: 'local' }) // 'google' for social login
-  authProvider: 'local' | 'google';
+  @Prop({ default: true })
+  profileVisible: boolean;
+
+  @Prop({ default: 'local' }) // 'google' or 'guest'
+  authProvider: 'local' | 'google' | 'guest';
   
   updatedAt: Date;
 }
