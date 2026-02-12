@@ -13,6 +13,7 @@ import HeroSection from '../components/home/HeroSection';
 import { useRouter } from 'next/router';
 import debounce from 'lodash.debounce';
 import styles from '../styles/HomePage.module.css';
+import { api } from '../lib/api';
 
 export default function HomePage() {
   const { t } = useTranslation('common');
@@ -29,6 +30,88 @@ export default function HomePage() {
   );
 
   useEffect(() => () => debouncedNavigate.cancel(), [debouncedNavigate]);
+
+  // On first visit, attempt to detect user's city and request backend to add+scrape if new
+  useEffect(() => {
+    const reportedKey = 'wakapadi_reported_city';
+
+    const alreadyReported = typeof window !== 'undefined' && window.localStorage.getItem(reportedKey);
+    if (alreadyReported) return;
+
+    if (!('geolocation' in navigator)) return;
+
+    const onSuccess = async (pos: GeolocationPosition) => {
+      try {
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+
+        // Reverse geocode via backend
+        const geoRes = await api.get(`/geolocation/reverse?lat=${lat}&lon=${lon}`);
+        const data = geoRes.data || {};
+        const address = data.address || {};
+
+        const city = address.city || address.town || address.village || address.county || address.state;
+        if (!city) return;
+
+        // Ask backend to scrape new city once (backend will no-op if city exists)
+        await api.post('/scraper/new/city', { city });
+
+        // mark as reported to avoid repeated calls
+        window.localStorage.setItem(reportedKey, city);
+      } catch (err) {
+        // silent fail — don't block UI
+        console.error('City detection/scrape failed', err);
+      }
+    };
+
+    const onError = (err: GeolocationPositionError) => {
+      // ignore permission denied or other errors
+      console.warn('Geolocation error', err);
+
+      // Fallback: attempt IP-based lookup to get a city (uses public ipapi.co)
+      const tryIpLookup = async () => {
+        try {
+          const res = await fetch('https://ipapi.co/json/');
+          if (!res.ok) return;
+          const info = await res.json();
+
+          const cityFromIp = info.city || info.region || info.region_code || info.country_name;
+          if (cityFromIp) {
+            await api.post('/scraper/new/city', { city: cityFromIp });
+            if (typeof window !== 'undefined') {
+              window.localStorage.setItem(reportedKey, cityFromIp);
+            }
+            return;
+          }
+
+          // If ip service returns lat/lon, reverse-geocode via backend
+          const lat = info.latitude || info.lat;
+          const lon = info.longitude || info.lon || info.long;
+          if (lat && lon) {
+            try {
+              const geoRes = await api.get(`/geolocation/reverse?lat=${lat}&lon=${lon}`);
+              const address = geoRes.data?.address || {};
+              const city = address.city || address.town || address.village || address.county || address.state;
+              if (city) {
+                await api.post('/scraper/new/city', { city });
+                if (typeof window !== 'undefined') {
+                  window.localStorage.setItem(reportedKey, city);
+                }
+              }
+            } catch (e) {
+              console.warn('Reverse geocode from IP coordinates failed', e);
+            }
+          }
+        } catch (e) {
+          console.warn('IP lookup failed', e);
+        }
+      };
+
+      tryIpLookup();
+    };
+
+    navigator.geolocation.getCurrentPosition(onSuccess, onError, { maximumAge: 1000 * 60 * 60 * 24 });
+  }, []);
 
   const handleSearchInput = useCallback(
     (value: string) => {
