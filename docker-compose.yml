@@ -1,7 +1,8 @@
+
 version: '3.8'
 
 services:
- frontend:
+  frontend:
     build: ./frontend
     container_name: frontend
     ports:
@@ -9,8 +10,9 @@ services:
     volumes:
       - ./frontend:/app
     environment:
-      - PORT=8080
-      - NODE_ENV=development
+      PORT: 8080
+      NODE_ENV: development
+
   nestjs:
     build: ./backend
     container_name: nestjs
@@ -18,25 +20,24 @@ services:
       - '3000:3000'
     env_file: .env
     environment:
-      - MONGODB_URI=mongodb://mongo:27017/wakapadi
-      - JWT_SECRET=${JWT_SECRET}
-      - THROTTLE_TTL=${THROTTLE_TTL}
-      - THROTTLE_LIMIT=${THROTTLE_LIMIT}
-      - FRONTEND_URL=${FRONTEND_URL}
-      - QDRANTURL=${QDRANTURL}
-      - QDRANTAPIKEYS=${QDRANTAPIKEYS}
-      - NODE_ENV=${NODE_ENV}
+      MONGODB_URI: 'mongodb://mongo:27017/wakapadi'
+      JWT_SECRET: ${JWT_SECRET}
+      THROTTLE_TTL: ${THROTTLE_TTL}
+      THROTTLE_LIMIT: ${THROTTLE_LIMIT}
+      FRONTEND_URL: ${FRONTEND_URL}
+      QDRANTURL: ${QDRANTURL}
+      QDRANTAPIKEYS: ${QDRANTAPIKEYS}
+      NODE_ENV: ${NODE_ENV}
     depends_on:
       - mongo
-      # - qdrant
-    #   - ollama
     restart: always
 
+  # Optional services (disabled by default)
   # qdrant:
   #   image: qdrant/qdrant
   #   container_name: qdrant
   #   ports:
-  #     - "6333:6333"
+  #     - '6333:6333'
   #   volumes:
   #     - qdrant_data:/qdrant/storage
   #   restart: always
@@ -45,10 +46,11 @@ services:
   #   image: ollama/ollama
   #   container_name: ollama
   #   ports:
-  #     - "11434:11434"
+  #     - '11434:11434'
   #   volumes:
   #     - ollama_models:/root/.ollama
   #   restart: always
+
   mongo:
     image: mongo:6
     container_name: mongo
@@ -57,7 +59,8 @@ services:
     volumes:
       - mongo_data:/data/db
     restart: unless-stopped
+
 volumes:
-  qdrant_data:
-  ollama_models:
-  mongo_data:
+  qdrant_data: {}
+  ollama_models: {}
+  mongo_data: {}
