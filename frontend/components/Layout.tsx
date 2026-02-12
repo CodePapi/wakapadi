@@ -45,6 +45,7 @@ import ReactCountryFlag from 'react-country-flag';
 import { safeStorage } from '../lib/storage';
 import { clearDeviceId, ensureAnonymousSession } from '../lib/anonymousAuth';
 import { api } from '../lib/api/index';
+import logo from '../public/logo1.svg';
 
 const languages = [
   { code: 'en', name: 'English', flag: 'US' },
@@ -148,7 +149,7 @@ export default function Layout({
               )}
               <NextLink href="/" className={styles.logoLink} style={{ display: 'flex', alignItems: 'center' }}>
                 <Image 
-                  src="/logo1.png" 
+                  src={logo} 
                   alt="Wakapadi logo" 
                   width={140} 
                   height={38} 
@@ -228,7 +229,7 @@ export default function Layout({
       <Drawer anchor="left" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
         <Box sx={{ width: 280 }} role="presentation">
           <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Image src="/logo1.png" alt="Wakapadi logo" width={110} height={30} style={{ objectFit: 'contain' }} />
+            <Image src={logo} alt="Wakapadi logo" width={110} height={30} style={{ objectFit: 'contain' }} />
             <IconButton onClick={() => setDrawerOpen(false)}><CloseIcon /></IconButton>
           </Box>
           <Divider />
