@@ -7,20 +7,20 @@ services:
     container_name: nest_api
     restart: always
     ports:
-      - "3000:3000"
+      - "3002:3002"
     env_file:
       - .env
 
-  frontend:
-    build: ./frontend
-    container_name: frontend
-    ports:
-      - '8080:8080'
-    volumes:
-      - ./frontend:/app
-    environment:
-      PORT: 8080
-      NODE_ENV: development
+  # frontend:
+  #   build: ./frontend
+  #   container_name: frontend
+  #   ports:
+  #     - '8080:8080'
+  #   volumes:
+  #     - ./frontend:/app
+  #   environment:
+  #     PORT: 8080
+  #     NODE_ENV: development
 
   # nestjs:
   #   build: ./backend
@@ -60,14 +60,14 @@ services:
   #     - ollama_models:/root/.ollama
   #   restart: always
 
-  mongo:
-    image: mongo:6
-    container_name: mongo
-    ports:
-      - '27017:27017'
-    volumes:
-      - mongo_data:/data/db
-    restart: unless-stopped
+  # mongo:
+  #   image: mongo:6
+  #   container_name: mongo
+  #   ports:
+  #     - '27017:27017'
+  #   volumes:
+  #     - mongo_data:/data/db
+  #   restart: unless-stopped
 
 volumes:
   qdrant_data: {}
