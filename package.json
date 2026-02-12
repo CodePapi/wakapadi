@@ -8,7 +8,7 @@
     "dev:embed": "./.venv/bin/python embed_service/embed_service.py",
     "start:compose": "docker compose up --build",
     "scrape:all": "curl -X POST http://localhost:3002/scraper/run",
-    "vercel-build": "npm --prefix backend run build",
+    "vercel-build": "npm --prefix backend install --no-audit --no-fund && npm --prefix backend run build",
     "vercel-deploy": "vercel --prod"
   },
   "devDependencies": {
