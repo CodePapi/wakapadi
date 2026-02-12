@@ -1,0 +1,66 @@
+.main {
+  position: relative;
+}
+
+.main .container {
+  width: 85%;
+  margin-top: 2rem;
+  max-width: none !important;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1rem;
+  gap: 4rem;
+}
+
+.container.homepage {
+  margin-top: 0;
+  padding: 0;
+  position: absolute;
+  width: 100%;
+  z-index: 1;
+}
+
+.container .title {
+  background: linear-gradient(90deg, #4d9ceb 0%, #1976d2 100%);
+  color: #fff;
+}
+
+.main .header {
+  background: linear-gradient(to right, #007cf0, #00dfd8);
+  color: white;
+  font-size: 2.6rem;
+  font-weight: 600;
+  letter-spacing: 0.03rem;
+  width: 100%;
+  text-align: center;
+  padding: 3rem 0;
+  margin-top: 1.5rem;
+}
+
+@media only screen and (max-width: 1200px) {
+  .main .container {
+    width: 90%;
+    margin-bottom: 2rem;
+    margin-top: 2rem;
+  }
+
+  .container.homepage {
+    width: 100%;
+    margin: 0 auto;
+  }
+}
+
+@media only screen and (max-width: 768px) {
+  .main .container {
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+}
+
+@media only screen and (max-width: 500px) {
+  .main .container {
+    width: 100%;
+    margin: 0;
+  }
+}

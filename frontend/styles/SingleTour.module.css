@@ -1,53 +1,52 @@
 .container {
-    padding: 0;
-  }
-  
-  .imageContainer {
-    position: relative;
-    margin-bottom: 2rem;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-    transition: transform 0.3s ease;
-  }
-  
-  .imageContainer:hover {
-    transform: translateY(-2px);
-  }
-  
-  .imageContainer img {
-    width: 100%;
-    height: 400px;
-    object-fit: cover;
-    transition: transform 0.3s ease;
-  }
-  
-  .imageContainer:hover img {
-    transform: scale(1.02);
-  }
-  
-  .description {
-    white-space: pre-line;
-    line-height: 1.8;
-    font-size: 1.1rem;
-    color: #444;
-  }
-  
-  .section {
-    margin-bottom: 3rem;
-  }
-  
-  .mapContainer {
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    margin: 3rem 0;
-    background: red !important;
-    z-index: 1 !important;
-  }
-  
+  padding: 0;
+}
 
-  /* styles/SingleTour.module.css */
+.imageContainer {
+  position: relative;
+  margin-bottom: 2rem;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.imageContainer:hover {
+  transform: translateY(-2px);
+}
+
+.imageContainer img {
+  width: 100%;
+  height: 400px;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.imageContainer:hover img {
+  transform: scale(1.02);
+}
+
+.description {
+  white-space: pre-line;
+  line-height: 1.8;
+  font-size: 1.1rem;
+  color: #444;
+}
+
+.section {
+  margin-bottom: 3rem;
+}
+
+.mapContainer {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin: 3rem 0;
+  background: red !important;
+  /* z-index: 1 !important; */
+}
+
+/* styles/SingleTour.module.css */
 
 .mapContainer {
   height: 100%;
@@ -65,37 +64,44 @@
   color: #333; /* Darken zoom controls for better visibility */
 }
 
+@media (max-width: 768px) {
+  .imageContainer img {
+    height: 300px;
+  }
 
-  @media (max-width: 768px) {
-    .imageContainer img {
-      height: 300px;
-    }
-    
-    .description {
-      font-size: 1rem;
-    }
-  
-    .mapContainer {
-      height: 300px;
-    }
+  .description {
+    font-size: 1rem;
   }
-  
-  /* Animation for the image overlay */
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+
+  .mapContainer {
+    height: 300px;
   }
-  
-  .image-overlay {
-    animation: fadeIn 0.3s ease;
+}
+
+/* Animation for the image overlay */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
   }
-  
-  /* Loading spinner animation */
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+  to {
+    opacity: 1;
   }
-  
-  .loader {
-    animation: spin 1s linear infinite;
+}
+
+.image-overlay {
+  animation: fadeIn 0.3s ease;
+}
+
+/* Loading spinner animation */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
   }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.loader {
+  animation: spin 1s linear infinite;
+}

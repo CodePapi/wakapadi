@@ -1,6 +1,16 @@
 version: '3.8'
 
 services:
+ frontend:
+    build: ./frontend
+    container_name: frontend
+    ports:
+      - '8080:8080'
+    volumes:
+      - ./frontend:/app
+    environment:
+      - PORT=8080
+      - NODE_ENV=development
   nestjs:
     build: ./backend
     container_name: nestjs

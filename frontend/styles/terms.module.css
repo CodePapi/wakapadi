@@ -1,0 +1,24 @@
+.container {
+  margin: 3rem 0;
+  font-family: 'Inter', sans-serif;
+  max-width: fit-content;
+}
+
+.container p,
+.container li {
+  font-size: 1.2rem;
+  line-height: 1.6;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.container .sectionTitle {
+  margin-top: 3rem;
+  margin-bottom: 0.8rem;
+  font-weight: 600;
+  font-size: 1.5rem;
+}
+
+.container ul {
+  margin-top: -0.5rem;
+}
