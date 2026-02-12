@@ -9,7 +9,7 @@
     "start:compose": "docker compose up --build",
     "scrape:all": "curl -X POST http://localhost:3002/scraper/run"
     ,
-    "vercel-build": "npm --prefix backend run build && npm --prefix frontend run build",
+    "vercel-build": "npm --prefix backend run build",
     "vercel-deploy": "vercel --prod"
   },
   "devDependencies": {
