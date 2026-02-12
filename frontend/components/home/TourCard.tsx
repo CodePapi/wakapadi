@@ -65,7 +65,7 @@ export default function TourCard({
               alt={tour.altText || tour.title}
               fill
               className={styles.cardImage}
-              onLoadingComplete={() => setImageLoading(false)}
+              onLoad={() => setImageLoading(false)}
               style={{ objectFit: 'cover' }}
               sizes="(max-width: 600px) 100vw, (max-width: 900px) 50vw, 33vw"
               priority={false}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import {
   Container,
   Typography,
@@ -11,13 +11,11 @@ import {
   ListItemText,
   Chip,
   Button,
-  TextField,
   MenuItem,
   Select,
   OutlinedInput,
   Snackbar,
   Alert,
-  IconButton,
   Switch,
   FormControlLabel,
 } from '@mui/material';
@@ -31,7 +29,6 @@ import PageHeader from '../components/PageHeader';
 import moment from 'moment';
 import { api } from '../lib/api/index';
 import styles from '../styles/Profile.module.css';
-import { StringNullableChain } from 'lodash';
 import { safeStorage } from '../lib/storage';
 import { clearDeviceId, ensureAnonymousSession } from '../lib/anonymousAuth';
 
@@ -41,7 +38,7 @@ interface User {
   avatarUrl?: string;
   travelPrefs?: string[];
   languages?: string[];
-  bio?:StringNullableChain;
+  bio?: string;
   profileVisible?: boolean;
   gender?: string;
   socials?: {
@@ -89,7 +86,8 @@ export default function ProfilePage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [socket, setSocket] = useState<Socket | null>(null);
+  const socketRef = useRef<Socket | null>(null);
+  
   const [travelPrefs, setTravelPrefs] = useState<string[]>([]);
   const [languages, setLanguages] = useState<string[]>([]);
   const [instagram, setInstagram] = useState('');
@@ -101,75 +99,86 @@ export default function ProfilePage() {
     error: '',
   });
 
-  const getTravelLabel = (value: string) =>
-    travelOptions.find((option) => option.value === value)
-      ? t(
-          travelOptions.find((option) => option.value === value)!.labelKey
-        )
-      : value;
+  const getTravelLabel = useCallback((value: string) => {
+    const option = travelOptions.find((opt) => opt.value === value);
+    return option ? t(option.labelKey) : value;
+  }, [t]);
 
-  const getLanguageLabel = (value: string) =>
-    languageOptions.find((option) => option.value === value)
-      ? t(
-          languageOptions.find((option) => option.value === value)!.labelKey
-        )
-      : value;
+  const getLanguageLabel = useCallback((value: string) => {
+    const option = languageOptions.find((opt) => opt.value === value);
+    return option ? t(option.labelKey) : value;
+  }, [t]);
 
   const getGenderLabel = (value?: string) => {
     if (!value) return t('profileGenderUndisclosed');
-    if (value === 'female') return t('profileGenderFemale');
-    if (value === 'male') return t('profileGenderMale');
-    if (value === 'nonbinary') return t('profileGenderNonBinary');
-    return t('profileGenderOther');
+    const labels: Record<string, string> = {
+      female: t('profileGenderFemale'),
+      male: t('profileGenderMale'),
+      nonbinary: t('profileGenderNonBinary'),
+      other: t('profileGenderOther'),
+    };
+    return labels[value] || t('profileGenderOther');
   };
 
-  useEffect(() => {
-    (async () => {
-      try {
-        setLoading(true);
-        const session = await ensureAnonymousSession();
-        const userId = session.userId || '';
+  const fetchInbox = useCallback(async () => {
+    try {
+      const res = await api.get('/whois/chat/inbox');
+      setConversations(res.data);
+    } catch (error) {
+      console.error('Failed to fetch inbox', error);
+    }
+  }, []);
 
-        const [userRes, convRes] = await Promise.all([
-          api.get(`/users/preferences/${userId}`), // Original endpoint
-          api.get('/whois/chat/inbox'), // Original endpoint
-        ]);
+  const initData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const session = await ensureAnonymousSession();
+      const userId = session.userId || '';
 
-        setUser(userRes.data);
-        setTravelPrefs(userRes.data.travelPrefs || []);
-        setLanguages(userRes.data.languages || []);
-        setInstagram(userRes.data.socials?.instagram || '');
-        setTwitter(userRes.data.socials?.twitter || '');
-        setProfileVisible(userRes.data.profileVisible ?? true);
-        setGender(userRes.data.gender || '');
-        setConversations(convRes.data);
+      const [userRes] = await Promise.all([
+        api.get(`/users/preferences/${userId}`),
+        fetchInbox(),
+      ]);
 
+      const userData = userRes.data;
+      setUser(userData);
+      setTravelPrefs(userData.travelPrefs || []);
+      setLanguages(userData.languages || []);
+      setInstagram(userData.socials?.instagram || '');
+      setTwitter(userData.socials?.twitter || '');
+      setProfileVisible(userData.profileVisible ?? true);
+      setGender(userData.gender || '');
+
+      // Initialize Socket
+      if (!socketRef.current) {
         const newSocket = io(process.env.NEXT_PUBLIC_SOCKET_URL || '', {
           auth: { token: safeStorage.getItem('token') },
         });
 
-        newSocket.on('newMessage', () => {
-          api.get('/conversations').then((res) => setConversations(res.data));
-        });
-
-        setSocket(newSocket);
-      } catch (error) {
-        console.log('error', error);
-        setNotifications((prev) => ({
-          ...prev,
-          error: t('profileLoadError'),
-        }));
-      } finally {
-        setLoading(false);
+        newSocket.on('newMessage', fetchInbox);
+        socketRef.current = newSocket;
       }
-    })();
+    } catch (error) {
+      console.error('Profile load error', error);
+      setNotifications((prev) => ({
+        ...prev,
+        error: t('profileLoadError'),
+      }));
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchInbox, t]);
 
-    // fetchData();
+  useEffect(() => {
+    initData();
 
     return () => {
-      socket?.disconnect();
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
     };
-  }, []);
+  }, [initData]);
 
   const handleSave = async () => {
     try {
@@ -185,16 +194,11 @@ export default function ProfilePage() {
         error: '',
       });
     } catch (error) {
-      console.error('error', error);
       setNotifications({
         success: '',
         error: t('profileSaveError'),
       });
     }
-  };
-
-  const closeNotification = () => {
-    setNotifications({ success: '', error: '' });
   };
 
   const handleDeleteAccount = async () => {
@@ -206,7 +210,6 @@ export default function ProfilePage() {
       clearDeviceId();
       window.location.href = '/';
     } catch (error) {
-      console.error('delete account error', error);
       setNotifications({ success: '', error: t('profileDeleteError') });
     }
   };
@@ -218,353 +221,169 @@ export default function ProfilePage() {
         subtitle={t('profileSubtitle')}
       />
       <Container maxWidth="lg" className={styles.container}>
-        {user && !loading && (
-          <section className={styles.profileHero}>
-            <div className={styles.profileIdentity}>
-              <Avatar
-                src={user.avatarUrl || `/default-avatar.png`}
-                alt={`${user.username}'s avatar`}
-                className={styles.avatar}
-              />
-              <div className={styles.profileIdentityText}>
-                <h2 className={styles.username}>{user.username}</h2>
-                <p className={styles.userBio}>{t('profileSubtitle')}</p>
-                <div className={styles.metaRow}>
-                  <span className={styles.metaChip}>
-                    {profileVisible
-                      ? t('profileVisibilityOn')
-                      : t('profileVisibilityOff')}
-                  </span>
-                  <span className={styles.metaChip}>
-                    {t('profileGenderLabel')}: {getGenderLabel(gender)}
-                  </span>
-                  <span className={styles.metaChip}>
-                    {t('profileTravelInterestsLabel')}: {travelPrefs.length}
-                  </span>
-                  <span className={styles.metaChip}>
-                    {t('profileLanguagesLabel')}: {languages.length}
-                  </span>
+        {loading ? (
+          <Box display="flex" flexDirection="column" alignItems="center" mt={10}>
+            <CircularProgress />
+            <Typography mt={2}>{t('profileLoading')}</Typography>
+          </Box>
+        ) : user ? (
+          <>
+            <section className={styles.profileHero}>
+              <div className={styles.profileIdentity}>
+                <Avatar
+                  src={user.avatarUrl || `/default-avatar.png`}
+                  className={styles.avatar}
+                />
+                <div className={styles.profileIdentityText}>
+                  <h2 className={styles.username}>{user.username}</h2>
+                  <div className={styles.metaRow}>
+                    <Chip label={getGenderLabel(gender)} size="small" />
+                    <Chip 
+                      label={profileVisible ? t('profileVisibilityOn') : t('profileVisibilityOff')} 
+                      color={profileVisible ? "success" : "default"}
+                      size="small"
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className={styles.profileHeroActions}>
-              <Button
-                variant="contained"
-                onClick={handleSave}
-                className={styles.primaryAction}
-                aria-label={t('profileSaveAria')}
-              >
+              <Button variant="contained" onClick={handleSave}>
                 {t('profileSaveButton')}
               </Button>
-            </div>
-          </section>
-        )}
-
-        {/* Main Content */}
-        {loading ? (
-          <div className={styles.loading} role="status" aria-live="polite">
-            <CircularProgress aria-label={t('profileLoadingAria')} />
-            <p>{t('profileLoading')}</p>
-          </div>
-        ) : user ? (
-          <main className={styles.profileGrid}>
-            <div className={styles.mainColumn}>
-            {/* Preferences Section */}
-            <section
-              className={styles.section}
-              aria-labelledby="preferences-heading"
-            >
-              <h2 id="preferences-heading" className={styles.sectionTitle}>
-                {t('profilePreferencesTitle')}
-              </h2>
-
-              <div className={styles.formGroup}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={profileVisible}
-                      onChange={(e) => setProfileVisible(e.target.checked)}
-                      color="primary"
-                      inputProps={{
-                        'aria-label': t('profileVisibilityAria'),
-                      }}
-                    />
-                  }
-                  label={
-                    profileVisible
-                      ? t('profileVisibilityOn')
-                      : t('profileVisibilityOff')
-                  }
-                />
-                <p className={styles.helperText}>
-                  {t('profileVisibilityHelp')}
-                </p>
-              </div>
-
-              <div className={styles.formGroup}>
-                <label htmlFor="gender" className={styles.formLabel}>
-                  {t('profileGenderLabel')}
-                </label>
-                <Select
-                  value={gender}
-                  onChange={(e) => setGender(e.target.value as string)}
-                  input={<OutlinedInput id="gender" />}
-                  fullWidth
-                >
-                  <MenuItem value="">{t('profileGenderUndisclosed')}</MenuItem>
-                  <MenuItem value="female">{t('profileGenderFemale')}</MenuItem>
-                  <MenuItem value="male">{t('profileGenderMale')}</MenuItem>
-                  <MenuItem value="nonbinary">{t('profileGenderNonBinary')}</MenuItem>
-                  <MenuItem value="other">{t('profileGenderOther')}</MenuItem>
-                </Select>
-                <p className={styles.helperText}>
-                  {t('profileGenderHelp')}
-                </p>
-              </div>
-
-              <div className={styles.formGroup}>
-                <label htmlFor="travel-interests" className={styles.formLabel}>
-                  {t('profileTravelInterestsLabel')}
-                </label>
-                <Select
-                  multiple
-                  value={travelPrefs}
-                  onChange={(e) => setTravelPrefs(e.target.value as string[])}
-                  input={<OutlinedInput id="travel-interests" />}
-                  renderValue={(selected) => (
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                      {selected.map((value) => (
-                        <Chip
-                          key={value}
-                          label={getTravelLabel(value)}
-                          onDelete={() =>
-                            setTravelPrefs((prev) =>
-                              prev.filter((item) => item !== value)
-                            )
-                          }
-                          aria-label={t('removeItem', { item: getTravelLabel(value) })}
-                        />
-                      ))}
-                    </Box>
-                  )}
-                  fullWidth
-                  aria-describedby="travel-interests-help"
-                >
-                  {travelOptions.map((option) => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {t(option.labelKey)}
-                    </MenuItem>
-                  ))}
-                </Select>
-                <p id="travel-interests-help" className={styles.helperText}>
-                  {t('profileTravelInterestsHelp')}
-                </p>
-              </div>
-
-              <div className={styles.formGroup}>
-                <label htmlFor="languages" className={styles.formLabel}>
-                  {t('profileLanguagesLabel')}
-                </label>
-                <Select
-                  multiple
-                  value={languages}
-                  onChange={(e) => setLanguages(e.target.value as string[])}
-                  input={<OutlinedInput id="languages" />}
-                  renderValue={(selected) => (
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                      {selected.map((value) => (
-                        <Chip
-                          key={value}
-                          label={getLanguageLabel(value)}
-                          onDelete={() =>
-                            setLanguages((prev) =>
-                              prev.filter((item) => item !== value)
-                            )
-                          }
-                          aria-label={t('removeItem', { item: getLanguageLabel(value) })}
-                        />
-                      ))}
-                    </Box>
-                  )}
-                  fullWidth
-                  aria-describedby="languages-help"
-                >
-                  {languageOptions.map((lang) => (
-                    <MenuItem key={lang.value} value={lang.value}>
-                      {t(lang.labelKey)}
-                    </MenuItem>
-                  ))}
-                </Select>
-                <p id="languages-help" className={styles.helperText}>
-                  {t('profileLanguagesHelp')}
-                </p>
-              </div>
             </section>
 
-            {/* Social Media Section */}
-            <section
-              className={styles.section}
-              aria-labelledby="social-media-heading"
-            >
-              <h2 id="social-media-heading" className={styles.sectionTitle}>
-                {t('profileSocialTitle')}
-              </h2>
-              <TextField
-                label={t('profileInstagramLabel')}
-                value={instagram}
-                onChange={(e) => setInstagram(e.target.value)}
-                fullWidth
-                margin="normal"
-                InputProps={{
-                  startAdornment: <Typography mr={1}>@</Typography>,
-                }}
-                aria-label={t('profileInstagramAria')}
-                placeholder={t('profileInstagramPlaceholder')}
-              />
-              <TextField
-                label={t('profileTwitterLabel')}
-                value={twitter}
-                onChange={(e) => setTwitter(e.target.value)}
-                fullWidth
-                margin="normal"
-                InputProps={{
-                  startAdornment: <Typography mr={1}>@</Typography>,
-                }}
-                aria-label={t('profileTwitterAria')}
-                placeholder={t('profileTwitterPlaceholder')}
-              />
-            </section>
-            <section
-              className={styles.section}
-              aria-labelledby="recent-chats-heading"
-            >
-              <h2 id="recent-chats-heading" className={styles.sectionTitle}>
-                {t('profileRecentChats')}
-              </h2>
-              <List className={styles.conversationList}>
-                {conversations.length > 0 ? (
-                  conversations.map((conv) => (
-                    <ListItem
-                      key={conv._id}
-                      className={styles.conversationItem}
-                      component={Link}
-                      href={`/chat/${conv.otherUser._id}`}
-                      aria-label={t('chatWith', { username: conv.otherUser.username })}
-                    >
-                      <ListItemAvatar>
-                        <Avatar
-                          src={conv.otherUser.avatarUrl}
-                          alt={`${conv.otherUser.username}'s avatar`}
-                        />
-                      </ListItemAvatar>
-                      <ListItemText
-                        primary={conv.otherUser.username}
-                        secondary={
-                          <>
-                            <Typography
-                              component="span"
-                              variant="body2"
-                              color="text.primary"
-                            >
-                              {conv.message.message}
-                            </Typography>
-                            <Typography
-                              variant="caption"
-                              display="block"
-                              color="text.secondary"
-                            >
-                              {moment(conv.message.createdAt).fromNow()}
-                            </Typography>
-                          </>
-                        }
+            <main className={styles.profileGrid}>
+              <div className={styles.mainColumn}>
+                <section className={styles.section}>
+                  <Typography variant="h6" gutterBottom>{t('profilePreferencesTitle')}</Typography>
+                  
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={profileVisible}
+                        onChange={(e) => setProfileVisible(e.target.checked)}
                       />
-                      <IconButton
-                        edge="end"
-                        aria-label={t('profileGoToChat', { username: conv.otherUser.username })}
-                      >
-                        <ChatIcon />
-                      </IconButton>
-                    </ListItem>
-                  ))
-                ) : (
-                  <p className={styles.noConversations}>
-                    {t('profileNoConversations')}
-                  </p>
-                )}
-              </List>
-            </section>
-            </div>
+                    }
+                    label={t('profileVisibilityLabel')}
+                  />
 
-            <aside className={styles.sideColumn}>
-              <section className={`${styles.section} ${styles.actionCard}`}>
-                <h2 className={styles.sectionTitle}>{t('profileSaveButton')}</h2>
-                <Button
-                  variant="contained"
-                  onClick={handleSave}
-                  className={styles.primaryAction}
-                  aria-label={t('profileSaveAria')}
-                  fullWidth
-                >
-                  {t('profileSaveButton')}
-                </Button>
-              </section>
+                  <Box mt={3}>
+                    <Typography variant="subtitle2">{t('profileGenderLabel')}</Typography>
+                    <Select
+                      value={gender}
+                      onChange={(e) => setGender(e.target.value as string)}
+                      fullWidth
+                      displayEmpty
+                    >
+                      <MenuItem value="">{t('profileGenderUndisclosed')}</MenuItem>
+                      <MenuItem value="female">{t('profileGenderFemale')}</MenuItem>
+                      <MenuItem value="male">{t('profileGenderMale')}</MenuItem>
+                      <MenuItem value="nonbinary">{t('profileGenderNonBinary')}</MenuItem>
+                      <MenuItem value="other">{t('profileGenderOther')}</MenuItem>
+                    </Select>
+                  </Box>
 
-              <section className={`${styles.section} ${styles.dangerCard}`} aria-labelledby="account-danger">
-                <h2 id="account-danger" className={styles.sectionTitle}>
-                  {t('profileDeleteTitle')}
-                </h2>
-                <Typography className={styles.helperText}>
-                  {t('profileDeleteDescription')}
-                </Typography>
-                <Button
-                  variant="outlined"
-                  color="error"
-                  onClick={handleDeleteAccount}
-                  fullWidth
-                >
-                  {t('profileDeleteAction')}
-                </Button>
-              </section>
-            </aside>
-          </main>
+                  <Box mt={3}>
+                    <Typography variant="subtitle2">{t('profileTravelInterestsLabel')}</Typography>
+                    <Select
+                      multiple
+                      value={travelPrefs}
+                      onChange={(e) => setTravelPrefs(e.target.value as string[])}
+                      input={<OutlinedInput />}
+                      fullWidth
+                      renderValue={(selected) => (
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                          {selected.map((value) => (
+                            <Chip key={value} label={getTravelLabel(value)} size="small" />
+                          ))}
+                        </Box>
+                      )}
+                    >
+                      {travelOptions.map((opt) => (
+                        <MenuItem key={opt.value} value={opt.value}>{t(opt.labelKey)}</MenuItem>
+                      ))}
+                    </Select>
+                  </Box>
+
+                  <Box mt={3}>
+                    <Typography variant="subtitle2">{t('profileLanguagesLabel')}</Typography>
+                    <Select
+                      multiple
+                      value={languages}
+                      onChange={(e) => setLanguages(e.target.value as string[])}
+                      input={<OutlinedInput />}
+                      fullWidth
+                      renderValue={(selected) => (
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                          {selected.map((value) => (
+                            <Chip key={value} label={getLanguageLabel(value)} size="small" />
+                          ))}
+                        </Box>
+                      )}
+                    >
+                      {languageOptions.map((lang) => (
+                        <MenuItem key={lang.value} value={lang.value}>{t(lang.labelKey)}</MenuItem>
+                      ))}
+                    </Select>
+                  </Box>
+                </section>
+
+                <section className={styles.section}>
+                  <Typography variant="h6" gutterBottom>{t('profileRecentChats')}</Typography>
+                  <List>
+                    {conversations.length > 0 ? (
+                      conversations.map((conv) => (
+                        <ListItem
+                          key={conv._id}
+                          component={Link}
+                          href={`/chat/${conv.otherUser._id}`}
+                        >
+                          <ListItemAvatar>
+                            <Avatar src={conv.otherUser.avatarUrl} />
+                          </ListItemAvatar>
+                          <ListItemText
+                            primary={conv.otherUser.username}
+                            secondary={conv.message.message}
+                          />
+                          <Typography variant="caption">
+                            {moment(conv.message.createdAt).fromNow()}
+                          </Typography>
+                        </ListItem>
+                      ))
+                    ) : (
+                      <Typography color="textSecondary">{t('profileNoConversations')}</Typography>
+                    )}
+                  </List>
+                </section>
+              </div>
+
+              <aside className={styles.sideColumn}>
+                <Paper className={styles.dangerCard} sx={{ p: 2, bgcolor: '#fff5f5' }}>
+                  <Typography variant="h6" color="error">{t('profileDeleteTitle')}</Typography>
+                  <Typography variant="body2" mb={2}>{t('profileDeleteDescription')}</Typography>
+                  <Button variant="outlined" color="error" fullWidth onClick={handleDeleteAccount}>
+                    {t('profileDeleteAction')}
+                  </Button>
+                </Paper>
+              </aside>
+            </main>
+          </>
         ) : (
-          <div className={styles.errorMessage} role="alert">
-            <Typography color="error">
-              {t('profileLoadErrorFallback')}
-            </Typography>
-          </div>
+          <Alert severity="error">{t('profileLoadErrorFallback')}</Alert>
         )}
 
-        {/* Notifications */}
         <Snackbar
           open={!!notifications.success}
-          autoHideDuration={6000}
-          onClose={closeNotification}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          autoHideDuration={4000}
+          onClose={() => setNotifications({ ...notifications, success: '' })}
         >
-          <Alert
-            onClose={closeNotification}
-            severity="success"
-            sx={{ width: '100%' }}
-            variant="filled"
-          >
-            {notifications.success}
-          </Alert>
+          <Alert severity="success" variant="filled">{notifications.success}</Alert>
         </Snackbar>
         <Snackbar
           open={!!notifications.error}
-          autoHideDuration={6000}
-          onClose={closeNotification}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          autoHideDuration={4000}
+          onClose={() => setNotifications({ ...notifications, error: '' })}
         >
-          <Alert
-            onClose={closeNotification}
-            severity="error"
-            sx={{ width: '100%' }}
-            variant="filled"
-          >
-            {notifications.error}
-          </Alert>
+          <Alert severity="error" variant="filled">{notifications.error}</Alert>
         </Snackbar>
       </Container>
     </Layout>
@@ -578,3 +397,6 @@ export async function getStaticProps({ locale }: { locale: string }) {
     },
   };
 }
+
+// Helper for side columns in CSS modules (example)
+import { Paper } from '@mui/material';

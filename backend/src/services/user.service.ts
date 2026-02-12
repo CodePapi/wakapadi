@@ -12,6 +12,17 @@ export class UsersService {
     @InjectModel(UserReport.name) private reportModel: Model<UserReport>,
     @InjectModel(UserBlock.name) private blockModel: Model<UserBlock>,
   ) {}
+  async getAllUsers() {
+    return this.userModel.find().select('username email role _id').lean();
+  }
+  async deleteUser(userId: string) {
+    // Remove the user by ID
+    await this.userModel.findByIdAndDelete(userId);
+    // Optionally: remove related blocks, reports, etc.
+    await this.blockModel.deleteMany({ $or: [{ blockerId: userId }, { blockedId: userId }] });
+    await this.reportModel.deleteMany({ $or: [{ reporterId: userId }, { reportedId: userId }] });
+    return { success: true };
+  }
 
   async getPreferences(userId: string) {
     return this.userModel

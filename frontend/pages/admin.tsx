@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
 import {
   Alert,
   Box,
@@ -10,51 +15,125 @@ import {
   Stack,
   TextField,
   Typography,
+  CircularProgress,
 } from '@mui/material';
 import Layout from '../components/Layout';
 import { api } from '../lib/api/index';
 import styles from '../styles/AdminDashboard.module.css';
 
-const parseCities = (value: string) =>
-  value
-    .split(/[\n,]/g)
-    .map((city) => city.trim())
-    .filter(Boolean);
+// Interfaces to replace 'any'
+interface User {
+  _id: string;
+  username?: string;
+  email?: string;
+  role: string;
+}
 
-const getTodayIso = () => new Date().toISOString().slice(0, 10);
+interface Feedback {
+  _id: string;
+  isHelpful: boolean;
+  feedbackText?: string;
+  message?: string;
+  timestamp: string;
+}
+
+interface Report {
+  _id: string;
+  reportedId: User | string;
+  reporterId: User | string;
+  reason: string;
+  createdAt: string;
+}
+
+interface Block {
+  _id: string;
+  blockedId: User | string;
+  blockerId: User | string;
+  createdAt: string;
+}
+
+interface ContactMessage {
+  _id: string;
+  name: string;
+  email: string;
+  message: string;
+  type?: string;
+  createdAt: string;
+}
 
 export default function AdminDashboardPage() {
+  const parseCities = (value: string) =>
+    value
+      .split(/\n|,/g)
+      .map((city) => city.trim())
+      .filter(Boolean);
+
+  const getTodayIso = () => new Date().toISOString().slice(0, 10);
+
   const apiBase = process.env.NEXT_PUBLIC_SOCKET_URL;
+
   const [cities, setCities] = useState<string[]>([]);
+  const [deleteUserDialog, setDeleteUserDialog] = useState<{
+    open: boolean;
+    userId: string | null;
+    username: string | null;
+    context: 'report' | 'block' | null;
+  }>({ open: false, userId: null, username: null, context: null });
+
+  const [isDeletingUser, setIsDeletingUser] = useState(false);
   const [cityInput, setCityInput] = useState('');
   const [scrapeCityInput, setScrapeCityInput] = useState('');
   const [notice, setNotice] = useState<{
     type: 'success' | 'error' | 'info';
     message: string;
   } | null>(null);
+
   const [isScrapingAll, setIsScrapingAll] = useState(false);
   const [isAddingCities, setIsAddingCities] = useState(false);
   const [isScrapingCity, setIsScrapingCity] = useState(false);
   const [isSeedingUsers, setIsSeedingUsers] = useState(false);
   const [isSeedingWhois, setIsSeedingWhois] = useState(false);
+
   const [visitDate, setVisitDate] = useState(getTodayIso());
   const [dailyVisits, setDailyVisits] = useState<number | null>(null);
   const [isLoadingVisits, setIsLoadingVisits] = useState(false);
-  const [feedback, setFeedback] = useState<any[]>([]);
+
+  const [feedback, setFeedback] = useState<Feedback[]>([]);
   const [feedbackStats, setFeedbackStats] = useState<{
     helpfulCount: number;
     unhelpfulCount: number;
     helpfulPercentage: number;
   } | null>(null);
-  const [reports, setReports] = useState<any[]>([]);
-  const [blocks, setBlocks] = useState<any[]>([]);
+
+  const [reports, setReports] = useState<Report[]>([]);
+  const [blocks, setBlocks] = useState<Block[]>([]);
   const [isLoadingInsights, setIsLoadingInsights] = useState(false);
-  const [contactMessages, setContactMessages] = useState<any[]>([]);
+
+  const [contactMessages, setContactMessages] = useState<ContactMessage[]>([]);
   const [contactPage, setContactPage] = useState(1);
   const [contactTotal, setContactTotal] = useState(0);
   const [isLoadingContacts, setIsLoadingContacts] = useState(false);
   const contactLimit = 20;
+
   const [tourCount, setTourCount] = useState<number | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+
+  const fetchUsers = useCallback(async () => {
+    setIsLoadingUsers(true);
+    try {
+      const res = await api.get('/users/all');
+      setUsers(Array.isArray(res.data) ? res.data : []);
+    } catch {
+      setUsers([]);
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   const sortedCities = useMemo(
     () => [...cities].sort((a, b) => a.localeCompare(b)),
@@ -69,6 +148,7 @@ export default function AdminDashboardPage() {
       });
       return;
     }
+
     const res = await api.get('/cities/all').catch((error) => {
       console.warn('Failed to load cities', error);
       setNotice({
@@ -82,6 +162,7 @@ export default function AdminDashboardPage() {
     });
 
     if (!res) return;
+
     if (Array.isArray(res.data)) {
       setCities(res.data);
     }
@@ -94,95 +175,96 @@ export default function AdminDashboardPage() {
   }, [fetchCities]);
 
   const fetchInsights = useCallback(async () => {
-    if (!apiBase) {
-      return;
-    }
+    if (!apiBase) return;
+
     setIsLoadingInsights(true);
+
     const results = await Promise.all([
-      api.get('/tours').catch((error) => {
-        console.warn('Failed to load tours', error);
-        return null;
-      }),
-      api.get('/feedback', { params: { limit: 20 } }).catch((error) => {
-        console.warn('Failed to load feedback', error);
-        return null;
-      }),
-      api.get('/feedback/stats').catch((error) => {
-        console.warn('Failed to load feedback stats', error);
-        return null;
-      }),
-      api
-        .get('/contact', { params: { page: 1, limit: contactLimit } })
-        .catch((error) => {
-          console.warn('Failed to load contact messages', error);
-          return null;
-        }),
-      api.get('/users/reports').catch((error) => {
-        console.warn('Failed to load reports', error);
-        return null;
-      }),
-      api.get('/users/blocks').catch((error) => {
-        console.warn('Failed to load blocks', error);
-        return null;
-      }),
+      api.get('/tours').catch(() => null),
+      api.get('/feedback', { params: { limit: 20 } }).catch(() => null),
+      api.get('/feedback/stats').catch(() => null),
+      api.get('/contact', { params: { page: 1, limit: contactLimit } }).catch(() => null),
+      api.get('/users/reports').catch(() => null),
+      api.get('/users/blocks').catch(() => null),
     ]);
 
     const [toursRes, feedbackRes, statsRes, contactRes, reportRes, blockRes] = results;
-    if (!toursRes && !feedbackRes && !statsRes && !contactRes && !reportRes && !blockRes) {
-      setNotice({
-        type: 'error',
-        message: 'Backend is not reachable. Please start the API server.',
-      });
-      setIsLoadingInsights(false);
-      return;
-    }
 
-    const toursCount = Array.isArray(toursRes?.data) ? toursRes?.data.length : null;
+    const toursCount = Array.isArray(toursRes?.data) ? toursRes.data.length : null;
+
     setTourCount(toursCount);
-    setFeedback(Array.isArray(feedbackRes?.data) ? feedbackRes?.data : []);
+    setFeedback(Array.isArray(feedbackRes?.data) ? feedbackRes.data : []);
     setFeedbackStats(statsRes?.data || null);
-    const contactItems = Array.isArray(contactRes?.data?.items)
-      ? contactRes?.data?.items
-      : [];
+
+    const contactItems = Array.isArray(contactRes?.data?.items) ? contactRes.data.items : [];
+
     setContactMessages(contactItems);
     setContactPage(contactRes?.data?.page || 1);
     setContactTotal(contactRes?.data?.total || 0);
-    setReports(Array.isArray(reportRes?.data) ? reportRes?.data : []);
-    setBlocks(Array.isArray(blockRes?.data) ? blockRes?.data : []);
+
+    setReports(Array.isArray(reportRes?.data) ? reportRes.data : []);
+    setBlocks(Array.isArray(blockRes?.data) ? blockRes.data : []);
+
     setIsLoadingInsights(false);
   }, [apiBase]);
-
-  const handleLoadMoreContacts = useCallback(async () => {
-    if (!apiBase || isLoadingContacts) return;
-    const nextPage = contactPage + 1;
-    const totalPages = Math.ceil(contactTotal / contactLimit) || 1;
-    if (nextPage > totalPages) return;
-
-    setIsLoadingContacts(true);
-    const res = await api
-      .get('/contact', { params: { page: nextPage, limit: contactLimit } })
-      .catch((error) => {
-        console.warn('Failed to load more contact messages', error);
-        setNotice({
-          type: 'error',
-          message: 'Unable to load more contact messages.',
-        });
-        return null;
-      });
-
-    if (res?.data?.items) {
-      setContactMessages((prev) => [...prev, ...res.data.items]);
-      setContactPage(res.data.page || nextPage);
-      setContactTotal(res.data.total || contactTotal);
-    }
-    setIsLoadingContacts(false);
-  }, [apiBase, contactPage, contactTotal, isLoadingContacts]);
 
   useEffect(() => {
     void fetchInsights().catch((error) => {
       console.error('Unhandled fetchInsights error', error);
     });
   }, [fetchInsights]);
+
+  const handleDeleteUser = useCallback(async () => {
+    if (!deleteUserDialog.userId) return;
+
+    setIsDeletingUser(true);
+    setNotice(null);
+
+    try {
+      await api.delete(`/users/${deleteUserDialog.userId}`);
+      setNotice({ type: 'success', message: `User deleted successfully.` });
+
+      setDeleteUserDialog({
+        open: false,
+        userId: null,
+        username: null,
+        context: null,
+      });
+
+      await fetchInsights();
+      await fetchUsers();
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error && (error as any).response?.data?.message
+          ? (error as any).response.data.message
+          : 'Failed to delete user.';
+      setNotice({ type: 'error', message: errorMessage });
+    } finally {
+      setIsDeletingUser(false);
+    }
+  }, [deleteUserDialog, fetchInsights, fetchUsers]);
+
+  const handleLoadMoreContacts = useCallback(async () => {
+    if (!apiBase || isLoadingContacts) return;
+
+    const nextPage = contactPage + 1;
+    const totalPages = Math.ceil(contactTotal / contactLimit) || 1;
+    if (nextPage > totalPages) return;
+
+    setIsLoadingContacts(true);
+
+    const res = await api
+      .get('/contact', { params: { page: nextPage, limit: contactLimit } })
+      .catch(() => null);
+
+    if (res?.data?.items) {
+      setContactMessages((prev) => [...prev, ...res.data.items]);
+      setContactPage(res.data.page || nextPage);
+      setContactTotal(res.data.total || contactTotal);
+    }
+
+    setIsLoadingContacts(false);
+  }, [apiBase, contactPage, contactTotal, isLoadingContacts]);
 
   const handleScrapeAll = useCallback(async () => {
     try {
@@ -193,12 +275,8 @@ export default function AdminDashboardPage() {
         type: 'success',
         message: res.data?.message || 'Scraping started for all cities.',
       });
-    } catch (error) {
-      console.error('Scrape all failed', error);
-      setNotice({
-        type: 'error',
-        message: 'Scraping all cities failed. Please try again.',
-      });
+    } catch {
+      setNotice({ type: 'error', message: 'Scraping all cities failed.' });
     } finally {
       setIsScrapingAll(false);
     }
@@ -219,12 +297,8 @@ export default function AdminDashboardPage() {
         type: 'success',
         message: res.data?.message || `Scraping started for ${city}.`,
       });
-    } catch (error) {
-      console.error('Scrape city failed', error);
-      setNotice({
-        type: 'error',
-        message: `Scraping ${city} failed. Please try again.`,
-      });
+    } catch {
+      setNotice({ type: 'error', message: `Scraping ${city} failed.` });
     } finally {
       setIsScrapingCity(false);
     }
@@ -241,21 +315,18 @@ export default function AdminDashboardPage() {
       setIsAddingCities(true);
       setNotice(null);
       const res = await api.post('/cities/add', { cities: payload });
+
       setNotice({
         type: 'success',
-        message:
-          res.data?.added?.length
-            ? `Added ${res.data.added.length} city(ies).`
-            : 'Cities submitted successfully.',
+        message: res.data?.added?.length
+          ? `Added ${res.data.added.length} city(ies).`
+          : 'Cities submitted successfully.',
       });
+
       setCityInput('');
       await fetchCities();
-    } catch (error) {
-      console.error('Add cities failed', error);
-      setNotice({
-        type: 'error',
-        message: 'Adding cities failed. Please try again.',
-      });
+    } catch {
+      setNotice({ type: 'error', message: 'Adding cities failed.' });
     } finally {
       setIsAddingCities(false);
     }
@@ -266,16 +337,9 @@ export default function AdminDashboardPage() {
       setIsSeedingUsers(true);
       setNotice(null);
       await api.post('/seed/users');
-      setNotice({
-        type: 'success',
-        message: 'User seed completed successfully.',
-      });
-    } catch (error) {
-      console.error('Seed users failed', error);
-      setNotice({
-        type: 'error',
-        message: 'Seeding users failed. Please try again.',
-      });
+      setNotice({ type: 'success', message: 'User seed completed.' });
+    } catch {
+      setNotice({ type: 'error', message: 'Seeding users failed.' });
     } finally {
       setIsSeedingUsers(false);
     }
@@ -286,16 +350,9 @@ export default function AdminDashboardPage() {
       setIsSeedingWhois(true);
       setNotice(null);
       const res = await api.post('/seed/whois');
-      setNotice({
-        type: 'success',
-        message: res.data?.message || 'Whois seed completed successfully.',
-      });
-    } catch (error) {
-      console.error('Seed whois failed', error);
-      setNotice({
-        type: 'error',
-        message: 'Seeding whois failed. Please try again.',
-      });
+      setNotice({ type: 'success', message: res.data?.message || 'Whois seed completed.' });
+    } catch {
+      setNotice({ type: 'error', message: 'Seeding whois failed.' });
     } finally {
       setIsSeedingWhois(false);
     }
@@ -304,21 +361,8 @@ export default function AdminDashboardPage() {
   const handleLoadVisits = useCallback(async () => {
     setIsLoadingVisits(true);
     const res = await api
-      .get('/auth/visits/daily', {
-        params: { day: visitDate },
-      })
-      .catch((error) => {
-        console.warn('Failed to load daily visits', error);
-        setNotice({
-          type: 'error',
-          message:
-            error?.message === 'Network Error'
-              ? 'Backend is not reachable. Please start the API server.'
-              : 'Unable to load daily visits. Please try again.',
-        });
-        return null;
-      });
-
+      .get('/auth/visits/daily', { params: { day: visitDate } })
+      .catch(() => null);
     if (res) {
       setDailyVisits(res.data?.uniqueVisitors ?? null);
     }
@@ -329,10 +373,6 @@ export default function AdminDashboardPage() {
     <Layout title="Admin Dashboard">
       <Head>
         <title>Admin Dashboard | Wakapadi</title>
-        <meta
-          name="description"
-          content="Admin tools for managing cities, scraping, and data seeding."
-        />
       </Head>
 
       <section className={styles.hero}>
@@ -342,7 +382,7 @@ export default function AdminDashboardPage() {
               Admin Dashboard
             </Typography>
             <Typography className={styles.heroSubtitle}>
-              Manage scraping, add cities, and run data utilities in one place.
+              Manage scraping, add cities, and run data utilities.
             </Typography>
           </Box>
         </Container>
@@ -357,321 +397,187 @@ export default function AdminDashboardPage() {
 
         <div className={styles.grid}>
           <Paper className={styles.card} elevation={0}>
-            <Typography className={styles.cardTitle}>Scraping controls</Typography>
-            <Typography className={styles.cardSubtitle}>
-              Trigger scrapes across the entire catalog or for a specific city.
-            </Typography>
-
+            <Typography className={styles.cardTitle}>Users</Typography>
             <Stack spacing={2} className={styles.cardContent}>
-              <Button
-                variant="contained"
-                onClick={handleScrapeAll}
-                disabled={isScrapingAll}
-              >
-                {isScrapingAll ? 'Scraping all cities…' : 'Scrape all cities'}
-              </Button>
-
-              <Box className={styles.inlineField}>
-                <TextField
-                  label="Scrape city"
-                  value={scrapeCityInput}
-                  onChange={(event) => setScrapeCityInput(event.target.value)}
-                  placeholder="e.g. Berlin"
-                  size="small"
-                  fullWidth
-                />
-                <Button
-                  variant="outlined"
-                  onClick={handleScrapeCity}
-                  disabled={isScrapingCity}
-                >
-                  {isScrapingCity ? 'Scraping…' : 'Scrape city'}
-                </Button>
-              </Box>
-            </Stack>
-          </Paper>
-
-          <Paper className={styles.card} elevation={0}>
-            <Typography className={styles.cardTitle}>City management</Typography>
-            <Typography className={styles.cardSubtitle}>
-              Add new destinations to the catalog and review the current list.
-            </Typography>
-
-            <Stack spacing={2} className={styles.cardContent}>
-              <TextField
-                label="Add cities"
-                value={cityInput}
-                onChange={(event) => setCityInput(event.target.value)}
-                placeholder="Add cities separated by commas or new lines"
-                multiline
-                minRows={3}
-              />
-              <Button
-                variant="contained"
-                onClick={handleAddCities}
-                disabled={isAddingCities}
-              >
-                {isAddingCities ? 'Adding cities…' : 'Add cities'}
-              </Button>
-
-              <Box className={styles.cityList}>
-                <Typography className={styles.sectionLabel}>
-                  Existing cities
-                </Typography>
-                {sortedCities.length ? (
-                  <div className={styles.cityChips}>
-                    {sortedCities.map((city) => (
-                      <Chip key={city} label={city} className={styles.cityChip} />
-                    ))}
-                  </div>
-                ) : (
-                  <Typography className={styles.emptyState}>
-                    No cities added yet.
-                  </Typography>
-                )}
-              </Box>
-            </Stack>
-          </Paper>
-
-          <Paper className={styles.card} elevation={0}>
-            <Typography className={styles.cardTitle}>Data utilities</Typography>
-            <Typography className={styles.cardSubtitle}>
-              Seed data for demos or QA testing environments.
-            </Typography>
-
-            <Stack spacing={2} className={styles.cardContent}>
-              <Button
-                variant="outlined"
-                onClick={handleSeedUsers}
-                disabled={isSeedingUsers}
-              >
-                {isSeedingUsers ? 'Seeding users…' : 'Seed demo users'}
-              </Button>
-              <Button
-                variant="outlined"
-                onClick={handleSeedWhois}
-                disabled={isSeedingWhois}
-              >
-                {isSeedingWhois ? 'Seeding whois…' : 'Seed whois presence'}
-              </Button>
-            </Stack>
-          </Paper>
-
-          <Paper className={styles.card} elevation={0}>
-            <Typography className={styles.cardTitle}>Daily visits</Typography>
-            <Typography className={styles.cardSubtitle}>
-              Track unique visitors for any day.
-            </Typography>
-
-            <Stack spacing={2} className={styles.cardContent}>
-              <TextField
-                label="Visit date"
-                type="date"
-                value={visitDate}
-                onChange={(event) => setVisitDate(event.target.value)}
-                InputLabelProps={{ shrink: true }}
-              />
-              <Button
-                variant="outlined"
-                onClick={handleLoadVisits}
-                disabled={isLoadingVisits}
-              >
-                {isLoadingVisits ? 'Loading visits…' : 'Load visits'}
-              </Button>
-              <Typography className={styles.metricValue}>
-                {dailyVisits === null
-                  ? 'No data yet.'
-                  : `${dailyVisits} unique visitors`}
-              </Typography>
-            </Stack>
-          </Paper>
-
-          <Paper className={styles.card} elevation={0}>
-            <Typography className={styles.cardTitle}>Tours inventory</Typography>
-            <Typography className={styles.cardSubtitle}>
-              Total number of tours available in the catalog.
-            </Typography>
-
-            <Stack spacing={2} className={styles.cardContent}>
-              <Typography className={styles.metricValue}>
-                {tourCount === null ? 'No data yet.' : `${tourCount} tours`}
-              </Typography>
-            </Stack>
-          </Paper>
-
-          <Paper className={styles.card} elevation={0}>
-            <Typography className={styles.cardTitle}>Feedback overview</Typography>
-            <Typography className={styles.cardSubtitle}>
-              Review recent chatbot feedback and sentiment split.
-            </Typography>
-
-            <Stack spacing={2} className={styles.cardContent}>
-              <Box className={styles.metricRow}>
-                <div>
-                  <Typography className={styles.metricLabel}>Helpful</Typography>
-                  <Typography className={styles.metricValue}>
-                    {feedbackStats?.helpfulCount ?? 0}
-                  </Typography>
-                </div>
-                <div>
-                  <Typography className={styles.metricLabel}>Unhelpful</Typography>
-                  <Typography className={styles.metricValue}>
-                    {feedbackStats?.unhelpfulCount ?? 0}
-                  </Typography>
-                </div>
-                <div>
-                  <Typography className={styles.metricLabel}>Helpful %</Typography>
-                  <Typography className={styles.metricValue}>
-                    {Number.isFinite(feedbackStats?.helpfulPercentage)
-                      ? `${feedbackStats!.helpfulPercentage.toFixed(1)}%`
-                      : '0%'}
-                  </Typography>
-                </div>
-              </Box>
-
-              <div className={styles.listBox}>
-                {feedback.length ? (
-                  feedback.map((item) => (
-                    <div key={item._id} className={styles.listItem}>
+              {isLoadingUsers ? (
+                <CircularProgress size={24} />
+              ) : users.length ? (
+                <div className={styles.listBox}>
+                  {users.map((user) => (
+                    <div key={user._id} className={styles.listItem}>
                       <div>
                         <Typography className={styles.listTitle}>
-                          {item.isHelpful ? 'Helpful' : 'Unhelpful'}
+                          {user.username || 'Anonymous'} · {user.email}
                         </Typography>
-                        <Typography className={styles.listBody}>
-                          {item.feedbackText || item.message}
-                        </Typography>
+                        <Typography className={styles.listMeta}>Role: {user.role}</Typography>
                       </div>
-                      <Typography className={styles.listMeta}>
-                        {new Date(item.timestamp).toLocaleString()}
-                      </Typography>
+                      <Button
+                        size="small"
+                        color="error"
+                        variant="outlined"
+                        onClick={() =>
+                          setDeleteUserDialog({
+                            open: true,
+                            userId: user._id,
+                            username: user.username || user.email || 'this user',
+                            context: null,
+                          })
+                        }
+                      >
+                        Delete
+                      </Button>
                     </div>
-                  ))
-                ) : (
-                  <Typography className={styles.emptyState}>
-                    No feedback captured yet.
-                  </Typography>
-                )}
-              </div>
-            </Stack>
-          </Paper>
-
-          <Paper className={styles.card} elevation={0}>
-            <Typography className={styles.cardTitle}>Reported users</Typography>
-            <Typography className={styles.cardSubtitle}>
-              Monitor community reports and reasons.
-            </Typography>
-
-            <Stack spacing={2} className={styles.cardContent}>
-              <div className={styles.listBox}>
-                {reports.length ? (
-                  reports.map((report) => (
-                    <div key={report._id} className={styles.listItem}>
-                      <div>
-                        <Typography className={styles.listTitle}>
-                          {report.reportedId?.username || report.reportedId?.email || report.reportedId}
-                        </Typography>
-                        <Typography className={styles.listBody}>
-                          Reason: {report.reason}
-                        </Typography>
-                        <Typography className={styles.listMeta}>
-                          Reported by {report.reporterId?.username || report.reporterId?.email || report.reporterId}
-                        </Typography>
-                      </div>
-                      <Typography className={styles.listMeta}>
-                        {new Date(report.createdAt).toLocaleString()}
-                      </Typography>
-                    </div>
-                  ))
-                ) : (
-                  <Typography className={styles.emptyState}>
-                    No reports yet.
-                  </Typography>
-                )}
-              </div>
-            </Stack>
-          </Paper>
-
-          <Paper className={styles.card} elevation={0}>
-            <Typography className={styles.cardTitle}>Contact messages</Typography>
-            <Typography className={styles.cardSubtitle}>
-              Review incoming contact-us requests.
-            </Typography>
-
-            <Stack spacing={2} className={styles.cardContent}>
-              <div className={styles.listBox}>
-                {contactMessages.length ? (
-                  contactMessages.map((message) => (
-                    <div key={message._id} className={styles.listItem}>
-                      <div>
-                        <Typography className={styles.listTitle}>
-                          {message.name} · {message.email}
-                        </Typography>
-                        <Typography className={styles.listBody}>
-                          {message.message}
-                        </Typography>
-                        <Typography className={styles.listMeta}>
-                          Type: {message.type || 'general'}
-                        </Typography>
-                      </div>
-                      <Typography className={styles.listMeta}>
-                        {message.createdAt
-                          ? new Date(message.createdAt).toLocaleString()
-                          : ''}
-                      </Typography>
-                    </div>
-                  ))
-                ) : (
-                  <Typography className={styles.emptyState}>
-                    No contact messages yet.
-                  </Typography>
-                )}
-              </div>
-              {contactMessages.length < contactTotal && (
-                <Button
-                  variant="outlined"
-                  onClick={handleLoadMoreContacts}
-                  disabled={isLoadingContacts}
-                >
-                  {isLoadingContacts ? 'Loading…' : 'Load more'}
-                </Button>
+                  ))}
+                </div>
+              ) : (
+                <Typography className={styles.emptyState}>No users found.</Typography>
               )}
             </Stack>
           </Paper>
 
           <Paper className={styles.card} elevation={0}>
-            <Typography className={styles.cardTitle}>Blocked users</Typography>
-            <Typography className={styles.cardSubtitle}>
-              Track user blocks recorded in the system.
-            </Typography>
-
+            <Typography className={styles.cardTitle}>Scraping Controls</Typography>
             <Stack spacing={2} className={styles.cardContent}>
-              <div className={styles.listBox}>
-                {blocks.length ? (
-                  blocks.map((block) => (
-                    <div key={block._id} className={styles.listItem}>
-                      <div>
-                        <Typography className={styles.listTitle}>
-                          {block.blockedId?.username || block.blockedId?.email || block.blockedId}
-                        </Typography>
-                        <Typography className={styles.listMeta}>
-                          Blocked by {block.blockerId?.username || block.blockerId?.email || block.blockerId}
-                        </Typography>
-                      </div>
-                      <Typography className={styles.listMeta}>
-                        {new Date(block.createdAt).toLocaleString()}
-                      </Typography>
-                    </div>
-                  ))
-                ) : (
-                  <Typography className={styles.emptyState}>
-                    No blocks yet.
-                  </Typography>
-                )}
-              </div>
+              <Button variant="contained" onClick={handleScrapeAll} disabled={isScrapingAll}>
+                {isScrapingAll ? 'Scraping all...' : 'Scrape all cities'}
+              </Button>
+              <Box className={styles.inlineField}>
+                <TextField
+                  label="Scrape city"
+                  value={scrapeCityInput}
+                  onChange={(e) => setScrapeCityInput(e.target.value)}
+                  size="small"
+                  fullWidth
+                />
+                <Button variant="outlined" onClick={handleScrapeCity} disabled={isScrapingCity}>
+                  Scrape
+                </Button>
+              </Box>
             </Stack>
+          </Paper>
+
+          <Paper className={styles.card} elevation={0}>
+            <Typography className={styles.cardTitle}>City Management</Typography>
+            <Stack spacing={2} className={styles.cardContent}>
+              <TextField
+                label="Add cities"
+                value={cityInput}
+                onChange={(e) => setCityInput(e.target.value)}
+                placeholder="Comma separated cities"
+                multiline
+                minRows={2}
+              />
+              <Button variant="contained" onClick={handleAddCities} disabled={isAddingCities}>
+                Add
+              </Button>
+              <Box className={styles.cityList}>
+                <Typography className={styles.sectionLabel}>Existing</Typography>
+                {sortedCities.map((city) => (
+                  <Chip key={city} label={city} size="small" sx={{ m: 0.5 }} />
+                ))}
+              </Box>
+            </Stack>
+          </Paper>
+
+          <Paper className={styles.card} elevation={0}>
+            <Typography className={styles.cardTitle}>Daily Visits</Typography>
+            <Stack spacing={2} className={styles.cardContent}>
+              <TextField
+                type="date"
+                value={visitDate}
+                onChange={(e) => setVisitDate(e.target.value)}
+              />
+              <Button variant="outlined" onClick={handleLoadVisits} disabled={isLoadingVisits}>
+                Load
+              </Button>
+              <Typography variant="h6">{dailyVisits ?? 0} unique visitors</Typography>
+            </Stack>
+          </Paper>
+
+          <Paper className={styles.card} elevation={0}>
+            <Typography className={styles.cardTitle}>Inventory & Feedback</Typography>
+            <Stack spacing={1} className={styles.cardContent}>
+              {isLoadingInsights ? (
+                <CircularProgress size={24} />
+              ) : (
+                <>
+                  <Typography>Tours: {tourCount ?? 0}</Typography>
+                  <Typography>Helpful: {feedbackStats?.helpfulCount ?? 0}</Typography>
+                  <Typography>Unhelpful: {feedbackStats?.unhelpfulCount ?? 0}</Typography>
+                </>
+              )}
+            </Stack>
+          </Paper>
+
+          <Paper className={styles.card} elevation={0}>
+            <Typography className={styles.cardTitle}>Reported Users</Typography>
+            <div className={styles.listBox}>
+              {reports.map((report) => (
+                <div key={report._id} className={styles.listItem}>
+                  <div>
+                    <Typography variant="subtitle2">
+                      {typeof report.reportedId === 'object' ? report.reportedId.username : 'Unknown'}
+                    </Typography>
+                    <Typography variant="body2">{report.reason}</Typography>
+                  </div>
+                  <Button
+                    color="error"
+                    size="small"
+                    onClick={() =>
+                      setDeleteUserDialog({
+                        open: true,
+                        userId: typeof report.reportedId === 'object' ? report.reportedId._id : (report.reportedId as string),
+                        username: typeof report.reportedId === 'object'
+                          ? report.reportedId.username ?? null
+                          : 'User',
+                        context: 'report',
+                      })
+                    }
+                  >
+                    Delete
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </Paper>
+
+          <Paper className={styles.card} elevation={0}>
+            <Typography className={styles.cardTitle}>Contact Messages</Typography>
+            <div className={styles.listBox}>
+              {contactMessages.map((msg) => (
+                <div key={msg._id} className={styles.listItem}>
+                  <Typography variant="body2">
+                    <b>{msg.name}:</b> {msg.message}
+                  </Typography>
+                </div>
+              ))}
+              {contactMessages.length < contactTotal && (
+                <Button onClick={handleLoadMoreContacts}>Load more</Button>
+              )}
+            </div>
           </Paper>
         </div>
       </Container>
+
+      <Dialog
+        open={deleteUserDialog.open}
+        onClose={() => setDeleteUserDialog({ open: false, userId: null, username: null, context: null })}
+      >
+        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Delete user <b>{deleteUserDialog.username}</b>? This cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteUserDialog({ open: false, userId: null, username: null, context: null })}>
+            Cancel
+          </Button>
+          <Button onClick={handleDeleteUser} color="error" variant="contained" disabled={isDeletingUser}>
+            {isDeletingUser ? 'Deleting...' : 'Confirm'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Layout>
   );
 }

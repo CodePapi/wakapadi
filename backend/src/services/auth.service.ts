@@ -1,11 +1,12 @@
 // src/services/auth.service.ts
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, Inject, forwardRef } from '@nestjs/common';
 import * as jwt from 'jsonwebtoken';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Document } from 'mongoose';
 import { createHash } from 'crypto';
 import { User } from '../schemas/user.schema';
 import { DailyVisit } from '../schemas/daily-visit.schema';
+import { WhoisService } from './whois.service';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'changeme';
 
@@ -17,6 +18,8 @@ export class AuthService {
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     @InjectModel(DailyVisit.name)
     private readonly dailyVisitModel: Model<DailyVisit>,
+    @Inject(forwardRef(() => WhoisService))
+    private readonly whoisService: WhoisService,
   ) {}
 
   private signToken(id: string, username: string) {
@@ -140,6 +143,13 @@ export class AuthService {
   }
 
   async deleteAccount(userId: string) {
+    // Hide presence for this user
+    const whoisService = require('./whois.service');
+    if (whoisService && whoisService.hidePresence) {
+      await whoisService.hidePresence(userId, false);
+    }
+    // Remove presence for this user
+    await this.whoisService.removePresence(userId);
     const user = await this.userModel.findByIdAndDelete(userId).lean();
     if (!user) throw new NotFoundException('User not found');
     return { success: true };

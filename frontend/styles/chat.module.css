@@ -272,63 +272,78 @@
 
   .bubbleContainer {
     display: flex;
-    align-items: flex-start;
-    margin-bottom: 8px;
+    align-items: flex-end;
+    margin-bottom: 2px;
     max-width: 78%;
+    gap: 6px;
+    position: relative;
   }
-  
+
   .bubbleContainerSelf {
     align-self: flex-end;
     flex-direction: row-reverse;
+    margin-right: 6px;
   }
-  
+
   .bubbleContainerOther {
     align-self: flex-start;
+    margin-left: 6px;
   }
-  
+
   .bubbleAvatar {
-    width: 32px;
-    height: 32px;
-    margin-right: 8px;
-    margin-left: 8px;
+    width: 36px;
+    height: 36px;
+    margin: 0 4px 0 0;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border: 2px solid #fff;
   }
-  
+
   .bubbleContent {
     display: flex;
     flex-direction: column;
+    align-items: flex-end;
   }
   
   .messageBubble {
-    padding: 12px 16px;
-    border-radius: 20px;
+    padding: 10px 16px;
+    border-radius: 22px;
     word-break: break-word;
-    box-shadow: var(--shadow-light);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
     border: 1px solid var(--border-color);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: transform 0.2s, box-shadow 0.2s;
+    font-size: 1rem;
+    margin-bottom: 2px;
+    max-width: 100%;
   }
 
   .messageItem:hover .messageBubble {
-    transform: translateY(-1px);
-    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
+    transform: translateY(-1px) scale(1.01);
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.13);
   }
-  
+
   .messageBubbleSelf {
-    background: var(--color-primary-600);
-    color: white;
+    background: #0084ff;
+    color: #fff;
     border-top-right-radius: 8px;
-    border-color: rgba(0, 113, 227, 0.25);
+    border-bottom-right-radius: 8px;
+    border-color: #0084ff33;
+    align-self: flex-end;
   }
-  
+
   .messageBubbleOther {
-    background-color: rgba(255, 255, 255, 0.98);
-    color: var(--text-color-dark);
+    background: #f0f2f5;
+    color: #050505;
     border-top-left-radius: 8px;
-    border-color: var(--border-color);
+    border-bottom-left-radius: 8px;
+    border-color: #e4e6eb;
+    align-self: flex-start;
   }
   
   .messageText {
-    line-height: 1.55;
-    font-size: 0.98rem;
+    line-height: 1.6;
+    font-size: 1rem;
+    word-break: break-word;
   }
   
   .reactionsContainer {
@@ -349,9 +364,10 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    margin-top: 4px;
-    color: var(--text-color-light);
-    font-size: 0.75rem;
+    margin-top: 2px;
+    color: #65676b;
+    font-size: 0.74rem;
+    opacity: 0.85;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -365,11 +381,13 @@
   
   .username {
     font-weight: 500;
-    color: #3b82f6;
+    color: #0084ff;
+    margin-right: 4px;
   }
   
   .timestamp {
-    opacity: 0.8;
+    opacity: 0.7;
+    margin-left: 2px;
   }
   
   .readStatus {

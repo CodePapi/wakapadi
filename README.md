@@ -2,7 +2,7 @@
 
 
 ## Overview
-Wakapadi is a travel-focused social platform that connects travelers nearby, supports both anonymous and registered participation, and provides admin analytics. It is designed for travelers to discover, chat, and interact with others in their vicinity, while also offering robust moderation and feedback tools for administrators.
+Wakapadi is a social platform that connects people nearby—locals, travelers, and anonymous users. Anyone can discover, chat, and interact with others in their vicinity, with robust moderation and feedback tools for administrators.
 
 ---
 
@@ -19,14 +19,14 @@ Wakapadi is a travel-focused social platform that connects travelers nearby, sup
 
 
 ## Features
-- **Whois Page:** Discover travelers near your city, with real-time distance calculation using geolocation. Start chats with other users.
+- **Whois Page:** Discover people near your city (locals, travelers, anonymous users), with real-time distance calculation using geolocation. Start chats with other users.
 - **Anonymous Users:** Join instantly as an anonymous user with a fun, random name (e.g., "Gentle Panda") and device-based identity.
 - **Admin Dashboard:** View feedback, reports, blocks, paginated contact-us messages, and the total number of tours.
 - **Contact/Feedback:** Send messages or feedback to admins, who can review and respond.
 - **User Profiles:** Update travel preferences, languages, social links, and visibility settings.
 - **Presence:** See who is online, idle, or offline, with last seen tracking.
 - **Geolocation:** Browser-based geolocation and reverse geocoding to detect city and calculate distances.
-- **Chat:** Real-time, socket-based chat between users, with emoji reactions, typing indicators, and read receipts.
+- **Chat:** Real-time, socket-based chat between users—locals, travelers, and anonymous users—with emoji reactions, typing indicators, and read receipts.
 - **Moderation:** Block or report users, with admin review tools.
 
 ---
@@ -71,7 +71,7 @@ Wakapadi is a travel-focused social platform that connects travelers nearby, sup
 ---
 
 ## Usage
-- On first visit, your location is detected and you are shown travelers nearby.
+- On first visit, your location is detected and you are shown people nearby (locals, travelers, anonymous users).
 - You can join as an anonymous user or register for more features.
 - Start chats, send feedback, or contact admins from the UI.
 - Admins can log in to access the dashboard for analytics and moderation.

@@ -1,4 +1,3 @@
-// layout.tsx
 import {
   AppBar,
   Toolbar,
@@ -17,6 +16,10 @@ import {
   Typography,
   Divider,
   ListItemIcon,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
@@ -31,8 +34,8 @@ import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import NextLink from 'next/link';
-import Link from 'next/link';
-import React, { useEffect, useState } from 'react';
+import Image from 'next/image';
+import React, { useEffect, useState, useMemo } from 'react';
 import i18nextConfig from '../next-i18next.config';
 import { useTranslation } from 'next-i18next';
 import NotificationsDropdown from './NotificationsDropdown';
@@ -49,15 +52,17 @@ const languages = [
   { code: 'fr', name: 'Français', flag: 'FR' },
 ];
 
+interface LayoutProps {
+  children: React.ReactNode;
+  title?: string;
+  description?: string;
+}
+
 export default function Layout({
   children,
   title = 'Wakapadi – Free Walking Tours',
   description = 'Explore, connect, and discover local free walking tours and assistants around the world.',
-}: {
-  children: React.ReactNode;
-  title?: string;
-  description?: string;
-}) {
+}: LayoutProps) {
   const router = useRouter();
   const { t } = useTranslation('common');
   const currentLocale = router.locale || i18nextConfig.i18n.defaultLocale;
@@ -65,6 +70,7 @@ export default function Layout({
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentUserId, setCurrentUserId] = useState('');
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -85,32 +91,39 @@ export default function Layout({
     setAnchorEl(event.currentTarget);
   };
 
-  const handleLanguageClose = () => {
-    setAnchorEl(null);
-  };
+  const handleLanguageClose = () => setAnchorEl(null);
 
   const changeLanguage = (locale: string) => {
     handleLanguageClose();
     router.push(router.pathname, router.asPath, { locale });
   };
 
-  const handleLogout = async () => {
+  const confirmLogout = async () => {
     try {
-      await api.delete('/auth/me');
+      const userId = safeStorage.getItem('userId');
+      const authProvider = safeStorage.getItem('authProvider');
+
+      if (userId && authProvider !== 'anonymous') {
+        await api.delete(`/users/${userId}`);
+      } else {
+        await api.delete('/auth/me');
+      }
     } catch (error) {
-      console.warn('Failed to delete anonymous account', error);
+      console.warn('Logout cleanup failed', error);
     } finally {
       safeStorage.removeItem('token');
       safeStorage.removeItem('userId');
-      safeStorage.removeItem('username');
+      safeStorage.removeItem('authProvider');
       clearDeviceId();
       setIsLoggedIn(false);
+      setLogoutDialogOpen(false);
       router.push('/');
     }
   };
 
-  const currentLanguage =
-    languages.find((lang) => lang.code === currentLocale) || languages[0];
+  const currentLanguage = useMemo(() => 
+    languages.find((lang) => lang.code === currentLocale) || languages[0],
+  [currentLocale]);
 
   return (
     <div className={styles.layoutContainer}>
@@ -123,127 +136,83 @@ export default function Layout({
         <link rel="icon" type="image/png" href="/favicon.png" />
       </Head>
 
-      <AppBar
-        position="sticky"
-        className={styles.appBar}
-        elevation={0}
-        style={{ zIndex: '10' }}
-      >
-        <Container maxWidth="lg" disableGutters>
+      <AppBar position="sticky" className={styles.appBar} elevation={0} sx={{ zIndex: 1100, bgcolor: 'background.paper', borderBottom: '1px solid', borderColor: 'divider' }}>
+        <Container maxWidth="lg">
           <Toolbar className={styles.toolbar} disableGutters>
-            <Box className={styles.logoContainer}>
+            <Box className={styles.logoContainer} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               {isMobile && (
-                <IconButton
-                  edge="start"
-                  color="inherit"
-                  onClick={() => setDrawerOpen(true)}
-                  className={styles.menuButton}
-                  aria-label="menu"
-                >
+                <IconButton edge="start" color="inherit" onClick={() => setDrawerOpen(true)} aria-label="open menu">
                   <MenuIcon />
                 </IconButton>
               )}
-              <NextLink href="/" className={styles.logoImageWrapper}>
-                <img
-                  src="/logo1.png"
-                  alt="Wakapadi logo"
-                  className={styles.logoImage}
+              <NextLink href="/" className={styles.logoLink} style={{ display: 'flex', alignItems: 'center' }}>
+                <Image 
+                  src="/logo1.png" 
+                  alt="Wakapadi logo" 
+                  width={140} 
+                  height={38} 
+                  priority 
+                  style={{ objectFit: 'contain' }}
                 />
               </NextLink>
             </Box>
 
             {!isMobile && (
-              <Box className={styles.desktopNav}>
-                <Link href="/whois" className={styles.navLink}>
-                  {t('whoisNearby')}
-                </Link>
-                <Link href="/tours" className={styles.navLink}>
-                  {t('availableTours')}
-                </Link>
-                <Link href="/contact-us" className={styles.navLink}>
-                  {t('contactUs')}
-                </Link>
-                <Link href="/admin" className={styles.navLink}>
-                  Admin
-                </Link>
+              <Box className={styles.desktopNav} sx={{ display: 'flex', alignItems: 'center', gap: 2, ml: 'auto' }}>
+                <NextLink href="/whois" className={styles.navLink}>{t('whoisNearby')}</NextLink>
+                <NextLink href="/tours" className={styles.navLink}>{t('availableTours')}</NextLink>
+                <NextLink href="/contact-us" className={styles.navLink}>{t('contactUs')}</NextLink>
+                <NextLink href="/admin" className={styles.navLink} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <AdminPanelSettingsIcon fontSize="small" /> Admin
+                </NextLink>
+                
                 {isLoggedIn && (
-                  <>
-                    <Link href="/profile" className={styles.navLink}>
-                      {t('profile')}
-                    </Link>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <NextLink href="/profile" className={styles.navLink}>{t('profile')}</NextLink>
                     <NotificationsDropdown currentUserId={currentUserId} />
-                  </>
+                  </Box>
                 )}
-                <Box className={styles.authSection}>
+
+                <Box sx={{ ml: 2, display: 'flex', gap: 1 }}>
                   {isLoggedIn ? (
-                    <Button
-                      onClick={handleLogout}
-                      className={styles.logoutButton}
-                      variant="text"
-                    >
+                    <Button onClick={() => setLogoutDialogOpen(true)} color="inherit" variant="text">
                       {t('logout')}
                     </Button>
                   ) : (
                     <>
-                      <Button
-                        component={NextLink}
-                        href="/login"
-                        className={styles.loginButton}
-                        variant="outlined"
-                      >
+                      <Button component={NextLink} href="/login" variant="outlined" size="small">
                         {t('login')}
                       </Button>
-                      <Button
-                        component={NextLink}
-                        href="/register"
-                        className={styles.registerButton}
-                        variant="contained"
-                      >
+                      <Button component={NextLink} href="/register" variant="contained" size="small">
                         {t('register')}
                       </Button>
                     </>
                   )}
                 </Box>
 
+                {/* Fixed Language Menu Logic */}
                 <Button
                   onClick={handleLanguageMenu}
-                  className={styles.languageButton}
-                  startIcon={
-                    <ReactCountryFlag
-                      countryCode={currentLanguage.flag}
-                      svg
-                      style={{
-                        width: '1.5em',
-                        height: '1.5em',
-                        lineHeight: '1.5em',
-                      }}
-                    />
-                  }
+                  startIcon={<ReactCountryFlag countryCode={currentLanguage.flag} svg />}
+                  sx={{ ml: 1, color: 'text.primary' }}
                 >
                   {currentLanguage.code.toUpperCase()}
                 </Button>
 
-                <Menu
-                  anchorEl={anchorEl}
-                  open={Boolean(anchorEl)}
+                <Menu 
+                  anchorEl={anchorEl} 
+                  open={Boolean(anchorEl)} 
                   onClose={handleLanguageClose}
-                  className={styles.languageMenu}
+                  disableScrollLock // Recommended for Next.js to prevent body jumping
                 >
                   {languages.map((language) => (
-                    <MenuItem
-                      key={language.code}
+                    <MenuItem 
+                      key={language.code} 
                       onClick={() => changeLanguage(language.code)}
+                      selected={language.code === currentLocale}
                     >
-                      <ListItemIcon className={styles.languageListItemIcon}>
-                        <ReactCountryFlag
-                          countryCode={language.flag}
-                          svg
-                          style={{
-                            width: '1.5em',
-                            height: '1.5em',
-                            lineHeight: '1.5em',
-                          }}
-                        />
+                      <ListItemIcon>
+                        <ReactCountryFlag countryCode={language.flag} svg style={{ width: '1.2em', height: '1.2em' }} />
                       </ListItemIcon>
                       <ListItemText primary={language.name} />
                     </MenuItem>
@@ -255,289 +224,99 @@ export default function Layout({
         </Container>
       </AppBar>
 
-      <Drawer
-        anchor="right"
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        classes={{ paper: styles.drawerPaper }}
-      >
-        <Box className={styles.drawerContainer}>
-          <Box className={styles.drawerHeader}>
-            <Link
-              href="/"
-              className={styles.logoImageWrapper}
-              onClick={() => setDrawerOpen(false)}
-            >
-              <img
-                src="/logo1.png"
-                alt="Wakapadi logo"
-                className={styles.logoImage1}
-              />
-            </Link>
-            <IconButton
-              onClick={() => setDrawerOpen(false)}
-              className={styles.drawerCloseButton}
-              aria-label="close menu"
-            >
-              <CloseIcon />
-            </IconButton>
+      <Drawer anchor="left" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+        <Box sx={{ width: 280 }} role="presentation">
+          <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Image src="/logo1.png" alt="Wakapadi logo" width={110} height={30} style={{ objectFit: 'contain' }} />
+            <IconButton onClick={() => setDrawerOpen(false)}><CloseIcon /></IconButton>
           </Box>
-          <Divider className={styles.drawerDivider} />
-          <Typography className={styles.drawerSectionTitle}>
-            {t('explore')}
-          </Typography>
-          <List className={styles.drawerList}>
-            <ListItem
-              component={NextLink}
-              href="/whois"
-              onClick={() => setDrawerOpen(false)}
-              className={styles.drawerItem}
-            >
-              <ListItemIcon className={styles.drawerItemIcon}
-                ><ExploreIcon />
-              </ListItemIcon>
-              <ListItemText
-                primary={t('whoisNearby')}
-                className={styles.drawerItemText}
-              />
-            </ListItem>
-
-            <ListItem
-              component={NextLink}
-              href="/tours"
-              onClick={() => setDrawerOpen(false)}
-              className={styles.drawerItem}
-            >
-              <ListItemIcon className={styles.drawerItemIcon}
-                ><TourIcon />
-              </ListItemIcon>
-              <ListItemText
-                primary={t('availableTours')}
-                className={styles.drawerItemText}
-              />
-            </ListItem>
-
-            <ListItem
-              component={NextLink}
-              href="/contact-us"
-              onClick={() => setDrawerOpen(false)}
-              className={styles.drawerItem}
-            >
-              <ListItemIcon className={styles.drawerItemIcon}
-                ><SupportAgentIcon />
-              </ListItemIcon>
-              <ListItemText
-                primary={t('contactUs')}
-                className={styles.drawerItemText}
-              />
-            </ListItem>
-
-            <ListItem
-              component={NextLink}
-              href="/admin"
-              onClick={() => setDrawerOpen(false)}
-              className={styles.drawerItem}
-            >
-              <ListItemIcon className={styles.drawerItemIcon}
-                ><AdminPanelSettingsIcon />
-              </ListItemIcon>
-              <ListItemText primary="Admin" className={styles.drawerItemText} />
-            </ListItem>
-
+          <Divider />
+          <List>
+            {[
+              { href: '/whois', text: t('whoisNearby'), icon: <ExploreIcon /> },
+              { href: '/tours', text: t('availableTours'), icon: <TourIcon /> },
+              { href: '/contact-us', text: t('contactUs'), icon: <SupportAgentIcon /> },
+              { href: '/admin', text: 'Admin', icon: <AdminPanelSettingsIcon /> },
+            ].map((item) => (
+              <ListItem key={item.href} component={NextLink} href={item.href} onClick={() => setDrawerOpen(false)}>
+                <ListItemIcon>{item.icon}</ListItemIcon>
+                <ListItemText primary={item.text} />
+              </ListItem>
+            ))}
+            
             {isLoggedIn && (
-              <ListItem
-                component={NextLink}
-                href="/profile"
-                onClick={() => setDrawerOpen(false)}
-                className={styles.drawerItem}
-              >
-                <ListItemIcon className={styles.drawerItemIcon}
-                  ><AccountCircleIcon />
-                </ListItemIcon>
-                <ListItemText
-                  primary={t('profile')}
-                  className={styles.drawerItemText}
-                />
+              <ListItem component={NextLink} href="/profile" onClick={() => setDrawerOpen(false)}>
+                <ListItemIcon><AccountCircleIcon /></ListItemIcon>
+                <ListItemText primary={t('profile')} />
               </ListItem>
             )}
           </List>
+          <Divider />
+          
+          {/* Mobile Language Selection */}
+          <Typography variant="overline" sx={{ px: 2, pt: 2, display: 'block', color: 'text.secondary' }}>
+            {t('language', 'Language')}
+          </Typography>
+          <List>
+            {languages.map((language) => (
+              <ListItem 
+              button 
+                key={language.code} 
+                onClick={() => changeLanguage(language.code)}
+                selected={language.code === currentLocale}
+                sx={{ cursor: 'pointer' }}
+              >
+                <ListItemIcon>
+                  <ReactCountryFlag countryCode={language.flag} svg />
+                </ListItemIcon>
+                <ListItemText primary={language.name} />
+              </ListItem>
+            ))}
+          </List>
 
-          <Box className={styles.drawerFooter}>
-            <Divider className={styles.drawerDivider} />
-            <Typography className={styles.drawerSectionTitle}>
-              {t('account')}
-            </Typography>
-            <List className={styles.drawerListCompact}>
-              {!isLoggedIn && (
-                <>
-                  <ListItem
-                    component={NextLink}
-                    href="/login"
-                    onClick={() => setDrawerOpen(false)}
-                    className={`${styles.drawerItem} ${styles.drawerActionItem}`}
-                  >
-                    <ListItemIcon className={styles.drawerItemIcon}
-                      ><LoginIcon />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={t('login')}
-                      className={styles.drawerItemText}
-                    />
-                  </ListItem>
-                  <ListItem
-                    component={NextLink}
-                    href="/register"
-                    onClick={() => setDrawerOpen(false)}
-                    className={`${styles.drawerItem} ${styles.drawerPrimaryAction}`}
-                  >
-                    <ListItemIcon className={styles.drawerItemIcon}
-                      ><PersonAddAltIcon />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={t('register')}
-                      className={styles.drawerItemText}
-                    />
-                  </ListItem>
-                </>
-              )}
-              {isLoggedIn && (
-                <ListItem
-                  onClick={() => {
-                    handleLogout();
-                    setDrawerOpen(false);
-                  }}
-                  className={`${styles.drawerItem} ${styles.logoutDrawerItem}`}
-                >
-                  <ListItemIcon className={styles.drawerItemIcon}
-                    ><LogoutIcon />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={t('logout')}
-                    className={styles.drawerItemText}
-                  />
+          <Divider />
+          <List>
+            {isLoggedIn ? (
+              <ListItem onClick={() => { setDrawerOpen(false); setLogoutDialogOpen(true); }} sx={{ cursor: 'pointer' }}>
+                <ListItemIcon><LogoutIcon /></ListItemIcon>
+                <ListItemText primary={t('logout')} />
+              </ListItem>
+            ) : (
+              <>
+                <ListItem component={NextLink} href="/login" onClick={() => setDrawerOpen(false)}>
+                  <ListItemIcon><LoginIcon /></ListItemIcon>
+                  <ListItemText primary={t('login')} />
                 </ListItem>
-              )}
-            </List>
-            <Divider className={styles.drawerDivider} />
-            <Typography className={styles.drawerSectionTitle}>
-              {t('language')}
-            </Typography>
-            <List className={styles.drawerListCompact}>
-              {languages.map((language) => (
-                <MenuItem
-                  key={language.code}
-                  onClick={() => {
-                    changeLanguage(language.code);
-                    setDrawerOpen(false);
-                  }}
-                  selected={language.code === currentLocale}
-                  className={styles.drawerItem}
-                >
-                  <ListItemIcon className={styles.languageListItemIcon}>
-                    <ReactCountryFlag
-                      countryCode={language.flag}
-                      svg
-                      style={{ width: '1.5em', height: '1.5em' }}
-                    />
-                  </ListItemIcon>
-                  <ListItemText primary={language.name} />
-                </MenuItem>
-              ))}
-            </List>
-          </Box>
+                <ListItem component={NextLink} href="/register" onClick={() => setDrawerOpen(false)}>
+                  <ListItemIcon><PersonAddAltIcon /></ListItemIcon>
+                  <ListItemText primary={t('register')} />
+                </ListItem>
+              </>
+            )}
+          </List>
         </Box>
       </Drawer>
 
-      <main className={styles.mainContent}>{children}</main>
+      <main className={styles.mainContent} style={{ minHeight: '80vh' }}>
+        {children}
+      </main>
 
-      <Box component="footer" className={styles.footer}>
-        <Container maxWidth="lg" className={styles.footerContent}>
-          <Box className={styles.footerMain}>
-            <Box className={styles.footerLogo}>
-              <img
-                src="/logo1.png"
-                alt="Wakapadi logo"
-                className={styles.footerLogoImage}
-              />
-              <Typography variant="body2" className={styles.footerTagline}>
-                {t('footerTagline')}
-              </Typography>
-            </Box>
+      <Dialog open={logoutDialogOpen} onClose={() => setLogoutDialogOpen(false)}>
+        <DialogTitle>{t('confirmLogoutTitle', 'Confirm Logout')}</DialogTitle>
+        <DialogContent>
+          <Typography>{t('confirmLogoutMessage', 'Are you sure you want to log out? This will clear your session.')}</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setLogoutDialogOpen(false)}>{t('cancel')}</Button>
+          <Button onClick={confirmLogout} color="error" variant="contained">{t('logout')}</Button>
+        </DialogActions>
+      </Dialog>
 
-            <Box className={styles.footerLinks}>
-              <Box className={styles.footerLinkGroup}>
-                <Typography
-                  variant="subtitle2"
-                  className={styles.footerLinkTitle}
-                >
-                  {t('explore')}
-                </Typography>
-                <Link href="/whois" className={styles.footerLink}>
-                  {t('whoisNearby')}
-                </Link>
-                <Link href="/tours" className={styles.footerLink}>
-                  {t('availableTours')}
-                </Link>
-              </Box>
-
-              <Box className={styles.footerLinkGroup}>
-                <Typography
-                  variant="subtitle2"
-                  className={styles.footerLinkTitle}
-                >
-                  {t('company')}
-                </Typography>
-                <Link href="/about" className={styles.footerLink}>
-                  {t('aboutUs')}
-                </Link>
-                <Link href="/contact-us" className={styles.footerLink}>
-                  {t('contactUs')}
-                </Link>
-              </Box>
-
-              <Box className={styles.footerLinkGroup}>
-                <Typography
-                  variant="subtitle2"
-                  className={styles.footerLinkTitle}
-                >
-                  {t('legal')}
-                </Typography>
-                <Link href="/legal" className={styles.footerLink}>
-                  {t('legalNotice')}
-                </Link>
-                <Link href="/privacy" className={styles.footerLink}>
-                  {t('privacyPolicy')}
-                </Link>
-                <Link href="/terms" className={styles.footerLink}>
-                  {t('termsOfUse')}
-                </Link>
-                <Link href="/cookies" className={styles.footerLink}>
-                  {t('cookiePolicy')}
-                </Link>
-              </Box>
-            </Box>
-          </Box>
-
-          <Divider className={styles.footerDivider} />
-
-          <Box className={styles.footerBottom}>
-            <Typography variant="body2" className={styles.copyright}>
-              &copy; {new Date().getFullYear()} Wakapadi.{' '}
-              {t('allRightsReserved')}.
-            </Typography>
-
-            <Box className={styles.socialLinks}>
-              <Link href="#" className={styles.socialLink}>
-                <img src="/icons/facebook.svg" alt="Facebook" />
-              </Link>
-              <Link href="#" className={styles.socialLink}>
-                <img src="/icons/twitter.svg" alt="Twitter" />
-              </Link>
-              <Link href="#" className={styles.socialLink}>
-                <img src="/icons/instagram.svg" alt="Instagram" />
-              </Link>
-            </Box>
-          </Box>
+      <Box component="footer" sx={{ py: 6, mt: 'auto', bgcolor: 'background.paper', borderTop: '1px solid', borderColor: 'divider' }}>
+        <Container maxWidth="lg">
+          <Typography variant="body2" color="text.secondary" align="center">
+            &copy; {new Date().getFullYear()} Wakapadi. {t('allRightsReserved')}.
+          </Typography>
         </Container>
       </Box>
     </div>

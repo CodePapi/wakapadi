@@ -24,7 +24,8 @@ import { formatCityName, normalizeCityKey } from '../../lib/cityFormat';
 const PER_PAGE = 12;
 
 export type Tour = {
-  id: string;
+  id?: string;
+  _id?: string;
   title: string;
   location: string;
   recurringSchedule?: string;
@@ -42,7 +43,7 @@ export default function ToursPage() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [totalPages, setTotalPages] = useState(1);
+  
   const topRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { q } = router.query;
@@ -58,6 +59,11 @@ export default function ToursPage() {
         )
       : tours;
   }, [tours, search]);
+
+  // Derived state instead of useEffect state to fix the dependency warning
+  const totalPages = useMemo(() => {
+    return Math.ceil(filteredTours.length / PER_PAGE) || 1;
+  }, [filteredTours.length]);
 
   const fetchTours = useCallback(async () => {
     try {
@@ -100,6 +106,13 @@ export default function ToursPage() {
     []
   );
 
+  // Clean up debounce on unmount
+  useEffect(() => {
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [debouncedSearch]);
+
   const handleSearchInput = useCallback(
     (value: string) => {
       setSuggestion(value);
@@ -108,12 +121,12 @@ export default function ToursPage() {
     [debouncedSearch]
   );
 
+  // Adjust page number if filter makes current page invalid
   useEffect(() => {
-    setTotalPages(Math.ceil(filteredTours.length / PER_PAGE) || 1);
-    if (page > totalPages && totalPages > 0) {
+    if (page > totalPages) {
       setPage(totalPages);
     }
-  }, [filteredTours, page]);
+  }, [page, totalPages]);
 
   const paginatedTours = useMemo(() => {
     return filteredTours.slice((page - 1) * PER_PAGE, page * PER_PAGE);
@@ -249,7 +262,7 @@ export default function ToursPage() {
                     ))
                   : paginatedTours.map((tour) => (
                       <div
-                        key={tour.id}
+                        key={tour.id || tour._id}
                         className={styles.gridItem}
                         role="listitem"
                       >
@@ -293,7 +306,10 @@ export default function ToursPage() {
               {search && (
                 <Button
                   variant="text"
-                  onClick={() => setSearch('')}
+                  onClick={() => {
+                    setSearch('');
+                    setSuggestion('');
+                  }}
                   className={styles.clearSearchButton}
                 >
                   {t('clearSearch')}

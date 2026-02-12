@@ -1,14 +1,3 @@
-// const { i18n } = require('./next-i18next.config');
-
-// module.exports = {
-//   reactStrictMode: true,
-//   i18n: {
-//     locales: ['en', 'fr', 'de', 'es'], // Example locales, adjust as needed
-//     defaultLocale: 'en',
-//   },
-// };
-
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -16,7 +5,7 @@ const nextConfig = {
     instrumentationHook: true,
   },
   i18n: {
-    locales: ['en', 'fr', 'es', 'de'], // Ensure these match your actual setup
+    locales: ['en', 'fr', 'es', 'de'], 
     defaultLocale: 'en',
   },
   images: {
@@ -26,20 +15,21 @@ const nextConfig = {
       'media.guruwalk.com',
       'imagedelivery.net',
       'www.venicefreewalkingtour.com',
-      'www.neweuropetours.eu'
+      'www.neweuropetours.eu',
+      "assets.guruwalk.com"
     ]
   ,
-    // This is the critical part
+
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'cdn.paris-walks.com', // EXACTLY this hostname
+        hostname: 'cdn.paris-walks.com',
         port: '',
-        pathname: '/**', // Allows any path on this host
+        pathname: '/**', 
       },
     ],
   },
-  // ... any other configurations you might have
+
 };
 
 module.exports = nextConfig;

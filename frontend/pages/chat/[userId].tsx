@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import {
   Avatar,
@@ -129,17 +129,14 @@ export default function ChatPage() {
     };
 
     initAnonymous();
-  }, [router.isReady]);
+  }, [router.isReady, t]);
 
   useEffect(() => {
-    if (otherUserId) {
+    if (otherUserId && clearNotificationsFromUser) {
       clearNotificationsFromUser(otherUserId);
     }
-  }, [otherUserId]);
-  // Debug logs
-  useEffect(() => {
-    console.log('Current messages:', messages);
-  }, [messages]);
+  }, [otherUserId, clearNotificationsFromUser]);
+
   useEffect(() => {
     const unreadIds = messages
       .filter((msg) => !msg.read && msg.fromUserId === otherUserId)
@@ -156,17 +153,10 @@ export default function ChatPage() {
 
   // Main socket effect
   useEffect(() => {
-    if (!router.isReady || !sessionReady) {
-      return;
-    }
+    if (!router.isReady || !sessionReady) return;
 
     if (!otherUserId) {
       setConnectionError(t('chatInvalidPartner'));
-      setLoading(false);
-      return;
-    }
-
-    if (socketRef.current?.connected) {
       setLoading(false);
       return;
     }
@@ -179,8 +169,8 @@ export default function ChatPage() {
     });
 
     socketRef.current = socket;
+    const currentDedupeMap = messageDedupeMap.current;
 
-    // Socket event handlers
     const onConnect = () => {
       setSocketConnected(true);
       setConnectionError(null);
@@ -194,7 +184,6 @@ export default function ChatPage() {
     const onDisconnect = (reason: string) => {
       setSocketConnected(false);
       setConnectionError(t('chatDisconnected', { reason }));
-      setLoading(false);
     };
 
     const onConnectError = (error: Error) => {
@@ -204,7 +193,7 @@ export default function ChatPage() {
     };
 
     const onTyping = ({ fromUserId }: { fromUserId: string }) => {
-      if (fromUserId !== currentUserId && fromUserId === otherUserId) {
+      if (fromUserId === otherUserId) {
         setTypingUsers((prev) => new Set(prev).add(fromUserId));
         if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
         typingTimeoutRef.current = setTimeout(() => {
@@ -254,81 +243,65 @@ export default function ChatPage() {
     };
 
     const onNewMessage = (msg: Message) => {
-      // Deduplication check
-      if (
-        messageDedupeMap.current.has(msg._id) ||
-        (msg.tempId && messageDedupeMap.current.has(msg.tempId))
-      ) {
-        console.log('Duplicate message detected, ignoring');
+      if (currentDedupeMap.has(msg._id) || (msg.tempId && currentDedupeMap.has(msg.tempId))) {
         return;
       }
 
-      messageDedupeMap.current.add(msg._id);
-      if (msg.tempId) messageDedupeMap.current.add(msg.tempId);
+      currentDedupeMap.add(msg._id);
+      if (msg.tempId) currentDedupeMap.add(msg.tempId);
 
       setMessages((prev) => {
         const existingIndex = prev.findIndex(
           (m) => m._id === msg._id || (msg.tempId && m.tempId === msg.tempId)
         );
 
+        const processedMsg: Message = {
+          ...msg,
+          fromSelf: msg.fromUserId === currentUserId,
+          avatar: msg.avatar || `https://i.pravatar.cc/40?u=${msg.fromUserId}`,
+          status: 'sent',
+        };
+
         if (existingIndex > -1) {
-          // Update existing message
           const updated = [...prev];
-          updated[existingIndex] = {
-            _id: msg._id,
-            message: msg.message,
-            fromUserId: msg.fromUserId,
-            toUserId: msg.toUserId,
-            createdAt: msg.createdAt,
-            read: msg.read,
-            fromSelf: msg.fromUserId === currentUserId,
-            username: msg.username,
-            avatar:
-              msg.avatar || `https://i.pravatar.cc/40?u=${msg.fromUserId}`,
-            reactions: msg.reactions || [],
-            status: 'sent',
-          };
+          updated[existingIndex] = processedMsg;
           return updated;
         } else {
-          // Add new message
-          const newMessage: Message = {
-            _id: msg._id,
-            message: msg.message,
-            fromUserId: msg.fromUserId,
-            toUserId: msg.toUserId,
-            createdAt: msg.createdAt || new Date().toISOString(),
-            read: msg.read,
-            fromSelf: msg.fromUserId === currentUserId,
-            username: msg.username,
-            avatar:
-              msg.avatar || `https://i.pravatar.cc/40?u=${msg.fromUserId}`,
-            reactions: msg.reactions || [],
-            status: 'sent',
-          };
-          console.log('new m', newMessage);
-          if (newMessage.fromUserId === otherUserId && !newMessage.read) {
+          if (processedMsg.fromUserId === otherUserId && !processedMsg.read) {
             socket.emit('message:read', {
               toUserId: currentUserId,
               fromUserId: otherUserId,
-              messageIds: [newMessage._id],
+              messageIds: [processedMsg._id],
             });
-            return [...prev, newMessage];
-            // if (newMessage.fromUserId === otherUserId && !newMessage.read) {
-            //   return [...prev, newMessage]; // don't mark read immediately
           }
-
-          // return [...prev, { ...newMessage, read: true }];
-
-          return [...prev, newMessage];
+          return [...prev, processedMsg];
         }
       });
 
-      if (msg.fromUserId === currentUserId) {
-        setText('');
+      if (msg.fromUserId === currentUserId) setText('');
+    };
+
+    const fetchMessages = async () => {
+      try {
+        setLoading(true);
+        const res = await api.get(`/whois/chat/${otherUserId}/${otherUserIdParam}`);
+        const msgs = res.data.messages.map((msg: Message) => ({
+          ...msg,
+          fromSelf: msg.fromUserId === currentUserId,
+          avatar: msg.avatar || `https://i.pravatar.cc/40?u=${msg.fromUserId}`,
+          status: 'sent',
+        }));
+        setToName(res.data.otherUser.username);
+        setToAvatar(res.data.otherUser.avatarUrl);
+        msgs.forEach((msg: Message) => currentDedupeMap.add(msg._id));
+        setMessages(msgs);
+      } catch (err) {
+        setConnectionError(t('chatLoadMessagesError'));
+      } finally {
+        setLoading(false);
       }
     };
 
-    // Setup event listeners
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
     socket.on('connect_error', onConnectError);
@@ -337,97 +310,29 @@ export default function ChatPage() {
     socket.on('message:reaction', onReaction);
     socket.on('message:new', onNewMessage);
 
-    // Fetch messages function
-    const fetchMessages = async () => {
-      setLoading(true);
-      try {
-        const res = await api.get(
-          `/whois/chat/${otherUserId}/${otherUserIdParam}`
-        );
-        const msgs = res.data.messages.map((msg: Message) => ({
-          _id: msg._id,
-          message: msg.message,
-          fromUserId: msg.fromUserId,
-          toUserId: msg.toUserId,
-          createdAt: msg.createdAt,
-          read: msg.read,
-          fromSelf: msg.fromUserId === currentUserId,
-          username: msg.username,
-          avatar: msg.avatar || `https://i.pravatar.cc/40?u=${msg.fromUserId}`,
-          reactions: msg.reactions || [],
-          status: 'sent',
-        }));
-        setToName(res.data.otherUser.username);
-        setToAvatar(res.data.otherUser.avatarUrl);
-        // Add to dedupe map
-        msgs.forEach((msg: Message) => messageDedupeMap.current.add(msg._id));
-
-        setMessages(msgs);
-
-        const unreadMessageIds = msgs
-          .filter((msg: Message) => !msg.read && msg.fromUserId === otherUserId)
-          .map((msg: Message) => msg._id);
-
-        if (unreadMessageIds.length > 0) {
-          socket.emit('message:read', {
-            toUserId: currentUserId,
-            fromUserId: otherUserId,
-            messageIds: unreadMessageIds,
-          });
-        }
-      } catch (err) {
-        console.error('Failed to load messages:', err);
-        setConnectionError(t('chatLoadMessagesError'));
-      } finally {
-        setLoading(false);
-      }
-    };
-
     return () => {
-      if (socketRef.current) {
-        socket.off('connect', onConnect);
-        socket.off('disconnect', onDisconnect);
-        socket.off('connect_error', onConnectError);
-        socket.off('message:read:confirm', onReadConfirm);
-        socket.off('message:reaction', onReaction);
-        socket.off('message:new', onNewMessage);
-        socket.disconnect();
-        socketRef.current = null;
-      }
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current);
-      }
-      messageDedupeMap.current.clear();
+      socket.off('connect', onConnect);
+      socket.off('disconnect', onDisconnect);
+      socket.off('connect_error', onConnectError);
+      socket.off('typing', onTyping);
+      socket.off('message:read:confirm', onReadConfirm);
+      socket.off('message:reaction', onReaction);
+      socket.off('message:new', onNewMessage);
+      socket.disconnect();
+      socketRef.current = null;
+      currentDedupeMap.clear();
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     };
-  }, [router.isReady, sessionReady, otherUserId, currentUserId, authToken]);
+  }, [router.isReady, sessionReady, otherUserId, currentUserId, authToken, t, otherUserIdParam]);
 
-  // Auto-scroll to bottom
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages.length, typingUsers.size]);
 
-  // Handlers
   const handleSend = useCallback(async () => {
     if (!text.trim() || !socketRef.current || !otherUserId) return;
 
-    const tempId = `temp-${Date.now()}-${Math.random()
-      .toString(36)
-      .substring(2, 9)}`;
-    // const messageToSend: Message = {
-    //   _id: tempId,
-    //   message: text,
-    //   fromUserId: currentUserId,
-    //   toUserId: otherUserId,
-    //   createdAt: new Date().toISOString(),
-    //   read: false,
-    //   fromSelf: true,
-    //   username: 'You',
-    //   avatar: `https://i.pravatar.cc/40?u=${currentUserId}`,
-    //   status: 'sending',
-    //   tempId,
-    // };
-
-    // setMessages(prev => [...prev, messageToSend]);
+    const tempId = `temp-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
     messageDedupeMap.current.add(tempId);
 
     socketRef.current.emit('message', {
@@ -436,16 +341,11 @@ export default function ChatPage() {
       tempId,
     });
 
-    // Clear typing status
     setTypingUsers((prev) => {
       const newSet = new Set(prev);
       newSet.delete(currentUserId);
       return newSet;
     });
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-      typingTimeoutRef.current = null;
-    }
   }, [text, currentUserId, otherUserId]);
 
   const handleTyping = useCallback(
@@ -468,15 +368,12 @@ export default function ChatPage() {
     setEmojiAnchorEl(e.currentTarget);
   };
 
-  const handleEmojiSelect = (emoji: { native: boolean }) => {
+  const handleEmojiSelect = (emoji: { native: string }) => {
     setText((prev) => prev + emoji.native);
     setEmojiAnchorEl(null);
   };
 
-  const handleMessageOptionsClick = (
-    event: React.MouseEvent<HTMLElement>,
-    messageId: string
-  ) => {
+  const handleMessageOptionsClick = (event: React.MouseEvent<HTMLElement>, messageId: string) => {
     setMessageOptionsAnchorEl(event.currentTarget);
     setSelectedMessageId(messageId);
   };
@@ -502,7 +399,6 @@ export default function ChatPage() {
       setBlockDialogOpen(false);
       handleHeaderMenuClose();
     } catch (error) {
-      console.error('Block failed', error);
       setActionNotice({ type: 'error', message: t('chatBlockError') });
     }
   };
@@ -518,7 +414,6 @@ export default function ChatPage() {
       setReportReason('');
       handleHeaderMenuClose();
     } catch (error) {
-      console.error('Report failed', error);
       setActionNotice({ type: 'error', message: t('chatReportError') });
     }
   };
@@ -537,13 +432,14 @@ export default function ChatPage() {
     [selectedMessageId, otherUserId]
   );
 
-  // Group messages by date
-  const groupedMessages = messages.reduce((groups: GroupedMessages, msg) => {
-    const date = moment(msg.createdAt).format('LL');
-    if (!groups[date]) groups[date] = [];
-    groups[date].push(msg);
-    return groups;
-  }, {});
+  const groupedMessages = useMemo(() => {
+    return messages.reduce((groups: GroupedMessages, msg) => {
+      const date = moment(msg.createdAt).format('LL');
+      if (!groups[date]) groups[date] = [];
+      groups[date].push(msg);
+      return groups;
+    }, {});
+  }, [messages]);
 
   const getReadStatusText = (message: Message) => {
     if (message.fromSelf) {
@@ -555,16 +451,13 @@ export default function ChatPage() {
     return null;
   };
 
-  // Render loading/error states
   return (
     <Layout title={t('chatPageTitle', { name: toName })}>
       <Head>
         <title>{t('chatPageTitleMeta', { name: toName })}</title>
-        <meta name="description" content={t('chatMetaDescription', { name: toName })} />
       </Head>
 
       <Container className={styles.chatContainer}>
-        {/* Header Section */}
         <Box className={styles.chatHeader}>
           <Avatar className={styles.chatAvatar} src={toAvatar} alt={toName} />
           <Box className={styles.chatHeaderInfo}>
@@ -572,238 +465,99 @@ export default function ChatPage() {
               {t('chatWithName', { name: toName })}
             </Typography>
             <Typography variant="body2" className={styles.chatSubtitle}>
-              <span
-                className={`${styles.statusDot} ${
-                  socketConnected ? styles.statusOnline : styles.statusOffline
-                }`}
-                aria-hidden="true"
-              />
+              <span className={`${styles.statusDot} ${socketConnected ? styles.statusOnline : styles.statusOffline}`} />
               {socketConnected ? t('chatOnline') : t('chatOffline')}
             </Typography>
           </Box>
           <Box className={styles.chatHeaderActions}>
-            <IconButton
-              className={styles.profileButton}
-              aria-label={t('chatViewProfileAria', { name: toName || t('traveler') })}
-              onClick={() => otherUserId && router.push(`/peer/${otherUserId}`)}
-              disabled={!otherUserId}
-            >
+            <IconButton onClick={() => otherUserId && router.push(`/peer/${otherUserId}`)}>
               <AccountCircleIcon />
             </IconButton>
-            <IconButton
-              className={styles.profileButton}
-              aria-label={t('chatActionsAria')}
-              onClick={handleHeaderMenuOpen}
-              disabled={!otherUserId}
-            >
+            <IconButton onClick={handleHeaderMenuOpen}>
               <MoreVertIcon />
             </IconButton>
           </Box>
         </Box>
 
-        {/* Safety Alert */}
-        <Alert severity="warning" className={styles.safetyAlert}>
-          {t('chatSafetyWarning')}
-        </Alert>
-
-        {/* Connection Error */}
-        {connectionError && (
-          <Alert severity="error" className={styles.errorAlert}>
-            {connectionError}
-          </Alert>
-        )}
-
-        {/* Messages Area */}
         <Box className={styles.messagesContainer}>
           {loading ? (
-            <Box className={styles.loadingContainer}>
-              <CircularProgress />
-              <Typography variant="body2" className={styles.loadingText}>
-                {t('chatLoadingMessages')}
-              </Typography>
-            </Box>
+            <Box className={styles.loadingContainer}><CircularProgress /></Box>
           ) : (
             <>
               {Object.entries(groupedMessages).map(([date, msgs]) => (
-                <Box key={date} className={styles.messageGroup}>
-                  <Divider className={styles.dateDivider}>
-                    <Chip label={date} className={styles.dateChip} />
-                  </Divider>
+                <Box key={date}>
+                  <Divider className={styles.dateDivider}><Chip label={date} /></Divider>
                   {msgs.map((msg) => (
-                    <ListItem
-                      key={msg._id}
-                      className={`${styles.messageItem} ${
-                        msg.fromSelf
-                          ? styles.messageItemSelf
-                          : styles.messageItemOther
-                      }`}
-                    >
+                    <ListItem key={msg._id} className={`${styles.messageItem} ${msg.fromSelf ? styles.messageItemSelf : styles.messageItemOther}`}>
                       <ChatBubble
                         message={msg.message}
-                        fromSelf={msg.fromSelf!}
-                        avatar={msg.avatar!}
+                        fromSelf={!!msg.fromSelf}
+                        avatar={msg.avatar || ''}
                         username={msg.username}
                         createdAt={msg.createdAt}
                         reactions={msg.reactions}
                         readStatus={getReadStatusText(msg)}
                       />
-                      <IconButton
-                        className={styles.messageOptionsButton}
-                        onClick={(e) => handleMessageOptionsClick(e, msg._id)}
-                      >
-                        <MoreVertIcon />
-                      </IconButton>
+                      <IconButton onClick={(e) => handleMessageOptionsClick(e, msg._id)}><MoreVertIcon /></IconButton>
                     </ListItem>
                   ))}
                 </Box>
               ))}
-              {typingUsers.size > 0 && (
-                <Box className={styles.typingIndicator}>
-                  <Typography variant="caption">
-                    {t('chatTyping', { name: toName })}
-                    <span className={styles.typingPill}>typing...</span>
-                  </Typography>
-                </Box>
-              )}
               <div ref={bottomRef} />
             </>
           )}
         </Box>
 
-        {/* Message Options Menu */}
-        <Menu
-          anchorEl={messageOptionsAnchorEl}
-          open={Boolean(messageOptionsAnchorEl)}
-          onClose={handleMessageOptionsClose}
-          className={styles.messageOptionsMenu}
-        >
-          <MenuItem onClick={() => handleReaction('👍')}>👍 {t('chatReactionLike')}</MenuItem>
-          <MenuItem onClick={() => handleReaction('❤️')}>❤️ {t('chatReactionLove')}</MenuItem>
-          <MenuItem onClick={() => handleReaction('😂')}>😂 {t('chatReactionLaugh')}</MenuItem>
-          <MenuItem onClick={() => handleReaction('😮')}>😮 {t('chatReactionWow')}</MenuItem>
-          <MenuItem onClick={() => handleReaction('😢')}>😢 {t('chatReactionSad')}</MenuItem>
-          <MenuItem onClick={() => handleReaction('😡')}>😡 {t('chatReactionAngry')}</MenuItem>
-        </Menu>
-
-        <Menu
-          anchorEl={headerMenuAnchorEl}
-          open={Boolean(headerMenuAnchorEl)}
-          onClose={handleHeaderMenuClose}
-        >
-          <MenuItem
-            onClick={() => {
-              handleHeaderMenuClose();
-              otherUserId && router.push(`/peer/${otherUserId}`);
-            }}
-          >
-            {t('chatViewProfile')}
-          </MenuItem>
-          <MenuItem
-            onClick={() => {
-              setBlockDialogOpen(true);
-            }}
-          >
-            {t('chatBlockUser')}
-          </MenuItem>
-          <MenuItem
-            onClick={() => {
-              setReportDialogOpen(true);
-            }}
-          >
-            {t('chatReportUser')}
-          </MenuItem>
-        </Menu>
-
-        {/* Input Area */}
         <Box className={styles.inputContainer}>
-          <IconButton
-            className={styles.emojiButton}
-            onClick={handleEmojiClick}
-            aria-label={t('chatAddEmoji')}
-          >
-            <InsertEmoticonIcon />
-          </IconButton>
-          <Popover
-            open={!!emojiAnchorEl}
-            anchorEl={emojiAnchorEl}
-            onClose={() => setEmojiAnchorEl(null)}
-            className={styles.emojiPicker}
-          >
+          <IconButton onClick={handleEmojiClick}><InsertEmoticonIcon /></IconButton>
+          <Popover open={!!emojiAnchorEl} anchorEl={emojiAnchorEl} onClose={() => setEmojiAnchorEl(null)}>
             <Picker onEmojiSelect={handleEmojiSelect} />
           </Popover>
           <TextField
             fullWidth
-            placeholder={t('chatPlaceholder')}
             value={text}
             onChange={handleTyping}
             onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-            multiline
-            maxRows={4}
-            disabled={!socketConnected || loading || !otherUserId}
-            className={styles.messageInput}
+            disabled={!socketConnected || loading}
           />
-          <Button
-            variant="contained"
-            onClick={handleSend}
-            disabled={
-              !text.trim() || !socketConnected || loading || !otherUserId
-            }
-            className={styles.sendButton}
-          >
+          <Button onClick={handleSend} disabled={!text.trim() || !socketConnected}>
             {t('chatSend')}
           </Button>
         </Box>
 
+        <Menu anchorEl={messageOptionsAnchorEl} open={Boolean(messageOptionsAnchorEl)} onClose={handleMessageOptionsClose}>
+          {['👍', '❤️', '😂', '😮', '😢', '😡'].map((emoji) => (
+            <MenuItem key={emoji} onClick={() => handleReaction(emoji)}>{emoji}</MenuItem>
+          ))}
+        </Menu>
+
+        <Menu anchorEl={headerMenuAnchorEl} open={Boolean(headerMenuAnchorEl)} onClose={handleHeaderMenuClose}>
+          <MenuItem onClick={() => { handleHeaderMenuClose(); router.push(`/peer/${otherUserId}`); }}>{t('chatViewProfile')}</MenuItem>
+          <MenuItem onClick={() => setBlockDialogOpen(true)}>{t('chatBlockUser')}</MenuItem>
+          <MenuItem onClick={() => setReportDialogOpen(true)}>{t('chatReportUser')}</MenuItem>
+        </Menu>
+
         <Dialog open={blockDialogOpen} onClose={() => setBlockDialogOpen(false)}>
-          <DialogTitle>{t('chatBlockTitle')}</DialogTitle>
-          <DialogContent>
-            <Typography>{t('chatBlockPrompt', { name: toName || t('traveler') })}</Typography>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setBlockDialogOpen(false)}>
-              {t('chatBlockCancel')}
-            </Button>
-            <Button color="warning" variant="contained" onClick={handleBlockUser}>
-              {t('chatBlockConfirm')}
-            </Button>
-          </DialogActions>
+            <DialogTitle>{t('chatBlockTitle')}</DialogTitle>
+            <DialogActions>
+                <Button onClick={() => setBlockDialogOpen(false)}>{t('chatBlockCancel')}</Button>
+                <Button onClick={handleBlockUser} color="warning">{t('chatBlockConfirm')}</Button>
+            </DialogActions>
         </Dialog>
 
         <Dialog open={reportDialogOpen} onClose={() => setReportDialogOpen(false)}>
-          <DialogTitle>{t('chatReportTitle')}</DialogTitle>
-          <DialogContent>
-            <Typography>{t('chatReportPrompt', { name: toName || t('traveler') })}</Typography>
-            <TextField
-              fullWidth
-              margin="normal"
-              label={t('chatReportReasonLabel')}
-              placeholder={t('chatReportReasonPlaceholder')}
-              value={reportReason}
-              onChange={(e) => setReportReason(e.target.value)}
-              minRows={3}
-              multiline
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setReportDialogOpen(false)}>
-              {t('chatReportCancel')}
-            </Button>
-            <Button color="error" variant="contained" onClick={handleReportUser}>
-              {t('chatReportSubmit')}
-            </Button>
-          </DialogActions>
+            <DialogTitle>{t('chatReportTitle')}</DialogTitle>
+            <DialogContent>
+                <TextField fullWidth multiline value={reportReason} onChange={(e) => setReportReason(e.target.value)} />
+            </DialogContent>
+            <DialogActions>
+                <Button onClick={() => setReportDialogOpen(false)}>{t('chatReportCancel')}</Button>
+                <Button onClick={handleReportUser} color="error">{t('chatReportSubmit')}</Button>
+            </DialogActions>
         </Dialog>
 
-        <Snackbar
-          open={Boolean(actionNotice)}
-          autoHideDuration={4000}
-          onClose={() => setActionNotice(null)}
-        >
-          {actionNotice ? (
-            <Alert severity={actionNotice.type} onClose={() => setActionNotice(null)}>
-              {actionNotice.message}
-            </Alert>
-          ) : null}
+        <Snackbar open={!!actionNotice} autoHideDuration={4000} onClose={() => setActionNotice(null)}>
+          <Alert severity={actionNotice?.type}>{actionNotice?.message}</Alert>
         </Snackbar>
       </Container>
     </Layout>
@@ -811,9 +565,5 @@ export default function ChatPage() {
 }
 
 export async function getServerSideProps({ locale }: { locale: string }) {
-  return {
-    props: {
-      ...(await serverSideTranslations(locale, ['common'])),
-    },
-  };
+  return { props: { ...(await serverSideTranslations(locale, ['common'])) } };
 }

@@ -18,5 +18,6 @@ import { UserSchema, User } from '../schemas/user.schema';
   ],
   controllers: [WhoisController],
   providers: [WhoisService],
+  exports: [WhoisService],
 })
 export class WhoisModule {}

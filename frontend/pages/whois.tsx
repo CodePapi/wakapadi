@@ -26,9 +26,11 @@ import styles from '../styles/whois.module.css';
 import funNames from '../lib/data/funNames.json';
 import { safeStorage } from '../lib/storage';
 import { ensureAnonymousSession } from '../lib/anonymousAuth';
+import { getSocket } from '../lib/socket';
 
-const getRandomFunName = () =>
-  funNames[Math.floor(Math.random() * funNames.length)];
+// --- Utilities ---
+const getRandomFunName = () => funNames[Math.floor(Math.random() * funNames.length)];
+
 const statusColors = {
   active: '#10b981',
   idle: '#f59e0b',
@@ -43,93 +45,65 @@ interface User {
   lastSeen?: string;
   coordinates?: { lat: number; lng: number };
   distanceKm?: number | null;
+  status?: 'active' | 'idle' | 'offline';
 }
 
 const toRadians = (value: number) => (value * Math.PI) / 180;
-const haversineKm = (
-  lat1: number,
-  lng1: number,
-  lat2: number,
-  lng2: number
-) => {
+const haversineKm = (lat1: number, lng1: number, lat2: number, lng2: number) => {
   const earthRadiusKm = 6371;
   const dLat = toRadians(lat2 - lat1);
   const dLng = toRadians(lng2 - lng1);
   const a =
     Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRadians(lat1)) *
-      Math.cos(toRadians(lat2)) *
-      Math.sin(dLng / 2) ** 2;
+    Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) * Math.sin(dLng / 2) ** 2;
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return earthRadiusKm * c;
 };
 
-export default function WhoisPage() {
+export default function WhoIsNearby() {
+  const router = useRouter();
+  const { t } = useTranslation('common');
+  
+  // --- State ---
   const [hasMounted, setHasMounted] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [city, setCity] = useState('');
   const [users, setUsers] = useState<User[]>([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userId, setUserId] = useState('');
+  const [currentUserId, setCurrentUserId] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const [currentCoords, setCurrentCoords] = useState<{
-    lat: number;
-    lng: number;
-  } | null>(null);
+  const [currentCoords, setCurrentCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [geoRequested, setGeoRequested] = useState(false);
+
   const [ref, inView] = useInView();
   const anonymousNameMap = useRef<Map<string, string>>(new Map());
-  const router = useRouter();
-  const { t } = useTranslation('common');
 
-  useEffect(() => {
-    setHasMounted(true);
-    (async () => {
-      try {
-        const session = await ensureAnonymousSession();
-        setIsLoggedIn(!!session?.token);
-        if (session?.userId) setUserId(session.userId);
-      } catch (error) {
-        console.warn('Anonymous session failed', error);
-      }
-    })();
-  }, []);
+  // --- Helpers ---
+  const getUserStatus = (lastSeen?: string) => {
+    if (!lastSeen) return 'offline';
+    const minutesAgo = (new Date().getTime() - new Date(lastSeen).getTime()) / (1000 * 60);
+    if (minutesAgo < 5) return 'active';
+    if (minutesAgo < 30) return 'idle';
+    return 'offline';
+  };
 
+  // --- Data Fetching ---
   const fetchNearby = useCallback(
     async (targetCity: string, pageNum = 1) => {
       try {
+        if (pageNum > 1) setLoadingMore(true);
         setError(null);
-        const res = await api
-          .get('/whois/nearby', {
-            params: {
-              city: targetCity,
-              userId,
-              page: pageNum,
-              limit: 15,
-            },
-            headers: {
-              Authorization: `Bearer ${safeStorage.getItem('token') || ''}`,
-            },
-          })
-          .catch((error) => {
-            console.warn('Fetch nearby failed', error);
-            setError(t('fetchError'));
-            return null;
-          });
 
-        if (!res) {
-          setLoading(false);
-          setLoadingMore(false);
-          return;
-        }
+        const res = await api.get('/whois/nearby', {
+          params: { city: targetCity, userId: currentUserId, page: pageNum, limit: 15 },
+          headers: { Authorization: `Bearer ${safeStorage.getItem('token') || ''}` },
+        });
 
         const enriched = res.data.map((user: User) => {
-          if (!currentCoords || !user.coordinates) {
-            return { ...user, distanceKm: null };
-          }
-
+          if (!currentCoords || !user.coordinates) return { ...user, distanceKm: null };
           const distanceKm = haversineKm(
             currentCoords.lat,
             currentCoords.lng,
@@ -139,12 +113,7 @@ export default function WhoisPage() {
           return { ...user, distanceKm };
         });
 
-        if (pageNum === 1) {
-          setUsers(enriched);
-        } else {
-          setUsers((prev) => [...prev, ...enriched]);
-        }
-
+        setUsers((prev) => (pageNum === 1 ? enriched : [...prev, ...enriched]));
         setHasMore(res.data.length === 15);
       } catch (err) {
         console.error('Fetch nearby failed:', err);
@@ -154,126 +123,96 @@ export default function WhoisPage() {
         setLoadingMore(false);
       }
     },
-    [userId, t, currentCoords]
-  );
-
-  const handleStartChat = useCallback(
-    async (targetUserId: string) => {
-      try {
-        router.push(`/chat/${targetUserId}`);
-      } catch (err) {
-        console.error('Failed to start chat:', err);
-        setError(t('whoisChatStartError'));
-      }
-    },
-    [router, t]
+    [currentUserId, t, currentCoords]
   );
 
   const pingPresence = async (targetCity: string) => {
     try {
       const res = await api.post('/whois/ping', { city: targetCity });
-      if (res.status === 201) {
-        await fetchNearby(targetCity);
-      }
+      if (res.status === 201) await fetchNearby(targetCity);
     } catch (err) {
       console.error('Ping presence failed:', err);
     }
   };
 
-  const getUserStatus = (lastSeen?: string) => {
-    if (!lastSeen) return 'offline';
-    const minutesAgo =
-      (new Date().getTime() - new Date(lastSeen).getTime()) / (1000 * 60);
-    if (minutesAgo < 5) return 'active';
-    if (minutesAgo < 30) return 'idle';
-    return 'offline';
+  // --- Event Handlers ---
+  const handleFindNearby = async () => {
+    setLoading(true);
+    setError(null);
+    setGeoRequested(true);
+
+    if (!navigator.geolocation) {
+      setError(t('whoisGeoError'));
+      setLoading(false);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const { latitude, longitude } = pos.coords;
+          setCurrentCoords({ lat: latitude, lng: longitude });
+
+          const res = await api.get(`/geolocation/reverse?lat=${latitude}&lon=${longitude}`);
+          const geocode = res.data;
+          const detectedCity = (geocode?.address?.city || geocode?.address?.town || geocode?.address?.village || '').trim().toLowerCase();
+
+          if (!detectedCity) {
+            setError(t('whoisGeoError'));
+            setLoading(false);
+            return;
+          }
+
+          setCity(detectedCity);
+          if (isLoggedIn) await pingPresence(detectedCity);
+          await fetchNearby(detectedCity, 1);
+        } catch (geoErr) {
+          setError(t('whoisGeoError'));
+          setLoading(false);
+        }
+      },
+      () => {
+        setError(t('whoisGeoDenied'));
+        setLoading(false);
+      },
+      { timeout: 10000 }
+    );
   };
 
+  const handleStartChat = (targetUserId: string) => {
+    router.push(`/chat/${targetUserId}`);
+  };
+
+  // --- Effects ---
   useEffect(() => {
-    if (!hasMounted) return;
-
-    const detectCityAndLoad = async () => {
-      const timeout = setTimeout(() => {
-        console.warn('Geolocation timed out after 10s');
-        setLoading(false);
-      }, 10000);
-
+    setHasMounted(true);
+    (async () => {
       try {
-        navigator.geolocation.getCurrentPosition(
-          async (pos) => {
-            clearTimeout(timeout);
-
-            try {
-              const { latitude, longitude } = pos.coords;
-              if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
-                throw new Error('Invalid coordinates');
-              }
-
-              setCurrentCoords({ lat: latitude, lng: longitude });
-
-              const res = await api
-                .get(
-                  `/geolocation/reverse?lat=${encodeURIComponent(latitude)}&lon=${encodeURIComponent(longitude)}`,
-                  { validateStatus: () => true }
-                )
-                .catch((error) => {
-                  console.warn('Reverse geocoding request failed', error);
-                  setError(t('whoisGeoError'));
-                  return null;
-                });
-
-              if (!res) {
-                return;
-              }
-
-              if (res.status >= 400) {
-                console.warn('Reverse geocoding failed:', res.status, res.data);
-                setError(t('whoisGeoError'));
-                return;
-              }
-
-              const geocode = res.data;
-              const detectedCity = (
-                geocode?.address?.city ||
-                geocode?.address?.town ||
-                geocode?.address?.village ||
-                ''
-              )
-                .trim()
-                .toLowerCase();
-
-              if (!detectedCity) {
-                setError(t('whoisGeoError'));
-                return;
-              }
-
-              setCity(detectedCity);
-              if (isLoggedIn) await pingPresence(detectedCity);
-              await fetchNearby(detectedCity);
-            } catch (geoErr) {
-              console.error('Geocoding failed:', geoErr);
-              setError(t('whoisGeoError'));
-            } finally {
-              setLoading(false);
-            }
-          },
-          (geoErr) => {
-            clearTimeout(timeout);
-            console.error('Geolocation error:', geoErr);
-            setError(t('whoisGeoDenied'));
-            setLoading(false);
-          }
-        );
-      } catch (err) {
-        clearTimeout(timeout);
-        console.error('Unexpected error in geolocation flow:', err);
-        setError(t('whoisUnexpectedError'));
-        setLoading(false);
+        const session = await ensureAnonymousSession();
+        setIsLoggedIn(!!session?.token);
+        if (session?.userId) setCurrentUserId(session.userId);
+      } catch (error) {
+        console.warn('Session init failed', error);
       }
-    };
+    })();
+  }, []);
 
-    detectCityAndLoad();
-  }, [hasMounted, isLoggedIn, fetchNearby, t]);
+  useEffect(() => {
+    const socket = getSocket();
+    socket.on('userOnline', (uid: string) => {
+      setUsers((prev) => prev.map((u) => (u.userId === uid ? { ...u, status: 'active' } : u)));
+    });
+    socket.on('userOffline', (uid: string) => {
+      setUsers((prev) => prev.map((u) => (u.userId === uid ? { ...u, status: 'offline' } : u)));
+    });
+    socket.on('whoisUpdate', (updatedUsers: User[]) => setUsers(updatedUsers));
+
+    return () => {
+      socket.off('userOnline');
+      socket.off('userOffline');
+      socket.off('whoisUpdate');
+    };
+  }, []);
 
   useEffect(() => {
     if (inView && !loadingMore && hasMore && city) {
@@ -285,14 +224,14 @@ export default function WhoisPage() {
 
   if (!hasMounted) return null;
 
+  // --- Components ---
   const UserSkeleton = () => (
     <Box sx={{ display: 'flex', alignItems: 'center', p: 2, gap: 2 }}>
       <Skeleton variant="circular" width={44} height={44} />
       <Box sx={{ flex: 1 }}>
-        <Skeleton variant="text" width="60%" height={24} />
-        <Skeleton variant="text" width="40%" height={20} />
+        <Skeleton variant="text" width="60%" />
+        <Skeleton variant="text" width="40%" />
       </Box>
-      {isLoggedIn && <Skeleton variant="rectangular" width={80} height={36} />}
     </Box>
   );
 
@@ -300,154 +239,87 @@ export default function WhoisPage() {
     <Layout title={`#${t('whoisNearby')} – Wakapadi`}>
       <Head>
         <title>{`#${t('whoisNearby')} – Wakapadi`}</title>
-        <meta name="description" content={t('whoisDescription')} />
       </Head>
 
       <section className={styles.hero}>
-        <Container maxWidth="lg" className={styles.heroInner}>
-          <Box className={styles.heroCopy}>
-            <Typography variant="h1" className={styles.heroTitle}>
-              {t('whoisNearby')}
-            </Typography>
-            <Typography className={styles.heroSubtitle}>
-              {t('discoverTravelers')}
-            </Typography>
-            {city && (
-              <div className={styles.heroMeta}>
-                <Chip
-                  label={`📍 ${t('near')} ${
-                    city.charAt(0).toUpperCase() + city.slice(1)
-                  }`}
-                  className={styles.locationChip}
-                  icon={<PlaceIcon fontSize="small" />}
-                />
-              </div>
-            )}
-          </Box>
+        <Container maxWidth="lg">
+          <Typography variant="h3" fontWeight="bold">{t('whoisNearby')}</Typography>
+          <Typography variant="h6" sx={{ opacity: 0.8, mb: 3 }}>{t('discoverTravelers')}</Typography>
+          {!geoRequested && (
+            <Button variant="contained" size="large" onClick={handleFindNearby}>
+              {t('findNearbyBtn')}
+            </Button>
+          )}
+          {city && (
+            <Chip 
+              icon={<PlaceIcon />} 
+              label={`${t('near')} ${city.toUpperCase()}`} 
+              color="primary" 
+              sx={{ mt: 2 }}
+            />
+          )}
         </Container>
       </section>
 
-      <Container maxWidth="lg" className={styles.container}>
-        <div className={styles.content}>
-          {error && (
-            <Alert severity="error" className={styles.errorAlert}>
-              {error}
-              <Button
-                variant="text"
-                color="inherit"
-                onClick={() => window.location.reload()}
-                sx={{ ml: 1 }}
-              >
-                {t('retry')}
-              </Button>
-            </Alert>
-          )}
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+        <Alert severity="info" sx={{ mb: 4 }}>{t('whoisSafetyWarning')}</Alert>
 
-          <Alert severity="warning" className={styles.errorAlert}>
-            {t('whoisSafetyWarning')}
-          </Alert>
+        {loading ? (
+          <Box>{[...Array(3)].map((_, i) => <UserSkeleton key={i} />)}</Box>
+        ) : users.length > 0 ? (
+          <>
+            <List>
+              {users.map((user, index) => {
+                const displayName = user.anonymous 
+                  ? (anonymousNameMap.current.get(user._id) || (() => {
+                      const name = getRandomFunName();
+                      anonymousNameMap.current.set(user._id, name);
+                      return name;
+                    })())
+                  : user.username;
 
-          {loading ? (
-            <Box className={styles.loadingContainer}>
-              {[...Array(3)].map((_, i) => (
-                <UserSkeleton key={`skeleton-${i}`} />
-              ))}
-            </Box>
-          ) : users.length > 0 ? (
-            <>
-              <List className={styles.userList} disablePadding>
-                {users.map((user, index) => (
+                return (
                   <div key={`${user._id}-${index}`}>
-                    <ListItem className={styles.userItem}>
-                      <Box className={styles.userItemContainer}>
-                        <Box className={styles.userContent}>
-                          <Avatar className={styles.userAvatar}>
-                            {user.anonymous
-                              ? '👤'
-                              : user.username?.charAt(0) || '👤'}
-                          </Avatar>
-                          <Box sx={{ overflow: 'hidden' }}>
-                            <Typography className={styles.userName}>
-                              {user.anonymous
-                                ? anonymousNameMap.current.get(user._id) ||
-                                  (() => {
-                                    const name = getRandomFunName();
-                                    anonymousNameMap.current.set(user._id, name);
-                                    return name;
-                                  })()
-                                : user.username}
-                              <Box
-                                component="span"
-                                className={styles.statusIndicator}
-                                sx={{
-                                  backgroundColor:
-                                    statusColors[getUserStatus(user.lastSeen)],
-                                  ...(user.anonymous && {
-                                    backgroundColor: statusColors.offline,
-                                  }),
-                                }}
-                              />
+                    <ListItem sx={{ py: 2, display: 'flex', justifyContent: 'space-between' }}>
+                      <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                        <Avatar>{displayName?.charAt(0)}</Avatar>
+                        <Box>
+                          <Typography variant="subtitle1" fontWeight="bold">
+                            {displayName}
+                            <Box component="span" sx={{ 
+                              display: 'inline-block', ml: 1, width: 8, height: 8, borderRadius: '50%',
+                              bgcolor: statusColors[user.status || getUserStatus(user.lastSeen)] 
+                            }} />
+                          </Typography>
+                          <Typography variant="caption" display="block">
+                            {user.lastSeen ? formatDistanceToNow(new Date(user.lastSeen), { addSuffix: true }) : t('lastSeenUnknown')}
+                          </Typography>
+                          {user.distanceKm !== null && (
+                            <Typography variant="body2" color="primary">
+                              {user.distanceKm! < 1 ? '< 1 km away' : `${user.distanceKm!.toFixed(1)} km away`}
                             </Typography>
-                            <Typography className={styles.lastSeen}>
-                              {user.lastSeen
-                                ? `${t('active')} ${formatDistanceToNow(
-                                    new Date(user.lastSeen),
-                                    { addSuffix: true }
-                                  )}`
-                                : t('lastSeenUnknown')}
-                            </Typography>
-                            {Number.isFinite(user.distanceKm) && (
-                              <Typography className={styles.distance}>
-                                {user.distanceKm! < 1
-                                  ? 'Less than 1 km away'
-                                  : `${user.distanceKm!.toFixed(1)} km away`}
-                              </Typography>
-                            )}
-                          </Box>
+                          )}
                         </Box>
-
-                        {user.userId && (
-                          <Button
-                            variant="outlined"
-                            color="primary"
-                            className={styles.chatButton}
-                            onClick={() => handleStartChat(user.userId!)}
-                            aria-label={
-                              t('chatWith', {
-                                username: user.username || t('traveler'),
-                              })
-                            }
-                            startIcon={<span>💬</span>}
-                          >
-                            {t('chat')}
-                          </Button>
-                        )}
                       </Box>
+                      {user.userId && (
+                        <Button variant="outlined" onClick={() => handleStartChat(user.userId!)}>
+                          {t('chat')}
+                        </Button>
+                      )}
                     </ListItem>
-                    {index < users.length - 1 && (
-                      <Divider className={styles.userDivider} />
-                    )}
+                    <Divider />
                   </div>
-                ))}
-              </List>
-
-              <div ref={ref} className={styles.infiniteScrollLoader}>
-                {loadingMore && <CircularProgress size={24} />}
-                {!hasMore && users.length > 0 && (
-                  <Typography variant="body2" color="textSecondary">
-                    {t('noMoreUsers')}
-                  </Typography>
-                )}
-              </div>
-            </>
-          ) : (
-            <Box className={styles.emptyState}>
-              <Typography variant="body1" mb={2}>
-                {t('noUsersFound')}
-              </Typography>
-            </Box>
-          )}
-        </div>
+                );
+              })}
+            </List>
+            <div ref={ref} style={{ textAlign: 'center', padding: '20px' }}>
+              {loadingMore && <CircularProgress size={24} />}
+            </div>
+          </>
+        ) : (
+          geoRequested && !loading && <Typography align="center">{t('noUsersFound')}</Typography>
+        )}
       </Container>
     </Layout>
   );

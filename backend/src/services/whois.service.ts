@@ -17,6 +17,10 @@ export class WhoisService {
     @InjectModel(User.name) private readonly userModel: Model<User>,
   ) {}
 
+  async removePresence(userId: string) {
+    return this.whoisModel.deleteMany({ userId });
+  }
+
   async pingPresence(userId: string, data: Partial<WhoisPresence>) {
     const now = new Date();
     const expiresAt = new Date(now.getTime() + 6 * 60 * 60 * 1000); // 6 hours
@@ -40,64 +44,78 @@ export class WhoisService {
       city,
       visible: true,
     };
-  
+
     // Only include userId exclusion if it's a valid non-empty string
     if (userId && typeof userId === 'string' && userId.trim() !== '') {
       query.userId = { $ne: userId };
     }
-  
-    const visibleUsers = await this.whoisModel.find(query);
-  
-    return Promise.all(
-      visibleUsers.map(async (user) => {
-        const base = {
-          _id: user._id,
-          city: user.city,
-          status: user.status,
-          coordinates: user.coordinates,
-          lastSeen: user.expiresAt,
+
+    // Fetch all visible presences for the city
+    const visibleUsers = await this.whoisModel.find(query).lean();
+
+    // Collect all userIds that are present and valid
+    const userIds = visibleUsers
+      .map((u) => u.userId)
+      .filter((id) => id && typeof id === 'object' && id.toString);
+
+    // Batch fetch all user details
+    const userMap = new Map();
+    if (userIds.length > 0) {
+      const users = await this.userModel
+        .find({ _id: { $in: userIds } })
+        .select('_id username profileVisible')
+        .lean();
+      users.forEach((u) => userMap.set(u._id.toString(), u));
+    }
+
+    // Build the response in one pass
+    return visibleUsers.map((user) => {
+      const base = {
+        _id: user._id,
+        city: user.city,
+        status: user.status,
+        coordinates: user.coordinates,
+        lastSeen: user.expiresAt,
+      };
+
+      // If the requestor is not logged in (no userId), return anonymous data
+      if (!userId || typeof userId !== 'string' || userId.trim() === '') {
+        return {
+          ...base,
+          anonymous: true,
         };
-  
-        // If the requestor is not logged in (no userId), return anonymous data
-        if (!userId || typeof userId !== 'string' || userId.trim() === '') {
-          return {
-            ...base,
-            anonymous: true,
-          };
-        }
-  
-        // Only attempt to find the user if a valid userId exists on the record
-        if (!user.userId) {
-          return {
-            ...base,
-            anonymous: true,
-          };
-        }
-  
-        const foundUser = await this.userModel.findById(user.userId).lean();
+      }
 
-        if (!foundUser) {
-          return {
-            ...base,
-            anonymous: true,
-          };
-        }
+      // Only attempt to find the user if a valid userId exists on the record
+      if (!user.userId) {
+        return {
+          ...base,
+          anonymous: true,
+        };
+      }
 
-        if (foundUser.profileVisible === false) {
-          return {
-            ...base,
-            userId: foundUser._id.toString(),
-            anonymous: true,
-          };
-        }
+      const foundUser = userMap.get(user.userId.toString());
+      if (!foundUser) {
+        return {
+          ...base,
+          anonymous: true,
+        };
+      }
 
+      if (foundUser.profileVisible === false) {
         return {
           ...base,
           userId: foundUser._id.toString(),
-          username: foundUser.username || 'User',
+          anonymous: true,
         };
-      }),
-    );
+      }
+
+      return {
+        ...base,
+        userId: foundUser._id.toString(),
+        username: foundUser.username || 'User',
+      };
+    });
   }
   
 

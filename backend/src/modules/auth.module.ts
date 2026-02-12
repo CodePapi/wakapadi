@@ -9,11 +9,12 @@ import { DailyVisit, DailyVisitSchema } from '../schemas/daily-visit.schema';
 
 @Module({
   imports: [
-    ConfigModule, // ⬅️ Make sure this is here
+    ConfigModule,
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
       { name: DailyVisit.name, schema: DailyVisitSchema },
     ]),
+    require('../modules/whois.module').WhoisModule,
   ],
   controllers: [AuthController],
   providers: [AuthService],
