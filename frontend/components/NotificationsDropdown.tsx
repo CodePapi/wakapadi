@@ -141,7 +141,9 @@ import {
             >
               {t('notificationsNewMessage', { name: lastNotification.fromUsername })}
             </Alert>
-          ) : null}
+          ) : (
+            <></>
+          )}
         </Snackbar>
       </>
     );

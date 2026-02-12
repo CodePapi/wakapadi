@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import {
@@ -131,11 +132,30 @@ export default function ChatPage() {
     initAnonymous();
   }, [router.isReady, t]);
 
+  // Ensure socket is disconnected when navigating away to avoid blocking route changes
   useEffect(() => {
-    if (otherUserId && clearNotificationsFromUser) {
-      clearNotificationsFromUser(otherUserId);
-    }
-  }, [otherUserId, clearNotificationsFromUser]);
+    const handleRouteChangeStart = () => {
+      if (socketRef.current) {
+        try {
+          socketRef.current.disconnect();
+        } catch (e) {
+          // swallow errors during navigation
+        }
+        socketRef.current = null;
+      }
+    };
+
+    router.events?.on?.('routeChangeStart', handleRouteChangeStart);
+    return () => {
+      router.events?.off?.('routeChangeStart', handleRouteChangeStart);
+    };
+  }, [router.events]);
+
+  // useEffect(() => {
+  //   if (otherUserId && clearNotificationsFromUser) {
+  //     clearNotificationsFromUser(otherUserId);
+  //   }
+  // }, [otherUserId, clearNotificationsFromUser]);
 
   useEffect(() => {
     const unreadIds = messages

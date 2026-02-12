@@ -21,7 +21,6 @@ import {
 } from '@mui/material';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import { useTranslation } from 'next-i18next';
-import { Chat as ChatIcon } from '@mui/icons-material';
 import Link from 'next/link';
 import io, { Socket } from 'socket.io-client';
 import Layout from '../components/Layout';
@@ -193,7 +192,8 @@ export default function ProfilePage() {
         success: t('profileSaveSuccess'),
         error: '',
       });
-    } catch (error) {
+    } catch (err) {
+      console.error('Failed to save profile', err);
       setNotifications({
         success: '',
         error: t('profileSaveError'),
@@ -209,7 +209,8 @@ export default function ProfilePage() {
       safeStorage.removeItem('username');
       clearDeviceId();
       window.location.href = '/';
-    } catch (error) {
+    } catch (err) {
+      console.error('Failed to delete account', err);
       setNotifications({ success: '', error: t('profileDeleteError') });
     }
   };

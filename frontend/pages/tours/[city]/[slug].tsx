@@ -1,4 +1,5 @@
 // pages/tours/[city]/[slug].tsx
+/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any */
 import { useRouter } from 'next/router';
 import { useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';

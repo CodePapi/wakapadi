@@ -8,6 +8,7 @@ import {
   Drawer,
   List,
   ListItem,
+  ListItemButton,
   ListItemText,
   Menu,
   MenuItem,
@@ -259,17 +260,17 @@ export default function Layout({
           </Typography>
           <List>
             {languages.map((language) => (
-              <ListItem 
-              button 
-                key={language.code} 
-                onClick={() => changeLanguage(language.code)}
-                selected={language.code === currentLocale}
-                sx={{ cursor: 'pointer' }}
-              >
-                <ListItemIcon>
-                  <ReactCountryFlag countryCode={language.flag} svg />
-                </ListItemIcon>
-                <ListItemText primary={language.name} />
+              <ListItem key={language.code} disablePadding>
+                <ListItemButton
+                  onClick={() => changeLanguage(language.code)}
+                  selected={language.code === currentLocale}
+                  sx={{ cursor: 'pointer' }}
+                >
+                  <ListItemIcon>
+                    <ReactCountryFlag countryCode={language.flag} svg />
+                  </ListItemIcon>
+                  <ListItemText primary={language.name} />
+                </ListItemButton>
               </ListItem>
             ))}
           </List>

@@ -1,9 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  experimental: {
-    instrumentationHook: true,
-  },
+  // removed deprecated experimental.instrumentationHook
   i18n: {
     locales: ['en', 'fr', 'es', 'de'], 
     defaultLocale: 'en',
@@ -16,16 +14,14 @@ const nextConfig = {
       'imagedelivery.net',
       'www.venicefreewalkingtour.com',
       'www.neweuropetours.eu',
-      "assets.guruwalk.com"
-    ]
-  ,
-
+      'assets.guruwalk.com',
+    ],
     remotePatterns: [
       {
         protocol: 'https',
         hostname: 'cdn.paris-walks.com',
         port: '',
-        pathname: '/**', 
+        pathname: '/**',
       },
     ],
   },

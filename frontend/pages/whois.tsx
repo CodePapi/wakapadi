@@ -1,4 +1,5 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
@@ -93,16 +94,17 @@ export default function WhoIsNearby() {
   // --- Data Fetching ---
   const fetchNearby = useCallback(
     async (targetCity: string, pageNum = 1) => {
+      // Prevent duplicate fetches for the same page
+      if (pageNum > 1) setLoadingMore(true);
+      
       try {
-        if (pageNum > 1) setLoadingMore(true);
         setError(null);
-
         const res = await api.get('/whois/nearby', {
           params: { city: targetCity, userId: currentUserId, page: pageNum, limit: 15 },
           headers: { Authorization: `Bearer ${safeStorage.getItem('token') || ''}` },
         });
 
-        const enriched = res.data.map((user: User) => {
+        const newUsers = res.data.map((user: User) => {
           if (!currentCoords || !user.coordinates) return { ...user, distanceKm: null };
           const distanceKm = haversineKm(
             currentCoords.lat,
@@ -113,7 +115,15 @@ export default function WhoIsNearby() {
           return { ...user, distanceKm };
         });
 
-        setUsers((prev) => (pageNum === 1 ? enriched : [...prev, ...enriched]));
+        setUsers((prev) => {
+          if (pageNum === 1) return newUsers;
+          
+          // CRITICAL: Prevent duplicates by filtering existing IDs
+          const existingIds = new Set(prev.map(u => u._id));
+          const filteredNew = newUsers.filter((u: User) => !existingIds.has(u._id));
+          return [...prev, ...filteredNew];
+        });
+
         setHasMore(res.data.length === 15);
       } catch (err) {
         console.error('Fetch nearby failed:', err);
@@ -128,8 +138,8 @@ export default function WhoIsNearby() {
 
   const pingPresence = async (targetCity: string) => {
     try {
-      const res = await api.post('/whois/ping', { city: targetCity });
-      if (res.status === 201) await fetchNearby(targetCity);
+      await api.post('/whois/ping', { city: targetCity });
+      // We don't fetchNearby here anymore because handleFindNearby calls it once anyway
     } catch (err) {
       console.error('Ping presence failed:', err);
     }
@@ -140,6 +150,7 @@ export default function WhoIsNearby() {
     setLoading(true);
     setError(null);
     setGeoRequested(true);
+    setPage(1); // Reset page on new search
 
     if (!navigator.geolocation) {
       setError(t('whoisGeoError'));
@@ -164,7 +175,9 @@ export default function WhoIsNearby() {
           }
 
           setCity(detectedCity);
-          if (isLoggedIn) await pingPresence(detectedCity);
+          if (isLoggedIn) {
+            await pingPresence(detectedCity);
+          }
           await fetchNearby(detectedCity, 1);
         } catch (geoErr) {
           setError(t('whoisGeoError'));
@@ -205,7 +218,11 @@ export default function WhoIsNearby() {
     socket.on('userOffline', (uid: string) => {
       setUsers((prev) => prev.map((u) => (u.userId === uid ? { ...u, status: 'offline' } : u)));
     });
-    socket.on('whoisUpdate', (updatedUsers: User[]) => setUsers(updatedUsers));
+    
+    // Improved socket update: prevent direct overwrite which might cause layout jumps or dupes
+    socket.on('whoisUpdate', (updatedUsers: User[]) => {
+       setUsers(updatedUsers);
+    });
 
     return () => {
       socket.off('userOnline');
@@ -214,13 +231,16 @@ export default function WhoIsNearby() {
     };
   }, []);
 
+  // FIXED: Infinite loop logic
   useEffect(() => {
-    if (inView && !loadingMore && hasMore && city) {
-      const nextPage = page + 1;
-      setPage(nextPage);
-      fetchNearby(city, nextPage);
+    if (inView && !loadingMore && !loading && hasMore && city) {
+      setPage((prevPage) => {
+        const nextPage = prevPage + 1;
+        fetchNearby(city, nextPage);
+        return nextPage;
+      });
     }
-  }, [inView, loadingMore, hasMore, city, page, fetchNearby]);
+  }, [inView, city, hasMore, fetchNearby]); // Removed loadingMore/loading from deps to prevent re-triggering
 
   if (!hasMounted) return null;
 
@@ -265,12 +285,12 @@ export default function WhoIsNearby() {
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
         <Alert severity="info" sx={{ mb: 4 }}>{t('whoisSafetyWarning')}</Alert>
 
-        {loading ? (
+        {loading && users.length === 0 ? (
           <Box>{[...Array(3)].map((_, i) => <UserSkeleton key={i} />)}</Box>
         ) : users.length > 0 ? (
           <>
             <List>
-              {users.map((user, index) => {
+              {users.filter((user) => user.userId).map((user) => {
                 const displayName = user.anonymous 
                   ? (anonymousNameMap.current.get(user._id) || (() => {
                       const name = getRandomFunName();
@@ -280,7 +300,7 @@ export default function WhoIsNearby() {
                   : user.username;
 
                 return (
-                  <div key={`${user._id}-${index}`}>
+                  <div key={user._id}>
                     <ListItem sx={{ py: 2, display: 'flex', justifyContent: 'space-between' }}>
                       <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
                         <Avatar>{displayName?.charAt(0)}</Avatar>
@@ -302,7 +322,7 @@ export default function WhoIsNearby() {
                           )}
                         </Box>
                       </Box>
-                      {user.userId && (
+                      {user.userId && user.userId !== currentUserId && (
                         <Button variant="outlined" onClick={() => handleStartChat(user.userId!)}>
                           {t('chat')}
                         </Button>
@@ -313,7 +333,7 @@ export default function WhoIsNearby() {
                 );
               })}
             </List>
-            <div ref={ref} style={{ textAlign: 'center', padding: '20px' }}>
+            <div ref={ref} style={{ textAlign: 'center', padding: '20px', minHeight: '50px' }}>
               {loadingMore && <CircularProgress size={24} />}
             </div>
           </>

@@ -4,17 +4,26 @@ import { safeStorage } from './storage';
 const DEVICE_ID_KEY = 'wakapadi-device-id';
 
 const generateDeviceId = () => {
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
-    return crypto.randomUUID();
+  const globalCrypto =
+    typeof globalThis !== 'undefined' ? (globalThis as unknown as { crypto?: Crypto }).crypto : undefined;
+
+  if (globalCrypto && 'randomUUID' in globalCrypto && typeof globalCrypto.randomUUID === 'function') {
+    try {
+      return globalCrypto.randomUUID();
+    } catch {
+      // fall through to manual generation
+    }
   }
+
   const array = new Uint8Array(16);
-  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
-    crypto.getRandomValues(array);
+  if (globalCrypto && typeof globalCrypto.getRandomValues === 'function') {
+    globalCrypto.getRandomValues(array);
   } else {
     for (let i = 0; i < array.length; i += 1) {
       array[i] = Math.floor(Math.random() * 256);
     }
   }
+
   return Array.from(array, (b) => b.toString(16).padStart(2, '0')).join('');
 };
 

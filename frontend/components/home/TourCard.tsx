@@ -1,12 +1,21 @@
 import { Card, CardContent, Typography, Button, Box, Skeleton } from '@mui/material';
 import { useTranslation } from 'next-i18next';
-import { Tour } from '../../pages';
 import styles from './TourCard.module.css';
 import Image from 'next/image';
 import { useState } from 'react';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import { formatCityName } from '../../lib/cityFormat';
 
+// Minimal Tour interface used by this component
+interface Tour {
+  title: string;
+  image?: string | null;
+  altText?: string | null;
+  location: string;
+  recurringSchedule?: string | null;
+  sourceUrl?: string | null;
+  externalPageUrl?: string | null;
+}
 const highlightText = (text: string = '', highlight: string = '') => {
   if (!highlight || !text) return text;
 
@@ -47,7 +56,7 @@ export default function TourCard({
     tour.recurringSchedule && tour.recurringSchedule !== 'Recurring'
       ? tour.recurringSchedule
       : t('tourScheduleRecurring');
-  const sourceLabel = getSourceLabel(tour.sourceUrl);
+  const sourceLabel = getSourceLabel(tour.sourceUrl ?? undefined);
 
   return (
     <article className={styles.cardWrapper}>
