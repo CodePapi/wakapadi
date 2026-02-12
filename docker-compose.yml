@@ -7,7 +7,7 @@ services:
     container_name: nest_api
     restart: always
     ports:
-      - "3002:3002"
+      - "3000:3000"
     env_file:
       - .env
 
