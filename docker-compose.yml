@@ -3,7 +3,7 @@ version: "3.9"
 
 services:
   api:
-    build: .
+    build: ./backend
     container_name: nest_api
     restart: always
     ports:
