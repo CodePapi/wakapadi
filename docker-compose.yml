@@ -1,7 +1,16 @@
 
-version: '3.8'
+version: "3.9"
 
 services:
+  api:
+    build: .
+    container_name: nest_api
+    restart: always
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+
   frontend:
     build: ./frontend
     container_name: frontend
@@ -13,24 +22,24 @@ services:
       PORT: 8080
       NODE_ENV: development
 
-  nestjs:
-    build: ./backend
-    container_name: nestjs
-    ports:
-      - '3000:3000'
-    env_file: .env
-    environment:
-      MONGODB_URI: 'mongodb://mongo:27017/wakapadi'
-      JWT_SECRET: ${JWT_SECRET}
-      THROTTLE_TTL: ${THROTTLE_TTL}
-      THROTTLE_LIMIT: ${THROTTLE_LIMIT}
-      FRONTEND_URL: ${FRONTEND_URL}
-      QDRANTURL: ${QDRANTURL}
-      QDRANTAPIKEYS: ${QDRANTAPIKEYS}
-      NODE_ENV: ${NODE_ENV}
-    depends_on:
-      - mongo
-    restart: always
+  # nestjs:
+  #   build: ./backend
+  #   container_name: nestjs
+  #   ports:
+  #     - '3000:3000'
+  #   env_file: .env
+  #   environment:
+  #     MONGODB_URI: 'mongodb://mongo:27017/wakapadi'
+  #     JWT_SECRET: ${JWT_SECRET}
+  #     THROTTLE_TTL: ${THROTTLE_TTL}
+  #     THROTTLE_LIMIT: ${THROTTLE_LIMIT}
+  #     FRONTEND_URL: ${FRONTEND_URL}
+  #     QDRANTURL: ${QDRANTURL}
+  #     QDRANTAPIKEYS: ${QDRANTAPIKEYS}
+  #     NODE_ENV: ${NODE_ENV}
+  #   depends_on:
+  #     - mongo
+  #   restart: always
 
   # Optional services (disabled by default)
   # qdrant:
