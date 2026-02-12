@@ -231,17 +231,28 @@ export default function WhoIsNearby() {
     };
   }, []);
 
-  // FIXED: Infinite loop logic
+  // // FIXED: Infinite loop logic
+  // useEffect(() => {
+  //   if (inView && !loadingMore && !loading && hasMore && city) {
+  //     setPage((prevPage) => {
+  //       const nextPage = prevPage + 1;
+  //       fetchNearby(city, nextPage);
+  //       return nextPage;
+  //     });
+  //   }
+  // }, [inView, city, hasMore, fetchNearby]); // Removed loadingMore/loading from deps to prevent re-triggering
+// FIXED: Pagination logic with dependencies satisfied
   useEffect(() => {
-    if (inView && !loadingMore && !loading && hasMore && city) {
+    const canLoadMore = inView && !loadingMore && !loading && hasMore && city;
+
+    if (canLoadMore) {
       setPage((prevPage) => {
         const nextPage = prevPage + 1;
         fetchNearby(city, nextPage);
         return nextPage;
       });
     }
-  }, [inView, city, hasMore, fetchNearby]); // Removed loadingMore/loading from deps to prevent re-triggering
-
+  }, [inView, city, hasMore, fetchNearby, loading, loadingMore]);
   if (!hasMounted) return null;
 
   // --- Components ---
