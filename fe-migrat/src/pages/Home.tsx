@@ -55,7 +55,7 @@ export default function Home() {
       }
     }
 
-    const onError = (err: GeolocationPositionError) => {
+    const onError = () => {
       // fallback: IP-based lookup
       const tryIp = async () => {
         try {
@@ -137,7 +137,7 @@ export default function Home() {
           <Link to="/whois" className="inline-flex items-center justify-center px-6 py-3 rounded-md bg-gradient-to-r from-green-600 to-blue-700 text-white hover:text-white font-semibold shadow-md hover:from-green-700 hover:to-blue-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
             {t('homeIntroPrimaryCta') || t('heroCtaMeet')}
           </Link>
-          <Link to="/tours" className="inline-flex items-center justify-center px-6 py-3 rounded-md bg-white border text-gray-800 shadow-sm hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
+          <Link to="/tours" className="inline-flex items-center justify-center px-6 py-3 rounded-md bg-white dark:bg-gray-800 border text-gray-800 dark:text-gray-100 dark:border-gray-700 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
             {t('homeIntroSecondaryCta') || t('heroCtaExplore')}
           </Link>
         </div>
@@ -149,7 +149,7 @@ export default function Home() {
               value={query}
               onChange={(e) => handleSearchChange(e.target.value)}
               placeholder={t('homeSearchPlaceholder') || 'Search tours or places'}
-              className="w-full px-4 py-3 rounded-md border focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 rounded-md border focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 dark:border-gray-700"
             />
           </div>
         </div>
@@ -163,7 +163,7 @@ export default function Home() {
           </div>
           <div className="flex gap-3">
             <Link to="/whois" className="inline-flex items-center px-5 py-3 rounded-md bg-gradient-to-r from-green-600 to-blue-700 text-white font-semibold shadow-md">{t('homeCtaPrimary')}</Link>
-            <Link to="/tours" className="inline-flex items-center px-5 py-3 rounded-md border bg-white text-gray-800">{t('homeCtaSecondary')}</Link>
+            <Link to="/tours" className="inline-flex items-center px-5 py-3 rounded-md border bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 dark:border-gray-700 dark:hover:bg-gray-700">{t('homeCtaSecondary')}</Link>
           </div>
         </div>
       </section>
@@ -203,7 +203,7 @@ export default function Home() {
             <p className="text-sm mt-2 text-gray-600">{t('homeSafetyBody')}</p>
             <div className="mt-4 flex gap-3">
               <Link to="/whois" className="inline-flex items-center px-5 py-3 rounded-md bg-gradient-to-r from-green-600 to-blue-700 text-white hover:text-white font-semibold">{t('homeIntroPrimaryCta')}</Link>
-              <Link to="/tours" className="inline-flex items-center px-5 py-3 rounded-md border bg-white text-gray-800">{t('homeIntroSecondaryCta')}</Link>
+              <Link to="/tours" className="inline-flex items-center px-5 py-3 rounded-md border bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 dark:border-gray-700 dark:hover:bg-gray-700">{t('homeIntroSecondaryCta')}</Link>
             </div>
           </div>
           <div className="mx-auto">

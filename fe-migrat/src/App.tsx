@@ -5,6 +5,7 @@ import React, { useEffect, Suspense } from 'react'
 import { ensureAnonymousSession } from './lib/anonymousAuth'
 const Whois = React.lazy(() => import('./pages/Whois'))
 const Tours = React.lazy(() => import('./pages/Tours'))
+const SavedTours = React.lazy(() => import('./pages/SavedTours'))
 const Profile = React.lazy(() => import('./pages/Profile'))
 const ChatInbox = React.lazy(() => import('./pages/ChatInbox'))
 const ChatConversation = React.lazy(() => import('./pages/ChatConversation'))
@@ -16,7 +17,7 @@ import LocaleStatus from './components/LocaleStatus'
 import VisibilityIndicator from './components/VisibilityIndicator'
 import PendingSyncNotice from './components/PendingSyncNotice'
 import SafetyNotice from './components/SafetyNotice'
-import anonymousAuth, { setLogoutBlock } from './lib/anonymousAuth'
+import { setLogoutBlock } from './lib/anonymousAuth'
 import { api } from './lib/api'
 import { useState } from 'react'
 import { safeStorage } from './lib/storage'
@@ -40,6 +41,7 @@ export default function App() {
                 <Route path="/contact-us" element={<ContactUs />} />
                 <Route path="/whois" element={<Whois />} />
                 <Route path="/tours" element={<Tours />} />
+                <Route path="/saved" element={<SavedTours />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/chat" element={<ChatInbox />} />
@@ -165,6 +167,7 @@ function NavTexts({ mobile }: { mobile?: boolean }) {
     <>
       <NavLink to="/whois" className={({ isActive }) => (isActive ? activeClass : inactiveClass)}>{t('whoisNearby')}</NavLink>
       <NavLink to="/tours" className={({ isActive }) => (isActive ? activeClass : inactiveClass)}>{t('toursBrowseTitle')}</NavLink>
+      <NavLink to="/saved" className={({ isActive }) => (isActive ? activeClass : inactiveClass)}>{t('savedLabel') || 'Saved'}</NavLink>
       <NavLink to="/contact-us" className={({ isActive }) => (isActive ? activeClass : inactiveClass)}>{t('contactUs')}</NavLink>
     </>
   )

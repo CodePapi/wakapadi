@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import { api } from '../lib/api'
 import { useTranslation } from '../lib/i18n'
 

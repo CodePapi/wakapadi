@@ -155,19 +155,19 @@ export default function CitySearch({ value, onChange, options, placeholder, aria
         onFocus={() => { if (options.length) setOpen(true); }}
         aria-label={ariaLabel}
         placeholder={placeholder}
-        className="w-full px-4 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full px-4 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700"
         autoComplete="off"
       />
       <div aria-live="polite" className="sr-only">{announce || (open ? `${filtered.length} suggestions` : value && filtered.length === 0 ? 'No suggestions' : '')}</div>
 
       {open && (
-        <ul ref={listRef} role="listbox" className="absolute z-30 left-0 right-0 mt-2 max-h-64 overflow-auto bg-white border rounded-md shadow-lg divide-y">
+        <ul ref={listRef} role="listbox" className="absolute z-30 left-0 right-0 mt-2 max-h-64 overflow-auto bg-white border rounded-md shadow-lg divide-y dark:bg-gray-800 dark:border-gray-700 dark:divide-gray-700">
           {filtered.map((opt, idx) => (
             <li
               key={opt}
               role="option"
               aria-selected={focusedIndex === idx}
-              className={`px-3 py-2 text-sm text-left ${focusedIndex === idx ? 'bg-blue-50' : 'bg-white'}`}
+              className={`px-3 py-2 text-sm text-left ${focusedIndex === idx ? 'bg-blue-50 dark:bg-blue-900/40' : 'bg-white dark:bg-gray-800'} text-gray-900 dark:text-gray-100`}
               onMouseDown={(e) => { e.preventDefault(); commit(opt); }}
               onMouseEnter={() => setFocusedIndex(idx)}
             >

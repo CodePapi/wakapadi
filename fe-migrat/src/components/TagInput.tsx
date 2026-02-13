@@ -54,20 +54,20 @@ export default function TagInput({ value, onChange, placeholder, suggestions = [
           onKeyDown={onKeyDown}
           onBlur={() => setTimeout(() => add(), 150)}
           placeholder={placeholder}
-          className="flex-1 px-3 py-2 border rounded"
+          className="flex-1 px-3 py-2 border rounded bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700"
         />
-        <button type="button" onClick={() => add()} className="px-3 py-2 bg-gray-100 border rounded">Add</button>
+        <button type="button" onClick={() => add()} className="px-3 py-2 bg-gray-100 border rounded dark:bg-gray-700 dark:text-gray-100">Add</button>
       </div>
 
       {open && filteredSuggestions.length > 0 && (
-        <div className="mt-1 border bg-white rounded shadow-sm max-h-40 overflow-auto z-10">
+        <div className="mt-1 border bg-white rounded shadow-sm max-h-40 overflow-auto z-10 dark:bg-gray-800 dark:border-gray-700">
           {filteredSuggestions.map((s) => (
             <button
               key={s}
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => add(s)}
-              className="w-full text-left px-3 py-2 hover:bg-gray-50"
+              className="w-full text-left px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100"
             >
               {s}
             </button>
