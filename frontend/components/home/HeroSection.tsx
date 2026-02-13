@@ -63,15 +63,15 @@ export default function HeroSection({
       <div className={`relative min-h-[56vh] overflow-x-hidden ${styles.heroContainer}`}>
         {/* Hero Banner with Background Image */}
         <div className={`${styles.heroBanner} bg-cover bg-center`}>
-          <div className="max-w-6xl mx-auto grid gap-12 items-center grid-cols-1 md:grid-cols-[1fr_480px] px-6 py-20">
+          <div className="max-w-6xl mx-auto grid gap-12 items-center grid-cols-1 md:grid-cols-2 px-6 py-20 justify-items-center">
             <motion.div
-              className="text-left"
+              className="text-center md:justify-self-center md:max-w-2xl"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6 }}
             >
               <h1 className={`${styles.heroTitle}`}>{t('homeTitle')}</h1>
-              <p className={`${styles.heroSubtitle} mt-4`}>{t('homeSubtitle')}</p>
+              {/* <p className={`${styles.heroSubtitle} mt-4`}>{t('homeSubtitle')}</p> */}
 
               <div className={styles.heroActions}>
                 <button

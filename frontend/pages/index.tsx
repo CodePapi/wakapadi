@@ -215,7 +215,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className={styles.ctaSection}>
+        <section className={`${styles.ctaSection}`}>
           <div className={`mx-auto max-w-6xl px-4 ${styles.ctaInner}`}>
             <div>
               <h2 className={styles.ctaTitle}>{t('homeCtaTitle')}</h2>
