@@ -99,15 +99,26 @@ export class AuthService {
       const username = this.buildAnonUsername();
       const email = `anon-${deviceHash.slice(0, 10)}@wakapadi.local`;
 
-      user = await this.userModel.create({
-        email,
-        password: '',
-        username,
-        authProvider: 'anonymous',
-        deviceIdHash: deviceHash,
-        profileVisible: true,
-        lastSeenAt: new Date(),
-      });
+      try {
+        user = await this.userModel.create({
+          email,
+          password: '',
+          username,
+          authProvider: 'anonymous',
+          deviceIdHash: deviceHash,
+          profileVisible: true,
+          lastSeenAt: new Date(),
+        });
+      } catch (err: any) {
+        // Handle rare race where two processes create the same anonymous user concurrently.
+        // If duplicate key on unique fields (email or deviceIdHash), re-query the existing user.
+        if (err?.code === 11000) {
+          user = await this.userModel.findOne({ deviceIdHash: deviceHash });
+          if (!user) throw err; // if still missing, rethrow the original error
+        } else {
+          throw err;
+        }
+      }
     } else {
       user.lastSeenAt = new Date();
       await user.save();

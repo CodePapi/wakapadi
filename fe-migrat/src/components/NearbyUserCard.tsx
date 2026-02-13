@@ -54,8 +54,10 @@ export default function NearbyUserCard({ user }: { user: User }) {
     return '—'
   }
 
+  const distanceStr = formatDistance(user)
+
   return (
-    <article className={`flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 bg-white border rounded-lg shadow-sm transition-transform duration-200 ${highlight ? 'scale-101 ring-2 ring-green-300/60' : ''}`}>
+    <article className={`flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 bg-white dark:bg-gray-800 dark:border-gray-700 border rounded-lg shadow-sm transition-transform duration-200 ${highlight ? 'scale-101 ring-2 ring-green-300/60' : ''}`}>
       <div className="relative flex-shrink-0">
         <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
           {avatar ? (
@@ -78,9 +80,19 @@ export default function NearbyUserCard({ user }: { user: User }) {
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <div className="text-sm font-medium text-gray-900 truncate">{displayName}</div>
-            {user.anonymous && <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">anonymous</span>}
+            {user.anonymous && <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-100 px-2 py-0.5 rounded">anonymous</span>}
           </div>
-          <div className="text-xs text-gray-500">{formatDistance(user)}</div>
+          <div className="text-xs text-gray-500 dark:text-gray-300">
+            {distanceStr !== '—' ? (
+              <span>
+                <span className="font-medium mr-1">{t('distanceLabel') || 'Distance'}:</span>
+                <span className="mr-1">{distanceStr}</span>
+                <span className="text-gray-500 dark:text-gray-300">{t('near') || 'near'}</span>
+              </span>
+            ) : (
+              '—'
+            )}
+          </div>
         </div>
         {user.profileVisible === true && user.bio && <div className="mt-1 text-xs text-gray-600 truncate">{user.bio}</div>}
       </div>

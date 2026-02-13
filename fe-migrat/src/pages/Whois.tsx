@@ -36,9 +36,11 @@ export default function Whois() {
   const fetchNearby = useCallback(async (targetCity: string, pageNum = 1) => {
     try {
       if (pageNum > 1) setLoadingMore(true)
+      else setLoading(true)
       setError(null)
       const userId = safeStorage.getItem('userId') || ''
-      const qs = `?city=${encodeURIComponent(targetCity)}&page=${pageNum}&limit=15${userId ? `&userId=${encodeURIComponent(userId)}` : ''}`
+      const latQs = currentCoords ? `&lat=${encodeURIComponent(String(currentCoords.lat))}&lon=${encodeURIComponent(String(currentCoords.lng))}` : ''
+      const qs = `?city=${encodeURIComponent(targetCity)}&page=${pageNum}&limit=15${userId ? `&userId=${encodeURIComponent(userId)}` : ''}${latQs}`
       const res: any = await api.get(`/whois/nearby${qs}`, { cache: 'no-store' })
       let data = Array.isArray(res?.data) ? res.data : []
       // filter out locally hidden users
@@ -76,6 +78,8 @@ export default function Whois() {
       } catch (e) {}
 
       const augmented = data.map((u: any) => {
+        // Prefer server-provided distance if available
+        if (typeof u.distanceKm === 'number') return { ...u }
         if (!currentCoords || !u.coordinates) return { ...u, distanceKm: null }
         const d = haversineKm(currentCoords.lat, currentCoords.lng, u.coordinates.lat, u.coordinates.lng)
         return { ...u, distanceKm: d }
@@ -203,6 +207,10 @@ export default function Whois() {
     const SOCKET = import.meta.env.VITE_SOCKET_URL || ''
     const socket = io(SOCKET || undefined, { path: '/socket.io', transports: ['websocket'], auth: { token } })
 
+    // Simple debounce/dedupe map to avoid rapid duplicate online/offline events
+    const ACTIVITY_DEBOUNCE_MS = 3000
+    const recentActivity = new Map<string, number>()
+
     socket.on('connect', () => {
       // optionally re-join notifications room
       const currentUserId = safeStorage.getItem('userId')
@@ -210,57 +218,78 @@ export default function Whois() {
     })
 
     socket.on('userOnline', async (userId: string) => {
-      // mark user active in the current list if present
-      let found = false
-      setUsers((prev) => {
-        const next = prev.map((u) => {
-          if (u._id === userId || u.id === userId) {
-            found = true
-            return { ...u, active: true, lastSeen: null }
-          }
-          return u
-        })
-        return next
-      })
+      try {
+        const now = Date.now()
+        const last = recentActivity.get(userId) || 0
+        if (now - last < ACTIVITY_DEBOUNCE_MS) return
+        recentActivity.set(userId, now)
 
-      // if not found in current list, attempt to fetch minimal profile and prepend
-      if (!found) {
-        try {
-          const profile: any = await api.get(`/users/preferences/${encodeURIComponent(userId)}`, { cache: 'no-store' })
-          if (profile) {
-            const item = {
-              _id: userId,
-              username: profile.username || 'Traveler',
-              name: profile.username || profile.name || undefined,
-              avatar: profile.avatarUrl || `https://i.pravatar.cc/40?u=${userId}`,
-              bio: profile.bio || undefined,
-              travelPrefs: profile.travelPrefs || undefined,
-              languages: profile.languages || undefined,
-              socials: profile.socials || undefined,
-              gender: profile.gender || undefined,
-              profileVisible: typeof profile.profileVisible === 'boolean' ? profile.profileVisible : undefined,
-              active: true,
-              lastSeen: null,
-              coordinates: profile.coordinates || null,
+        // mark user active in the current list if present
+        let found = false
+        setUsers((prev) => {
+          const next = prev.map((u) => {
+            if (u._id === userId || u.id === userId) {
+              found = true
+              return { ...u, active: true, lastSeen: null }
             }
-            setUsers((prev) => [item, ...prev])
-            // show toast for new nearby user
-            try {
-              setToast({ id: userId, text: `${item.username || 'Traveler'} is nearby` })
-              setTimeout(() => setToast(null), 3200)
-            } catch (e) {}
+            return u
+          })
+          return next
+        })
+
+        // if not found in current list, attempt to fetch minimal profile and prepend
+        if (!found) {
+          try {
+            const profile: any = await api.get(`/users/preferences/${encodeURIComponent(userId)}`, { cache: 'no-store' })
+            if (profile) {
+              const item = {
+                _id: userId,
+                username: profile.username || 'Traveler',
+                name: profile.username || profile.name || undefined,
+                avatar: profile.avatarUrl || `https://i.pravatar.cc/40?u=${userId}`,
+                bio: profile.bio || undefined,
+                travelPrefs: profile.travelPrefs || undefined,
+                languages: profile.languages || undefined,
+                socials: profile.socials || undefined,
+                gender: profile.gender || undefined,
+                profileVisible: typeof profile.profileVisible === 'boolean' ? profile.profileVisible : undefined,
+                active: true,
+                lastSeen: null,
+                coordinates: profile.coordinates || null,
+              }
+              // dedupe: ensure we don't already have this id (race guard)
+              setUsers((prev) => {
+                if (prev.some((p) => p._id === userId || p.id === userId)) return prev
+                return [item, ...prev]
+              })
+              // show toast for new nearby user
+              try {
+                setToast({ id: userId, text: `${item.username || 'Traveler'} is nearby` })
+                setTimeout(() => setToast(null), 3200)
+              } catch (e) {}
+            }
+          } catch (err) {
+            // ignore failures to fetch profile
+            console.warn('Could not fetch user profile for', userId)
           }
-        } catch (err) {
-          // ignore failures to fetch profile
-          console.warn('Could not fetch user profile for', userId)
         }
+      } catch (e) {
+        console.warn('userOnline handler error', e)
       }
     })
 
     socket.on('userOffline', (userId: string) => {
-      // mark user offline in the current list if present
-      const now = new Date().toISOString()
-      setUsers((prev) => prev.map((u) => (u._id === userId || u.id === userId ? { ...u, active: false, lastSeen: now } : u)))
+      try {
+        const nowTs = Date.now()
+        const last = recentActivity.get(userId) || 0
+        if (nowTs - last < ACTIVITY_DEBOUNCE_MS) return
+        recentActivity.set(userId, nowTs)
+        // mark user offline in the current list if present
+        const now = new Date().toISOString()
+        setUsers((prev) => prev.map((u) => (u._id === userId || u.id === userId ? { ...u, active: false, lastSeen: now } : u)))
+      } catch (e) {
+        console.warn('userOffline handler error', e)
+      }
     })
 
     socket.on('connect_error', (err: any) => {
@@ -296,7 +325,12 @@ export default function Whois() {
             <div className="mt-2 text-sm text-gray-600 dark:text-gray-300">{t('whoisYouNotListed') || "You won't appear in this list"}</div>
           )}
         </div>
-        <div className="text-sm text-gray-700">{t('whoisSafetyWarning')}</div>
+        <div className="mt-2 sm:mt-0">
+          <div role="status" className="flex items-start gap-3 text-sm bg-yellow-50 dark:bg-yellow-900 border-l-4 border-yellow-300 dark:border-yellow-700 text-yellow-800 dark:text-yellow-200 px-3 py-2 rounded">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.72-1.36 3.485 0l5.516 9.8c.75 1.333-.213 2.98-1.742 2.98H4.483c-1.529 0-2.492-1.647-1.742-2.98l5.516-9.8zM11 13a1 1 0 10-2 0 1 1 0 002 0zm-1-8a1 1 0 00-.993.883L8.9 7.5a1 1 0 001.993 0l-.107-1.617A1 1 0 0010 5z" clipRule="evenodd"/></svg>
+            <div>{t('whoisSafetyWarning')}</div>
+          </div>
+        </div>
       </div>
 
       <div className="mt-6 space-y-4">
@@ -331,7 +365,23 @@ export default function Whois() {
                 <label className="block text-xs text-gray-500">{t('whoisEnterCityManualLabel')}</label>
                 <div className="flex gap-2 mt-2">
                   <input value={manualCity} onChange={(e) => setManualCity(e.target.value)} placeholder={t('exampleCity')} className="flex-1 px-3 py-2 border rounded-md" />
-                  <button onClick={async () => { if (manualCity.trim()) { setShowLocationPrompt(false); setCity(manualCity.trim().toLowerCase()); await pingPresence(manualCity.trim().toLowerCase()); await fetchNearby(manualCity.trim().toLowerCase(), 1) } }} className="px-3 py-2 bg-blue-600 text-white rounded-md">{t('whoisUseCity')}</button>
+                  <button onClick={async () => {
+                    if (!manualCity.trim()) return
+                    const normalized = manualCity.trim().toLowerCase()
+                    setShowLocationPrompt(false)
+                    setCity(normalized)
+                    setPage(1)
+                    setLoading(true)
+                    try {
+                      await pingPresence(normalized)
+                      await fetchNearby(normalized, 1)
+                    } catch (e) {
+                      console.warn('manual city fetch failed', e)
+                      setError('Failed to load nearby users')
+                    } finally {
+                      setLoading(false)
+                    }
+                  }} className="px-3 py-2 bg-blue-600 text-white rounded-md">{t('whoisUseCity')}</button>
                 </div>
               </div>
             </div>

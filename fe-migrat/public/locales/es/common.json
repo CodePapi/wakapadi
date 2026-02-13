@@ -9,6 +9,7 @@
   "homeIntroSecondaryCta": "Explorar tours",
   "userHiddenToast": "Usuario ocultado",
   "whoisYouNotListed": "No aparecerás en esta lista",
+  "distanceLabel": "Distancia",
   "heroCtaExplore": "Explorar tours",
   "heroCtaMeet": "Conocer gente cerca",
 
@@ -56,6 +57,8 @@
   "hide": "Ocultar",
   "findAssistants": "Buscar asistentes de viaje",
   "whoisNearby": "#Quién está cerca",
+  "whoisDescription": "Encuentra viajeros cercanos y chatea de forma segura—locales, viajeros y usuarios anónimos.",
+  "whoisSafetyWarning": "Por tu seguridad, reúnanse en lugares públicos, informa a alguien de tus planes y confía en tu instinto. Wakapadi no puede verificar a los usuarios.",
   "availableTours": "Visitas disponibles",
   "moreInfo": "Más información",
   "moreInfoAria": "Más información sobre {{title}}",

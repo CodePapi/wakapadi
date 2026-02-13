@@ -46,10 +46,11 @@ export class WhoisController {
 
   @Get('nearby')
   async nearby(@Req() req: AuthRequest) {
-    const city = req.query.city as string;
+    const city = (req.query.city as string) || '';
     const userId = req.query.userId as string;
-    // return []
-    return this.whoisService.getNearby(city, userId);
+    const lat = req.query.lat as string | undefined;
+    const lon = req.query.lon as string | undefined;
+    return this.whoisService.getNearby(city, userId, lat, lon);
   }
 
   @UseGuards(AuthGuard)

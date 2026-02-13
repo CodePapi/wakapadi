@@ -39,7 +39,7 @@ export class WhoisService {
   }
 
 
-  async getNearby(city: string, userId: any) {
+  async getNearby(city: string, userId: any, lat?: string, lon?: string) {
     const query: any = {
       city,
       visible: true,
@@ -68,6 +68,20 @@ export class WhoisService {
       users.forEach((u) => userMap.set(u._id.toString(), u));
     }
 
+    // helper: compute haversine if lat/lon provided
+    const toRadians = (value: number) => (value * Math.PI) / 180
+    const haversineKm = (lat1: number, lng1: number, lat2: number, lng2: number) => {
+      const earthRadiusKm = 6371
+      const dLat = toRadians(lat2 - lat1)
+      const dLng = toRadians(lng2 - lng1)
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) * Math.sin(dLng / 2) ** 2
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+      return earthRadiusKm * c
+    }
+
+    const originLat = lat ? parseFloat(lat) : null
+    const originLon = lon ? parseFloat(lon) : null
+
     // Build the response in one pass
     return visibleUsers.map((user) => {
       const base = {
@@ -76,7 +90,18 @@ export class WhoisService {
         status: user.status,
         coordinates: user.coordinates,
         lastSeen: user.expiresAt,
-      };
+      } as any;
+
+      // compute distance if possible
+      if (originLat !== null && originLon !== null && user.coordinates && typeof user.coordinates.lat === 'number' && typeof user.coordinates.lng === 'number') {
+        try {
+          base.distanceKm = haversineKm(originLat, originLon, user.coordinates.lat, user.coordinates.lng)
+        } catch (e) {
+          // ignore errors computing distance
+        }
+      } else {
+        base.distanceKm = null
+      }
 
       // If the requestor is not logged in (no userId), return anonymous data
       if (!userId || typeof userId !== 'string' || userId.trim() === '') {

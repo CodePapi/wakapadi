@@ -54,6 +54,7 @@
   "chat": "Chat",
   "chatWith": "Chat with {username}",
   "near": "Near",
+  "distanceLabel": "Distance",
   "active": "Active",
   "lastSeenUnknown": "Last seen unknown",
   "noMoreUsers": "No more users to load",
