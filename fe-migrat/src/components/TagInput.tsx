@@ -1,0 +1,88 @@
+import React, { useEffect, useRef, useState } from 'react'
+
+type Props = {
+  value: string[]
+  onChange: (next: string[]) => void
+  placeholder?: string
+  suggestions?: string[]
+}
+
+export default function TagInput({ value, onChange, placeholder, suggestions = [] }: Props) {
+  const [input, setInput] = useState('')
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLInputElement | null>(null)
+
+  useEffect(() => {
+    if (input.length > 0) setOpen(true)
+    else setOpen(false)
+  }, [input])
+
+  const add = (raw?: string) => {
+    const v = ((raw ?? input) || '').trim()
+    if (!v) return
+    if (value.includes(v)) {
+      setInput('')
+      return
+    }
+    onChange([...value, v])
+    setInput('')
+    setOpen(false)
+    ref.current?.focus()
+  }
+
+  const remove = (t: string) => onChange(value.filter((x) => x !== t))
+
+  const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault()
+      add()
+    } else if (e.key === 'Backspace' && input === '') {
+      // remove last
+      if (value.length > 0) onChange(value.slice(0, -1))
+    }
+  }
+
+  const filteredSuggestions = suggestions.filter((s) => s.toLowerCase().includes(input.toLowerCase()) && !value.includes(s)).slice(0, 6)
+
+  return (
+    <div>
+      <div className="flex gap-2">
+        <input
+          ref={ref}
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={onKeyDown}
+          onBlur={() => setTimeout(() => add(), 150)}
+          placeholder={placeholder}
+          className="flex-1 px-3 py-2 border rounded"
+        />
+        <button type="button" onClick={() => add()} className="px-3 py-2 bg-gray-100 border rounded">Add</button>
+      </div>
+
+      {open && filteredSuggestions.length > 0 && (
+        <div className="mt-1 border bg-white rounded shadow-sm max-h-40 overflow-auto z-10">
+          {filteredSuggestions.map((s) => (
+            <button
+              key={s}
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => add(s)}
+              className="w-full text-left px-3 py-2 hover:bg-gray-50"
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="mt-2 flex flex-wrap gap-2">
+        {value.map((t) => (
+          <span key={t} className="inline-flex items-center gap-2 px-2 py-1 bg-gray-100 rounded text-sm">
+            {t}
+            <button onClick={() => remove(t)} className="text-xs text-red-600">×</button>
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}

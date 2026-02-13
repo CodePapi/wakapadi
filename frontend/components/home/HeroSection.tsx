@@ -62,7 +62,7 @@ export default function HeroSection({
     <>
       <div className={`relative min-h-[56vh] overflow-x-hidden ${styles.heroContainer}`}>
         {/* Hero Banner with Background Image */}
-        <div className={`${styles.heroBanner} bg-cover bg-center`}>
+        <div className={`${styles.heroBanner} bg-cover bg-center w-full top-0 left-0`}>
           <div className="max-w-6xl mx-auto grid gap-12 items-center grid-cols-1 md:grid-cols-2 px-6 py-20 justify-items-center">
             <motion.div
               className="text-center md:justify-self-center md:max-w-2xl"
