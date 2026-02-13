@@ -3,8 +3,8 @@
 }
 
 .introSection {
-  background: var(--bg-color-light);
-  padding: 3.5rem 0;
+  background: linear-gradient(180deg, var(--surface-alt), var(--bg-color-light));
+  padding: 4.5rem 0;
 }
 
 .introGrid {
@@ -17,8 +17,8 @@
 .introTitle {
   font-weight: 700;
   color: var(--text-color-dark);
-  font-size: clamp(1.8rem, 3vw, 2.5rem);
-  margin-bottom: 1rem;
+  font-size: clamp(2rem, 3.6vw, 2.75rem);
+  margin-bottom: 0.75rem;
 }
 
 .introText {
@@ -29,11 +29,11 @@
 }
 
 .introCard {
-  background: #ffffff;
-  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, #ffffff, #fbfdff);
+  border-radius: calc(var(--radius-lg) + 4px);
   padding: 2rem;
-  box-shadow: var(--shadow-light);
-  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-medium);
+  border: 1px solid rgba(31,42,55,0.04);
 }
 
 .introCardTitle {
@@ -61,15 +61,17 @@
 .highlightCard {
   padding: 1.75rem;
   border-radius: var(--radius-lg);
-  background: #ffffff;
-  border: 1px solid var(--border-color);
+  background: linear-gradient(180deg, #ffffff, #fbfdff);
+  border: 1px solid rgba(31,42,55,0.04);
   min-height: 180px;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
 .highlightTitle {
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-color-dark);
   margin-bottom: 0.75rem;
+  letter-spacing: -0.01em;
 }
 
 .highlightText {
@@ -90,17 +92,17 @@
 
 .stepCard {
   background: #ffffff;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   padding: 1.75rem;
   box-shadow: var(--shadow-light);
-  border: 1px solid var(--border-color);
+  border: 1px solid rgba(31,42,55,0.04);
 }
 
 .stepNumber {
   width: 38px;
   height: 38px;
   border-radius: 999px;
-  background: var(--color-primary-600);
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
   color: #ffffff;
   font-weight: 700;
   display: inline-flex;
@@ -121,21 +123,25 @@
 }
 
 .ctaSection {
-  padding: 3rem 0 4rem;
-  background: #0f172a;
+  padding: 3.5rem 0 4.5rem;
+  padding-left: 40px;
+  padding-right: 40px;
+  background: linear-gradient(90deg, #081226 0%, #0b1730 100%);
   color: #ffffff;
 }
 
 .ctaInner {
   display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  align-items: flex-start;
+  flex-direction: row;
+  gap: 2rem;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .ctaTitle {
   font-weight: 800;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
+  font-size: clamp(1.5rem, 3.6vw, 2rem);
 }
 
 .ctaText {
@@ -150,18 +156,22 @@
 
 .primaryAction {
   border-radius: 999px !important;
-  padding: 0.75rem 1.8rem !important;
+  padding: 0.9rem 1.8rem !important;
   text-transform: none !important;
-  font-weight: 700 !important;
+  font-weight: 800 !important;
+  background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+  color: white !important;
+  box-shadow: 0 12px 30px rgba(var(--primary-color-rgb), 0.12);
 }
 
 .secondaryAction {
   border-radius: 999px !important;
   padding: 0.75rem 1.8rem !important;
   text-transform: none !important;
-  font-weight: 600 !important;
-  color: #ffffff !important;
-  border-color: rgba(255, 255, 255, 0.6) !important;
+  font-weight: 700 !important;
+  color: rgba(255,255,255,0.95) !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  background: transparent !important;
 }
 
 .tourContainer {
@@ -173,11 +183,11 @@
 }
 
 .sectionTitle {
-  font-weight: 700;
+  font-weight: 800;
   text-align: center;
-  margin-bottom: 2.5rem;
-  color: #2d3748;
-  font-size: clamp(1.5rem, 4vw, 2rem);
+  margin-bottom: 2.25rem;
+  color: var(--text-color-dark);
+  font-size: clamp(1.6rem, 3.6vw, 2rem);
   position: relative;
 }
 
@@ -293,7 +303,7 @@
 @media (max-width: 900px) {
   .tourGrid {
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 16px;
+    gap: 18px;
   }
   
   .tourContainer {
@@ -330,12 +340,15 @@
   .stepsSection,
   .ctaSection {
     padding: 2.5rem 0;
+    padding-left: 20px;
+    padding-right: 20px;
   }
 }
 
 @media (max-width: 600px) {
   .tourGrid {
     grid-template-columns: 1fr;
+    gap: 18px;
   }
   
   .sectionTitle::after {
@@ -350,5 +363,169 @@
 
   .ctaActions {
     width: 100%;
+  }
+}
+
+/* Tours page compact search */
+.searchRow {
+  display: flex;
+  justify-content: center;
+  padding: 0.75rem 0 0.5rem;
+  position: sticky;
+  top: 76px;
+  z-index: 40;
+  backdrop-filter: blur(6px);
+  background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.4));
+}
+
+.searchInput {
+  width: 100%;
+  max-width: 760px;
+  padding: 0.9rem 1.25rem;
+  border-radius: 999px;
+  border: 1px solid rgba(31,42,55,0.08);
+  box-shadow: var(--shadow-light);
+  font-size: 1rem;
+}
+
+@media (min-width: 1100px) {
+  .searchInput {
+    max-width: 980px;
+    padding: 1.05rem 1.5rem;
+    font-size: 1.05rem;
+  }
+}
+
+.searchWrap {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.suggestionsList {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+  max-width: 760px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(2,6,23,0.08);
+  border: 1px solid rgba(31,42,55,0.06);
+  z-index: 60;
+  padding: 6px 4px;
+  max-height: 240px;
+  overflow: auto;
+}
+
+.suggestionItem {
+  padding: 10px 12px;
+  cursor: pointer;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.suggestionActive {
+  padding: 10px 12px;
+  cursor: pointer;
+  border-radius: 6px;
+  background: rgba(63,81,181,0.06);
+  font-weight: 700;
+}
+
+.suggestionHighlight {
+  background: linear-gradient(90deg, rgba(63,81,181,0.12), rgba(63,81,181,0.06));
+  padding: 0 3px;
+  border-radius: 3px;
+}
+
+.srOnly {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.suggestionsListOpen {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.suggestionsList {
+  transition: opacity 220ms cubic-bezier(.2,.9,.2,1), transform 220ms cubic-bezier(.2,.9,.2,1);
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+/* Ensure open state overrides the default closed state */
+.suggestionsList.suggestionsListOpen {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+  z-index: 9999 !important;
+}
+
+@media (min-width: 1100px) {
+  .suggestionsList {
+    max-width: 980px;
+  }
+}
+
+.gridItem {
+  padding: 6px;
+}
+
+.paginationList button.selected {
+  background-color: #3f51b5 !important;
+  color: white;
+  transform: scale(1.05);
+}
+
+.paginationList button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 8px;
+  margin: 0 4px;
+  border-radius: 8px;
+  border: 1px solid rgba(31,42,55,0.06);
+  background: white;
+  font-weight: 600;
+}
+
+.paginationList button[disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.paginationList button:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(63,81,181,0.12);
+}
+
+.paginationList span {
+  display: inline-block;
+  margin: 0 6px;
+  color: rgba(0,0,0,0.6);
+}
+
+/* compact on very small screens */
+@media (max-width: 420px) {
+  .paginationList button {
+    min-width: 32px;
+    height: 32px;
+    padding: 0 6px;
+    margin: 0 2px;
+    font-size: 0.9rem;
   }
 }

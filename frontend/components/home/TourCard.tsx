@@ -1,9 +1,9 @@
-import { Card, CardContent, Typography, Button, Box, Skeleton } from '@mui/material';
+// replaced MUI Skeleton with CSS-based placeholder
 import { useTranslation } from 'next-i18next';
 import styles from './TourCard.module.css';
 import Image from 'next/image';
 import { useState } from 'react';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
+import { LocationOn } from '../icons/LocationOn';
 import { formatCityName } from '../../lib/cityFormat';
 
 // Minimal Tour interface used by this component
@@ -15,6 +15,7 @@ interface Tour {
   recurringSchedule?: string | null;
   sourceUrl?: string | null;
   externalPageUrl?: string | null;
+  blurDataURL?: string | null;
 }
 const highlightText = (text: string = '', highlight: string = '') => {
   if (!highlight || !text) return text;
@@ -42,13 +43,7 @@ const getSourceLabel = (sourceUrl?: string) => {
   }
 };
 
-export default function TourCard({
-  tour,
-  highlight,
-}: {
-  tour: Tour;
-  highlight?: string;
-}) {
+export default function TourCard({ tour, highlight }: { tour: Tour; highlight?: string }) {
   const { t } = useTranslation('common');
   const [imageLoading, setImageLoading] = useState(true);
 
@@ -60,75 +55,59 @@ export default function TourCard({
 
   return (
     <article className={styles.cardWrapper}>
-      <Card className={styles.card} elevation={2}>
+      <div className={styles.card}>
         {tour.image ? (
           <div className={styles.imageContainer}>
-            {imageLoading && (
-              <Skeleton
-                variant="rectangular"
-                className={styles.imageSkeleton}
-              />
-            )}
+            {imageLoading && <div className={styles.imageSkeleton} />}
             <Image
               src={tour.image}
               alt={tour.altText || tour.title}
               fill
               className={styles.cardImage}
-              onLoad={() => setImageLoading(false)}
-              style={{ objectFit: 'cover' }}
+              onLoadingComplete={() => setImageLoading(false)}
+              style={{ objectFit: 'cover', objectPosition: 'center center' }}
               sizes="(max-width: 600px) 100vw, (max-width: 900px) 50vw, 33vw"
-              priority={false}
+              loading="lazy"
+              {...(tour.blurDataURL ? { placeholder: 'blur', blurDataURL: tour.blurDataURL } : {})}
             />
+            <div className={styles.imageOverlay}>
+              {sourceLabel && <span className={styles.sourceBadge}>{sourceLabel}</span>}
+              {scheduleText && <span className={styles.scheduleBadge}>{scheduleText}</span>}
+            </div>
           </div>
         ) : (
           <div className={styles.imagePlaceholder}>
-            <LocationOnIcon className={styles.placeholderIcon} />
+            <LocationOn className={styles.placeholderIcon} />
           </div>
         )}
 
-        <CardContent className={styles.cardContent}>
-          <Typography
-            variant="h3"
-            className={styles.cardTitle}
-            component="h3"
-          >
-            {highlightText(tour.title, highlight)}
-          </Typography>
+        <div className={styles.cardContent}>
+          <h3 className={styles.cardTitle}>{highlightText(tour.title, highlight)}</h3>
+
           <div className={styles.keyRow}>
-            <Typography
-              className={styles.cardLocation}
-              variant="body2"
-            >
+            <div className={styles.cardLocation}>
               <span className={styles.keyLabel}>{t('tourLocationLabel')}</span>
-              <span className={styles.keyValue}>
-                {highlightText(formatCityName(tour.location), highlight)}
-              </span>
-            </Typography>
+              <span className={styles.keyValue}>{highlightText(formatCityName(tour.location), highlight)}</span>
+            </div>
           </div>
 
           <div className={styles.keyRow}>
-            <Typography
-              className={styles.cardSchedule}
-              variant="body2"
-            >
+            <div className={styles.cardSchedule}>
               <span className={styles.keyLabel}>{t('tourScheduleLabel')}</span>
               <span className={styles.keyValue}>{scheduleText}</span>
-            </Typography>
+            </div>
           </div>
 
           <div className={styles.keyRow}>
-            <Typography className={styles.cardSource} variant="body2">
+            <div className={styles.cardSource}>
               <span className={styles.keyLabel}>{t('tourSourceLabel')}</span>
-              <span className={styles.keyValue}>
-                {sourceLabel || t('tourSourceUnknown')}
-              </span>
-            </Typography>
+              <span className={styles.keyValue}>{sourceLabel || t('tourSourceUnknown')}</span>
+            </div>
           </div>
 
-          <Box className={styles.buttonContainer}>
+          <div className={styles.buttonContainer}>
             {tour.externalPageUrl && (
-              <Button
-                variant="outlined"
+              <a
                 href={tour.externalPageUrl}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -136,11 +115,11 @@ export default function TourCard({
                 aria-label={t('moreInfoAria', { title: tour.title })}
               >
                 {t('tourOpenProvider')}
-              </Button>
+              </a>
             )}
-          </Box>
-        </CardContent>
-      </Card>
+          </div>
+        </div>
+      </div>
     </article>
   );
 }

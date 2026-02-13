@@ -1,12 +1,4 @@
 import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
-import {
-  Box,
-  Button,
-  Typography,
-  Pagination,
-  Skeleton,
-  Container,
-} from '@mui/material';
 import Head from 'next/head';
 import Layout from '../../components/Layout';
 import PageHeader from '../../components/PageHeader';
@@ -17,7 +9,7 @@ import TourCard from '../../components/home/TourCard';
 import { useRouter } from 'next/router';
 import debounce from 'lodash.debounce';
 import styles from '../../styles/HomePage.module.css';
-import HeroSection from '../../components/home/HeroSection';
+import CitySearch from '../../components/search/CitySearch';
 import { safeStorage } from '../../lib/storage';
 import { formatCityName, normalizeCityKey } from '../../lib/cityFormat';
 
@@ -37,7 +29,9 @@ export type Tour = {
 
 export default function ToursPage() {
   const { t } = useTranslation('common');
+  const [pageAnnounce, setPageAnnounce] = useState('');
   const [tours, setTours] = useState<Tour[]>([]);
+  const [locationsList, setLocationsList] = useState<string[]>([]);
   const [search, setSearch] = useState('');
   const [suggestion, setSuggestion] = useState('');
   const [page, setPage] = useState(1);
@@ -70,12 +64,19 @@ export default function ToursPage() {
       setLoading(true);
       setError(null);
       const res = await api.get('/tours');
-      setTours(
-        res.data.map((tour: Tour) => ({
-          ...tour,
-          location: formatCityName(tour.location),
-        }))
-      );
+      const mapped = res.data.map((tour: Tour) => ({
+        ...tour,
+        location: formatCityName(tour.location),
+      }));
+      setTours(mapped);
+      // derive unique sorted locations for the search dropdown
+      const map = new Map<string, string>();
+      mapped.forEach((tour: Tour) => {
+        const key = normalizeCityKey(tour.location);
+        if (!key) return;
+        if (!map.has(key)) map.set(key, formatCityName(tour.location));
+      });
+      setLocationsList(Array.from(map.values()).sort());
     } catch (err) {
       console.error('Error fetching tours:', err);
       setError(t('fetchError'));
@@ -128,32 +129,45 @@ export default function ToursPage() {
     }
   }, [page, totalPages]);
 
+  useEffect(() => {
+    const total = filteredTours.length;
+    const start = Math.min(total === 0 ? 0 : (page - 1) * PER_PAGE + 1, total || 0);
+    const end = Math.min(page * PER_PAGE, total);
+    const msg = total === 0
+      ? `No results for current filter.`
+      : `Showing ${start} to ${end} of ${total} results. Page ${page} of ${totalPages}.`;
+    setPageAnnounce(msg);
+    const id = setTimeout(() => setPageAnnounce(''), 1600);
+    return () => clearTimeout(id);
+  }, [page, filteredTours.length, totalPages]);
+
   const paginatedTours = useMemo(() => {
     return filteredTours.slice((page - 1) * PER_PAGE, page * PER_PAGE);
   }, [filteredTours, page]);
 
-  const handlePageChange = useCallback(
-    (_: React.ChangeEvent<unknown>, value: number) => {
-      setPage(value);
-      window.scrollTo({
-        top: topRef.current?.offsetTop || 0,
-        behavior: 'smooth',
-      });
-    },
-    []
-  );
+  
 
-  const locations = useMemo(() => {
-    const map = new Map<string, string>();
-    tours.forEach((tour) => {
-      const key = normalizeCityKey(tour.location);
-      if (!key) return;
-      if (!map.has(key)) {
-        map.set(key, formatCityName(tour.location));
-      }
-    });
-    return Array.from(map.values());
-  }, [tours]);
+  const handlePageClick = useCallback((value: number) => {
+    setPage(value);
+    const isMobile = typeof window !== 'undefined' && window.innerWidth <= 600;
+    window.scrollTo({ top: topRef.current?.offsetTop || 0, behavior: isMobile ? 'auto' : 'smooth' });
+  }, []);
+
+  const getPageWindow = useCallback((current: number, total: number, size = 5) => {
+    const half = Math.floor(size / 2);
+    let start = Math.max(1, current - half);
+    const end = Math.min(total, start + size - 1);
+    if (end - start + 1 < size) {
+      start = Math.max(1, end - size + 1);
+    }
+    const pages: number[] = [];
+    for (let i = start; i <= end; i++) pages.push(i);
+    return { pages, start, end };
+  }, []);
+
+  
+
+  
 
   useEffect(() => {
     const detectAndScrapeCity = async () => {
@@ -210,102 +224,100 @@ export default function ToursPage() {
           title={t('toursBrowseTitle')}
           subtitle={t('toursBrowseSubtitle')}
         />
-        <HeroSection
-          locations={locations}
-          onSearch={handleSearchInput}
-          initialValue={typeof q === 'string' ? q : ''}
-          suggestion={suggestion}
-        />
 
-        <Container
-          maxWidth="lg"
+        <div className={styles.searchRow}>
+          <CitySearch
+            value={suggestion}
+            onChange={(v) => handleSearchInput(v)}
+            options={locationsList}
+            ariaLabel={t('searchTours')}
+            placeholder={t('searchPlaceholder') || 'Search by city or title'}
+          />
+        </div>
+
+        <section
           className={styles.tourContainer}
-          component="section"
           aria-labelledby="tours-section-title"
         >
-          <Typography
-            variant="h2"
-            className={styles.sectionTitle}
-            component="h2"
-            id="tours-section-title"
-          >
+          <div className={styles.srOnly} aria-live="polite">{pageAnnounce}</div>
+          <h2 className={styles.sectionTitle} id="tours-section-title">
             {t('availableTours')}
-          </Typography>
+          </h2>
 
           {error ? (
-            <Box className={styles.errorContainer} role="alert">
-              <Typography color="error">{error}</Typography>
-              <Button
-                variant="outlined"
+            <div className={styles.errorContainer} role="alert">
+              <p style={{ color: 'var(--error-color, #b91c1c)' }}>{error}</p>
+              <button
                 onClick={() => window.location.reload()}
                 className={styles.retryButton}
               >
                 {t('retry')}
-              </Button>
-            </Box>
+              </button>
+            </div>
           ) : (
             <>
               <div className={styles.tourGrid} role="list">
                 {loading
                   ? Array.from({ length: PER_PAGE }).map((_, i) => (
-                      <div
-                        key={`skeleton-${i}`}
-                        className={styles.gridItem}
-                        role="listitem"
-                      >
-                        <Skeleton
-                          variant="rectangular"
-                          className={styles.skeletonCard}
-                          height={380}
-                        />
+                      <div key={`skeleton-${i}`} className={styles.gridItem} role="listitem">
+                        <div className={styles.skeletonCard} style={{ height: 380 }} />
                       </div>
                     ))
                   : paginatedTours.map((tour) => (
-                      <div
-                        key={tour.id || tour._id}
-                        className={styles.gridItem}
-                        role="listitem"
-                      >
-                        <TourCard
-                          tour={tour}
-                          highlight={search}
-                          aria-label={t('tourCardAria', { location: tour.location })}
-                        />
+                      <div key={tour.id || tour._id} className={styles.gridItem} role="listitem">
+                        <TourCard tour={tour} highlight={search} aria-label={t('tourCardAria', { location: tour.location })} />
                       </div>
                     ))}
               </div>
 
               {!loading && totalPages > 1 && (
-                <Box className={styles.paginationContainer}>
-                  <Pagination
-                    count={totalPages}
-                    page={page}
-                    onChange={handlePageChange}
-                    color="primary"
-                    shape="rounded"
-                    siblingCount={1}
-                    boundaryCount={1}
-                    showFirstButton
-                    showLastButton
-                    aria-label={t('paginationNavigation')}
-                    classes={{
-                      root: styles.paginationRoot,
-                      ul: styles.paginationList,
-                    }}
-                  />
-                </Box>
+                <div className={styles.paginationContainer}>
+                  <div className={styles.paginationRoot}>
+                    <div className={styles.paginationList} role="navigation" aria-label={t('paginationNavigation')}>
+                        <button onClick={() => handlePageClick(1)} disabled={page === 1} aria-label={t('firstPage')}>«</button>
+                        <button onClick={() => handlePageClick(Math.max(1, page - 1))} disabled={page === 1} aria-label={t('previousPage')}>{t('prev')}</button>
+                        {
+                          (() => {
+                            const { pages, start, end } = getPageWindow(page, totalPages, 5);
+                            return (
+                              <>
+                                {start > 1 && (
+                                  <>
+                                    <button onClick={() => handlePageClick(1)}>1</button>
+                                    {start > 2 && <span aria-hidden="true">…</span>}
+                                  </>
+                                )}
+
+                                {pages.map((p) => (
+                                  <button key={p} onClick={() => handlePageClick(p)} className={page === p ? 'selected' : ''} aria-current={page === p ? 'page' : undefined}>
+                                    {p}
+                                  </button>
+                                ))}
+
+                                {end < totalPages && (
+                                  <>
+                                    {end < totalPages - 1 && <span aria-hidden="true">…</span>}
+                                    <button onClick={() => handlePageClick(totalPages)}>{totalPages}</button>
+                                  </>
+                                )}
+                              </>
+                            );
+                          })()
+                        }
+                        <button onClick={() => handlePageClick(Math.min(totalPages, page + 1))} disabled={page === totalPages} aria-label={t('nextPage')}>{t('next')}</button>
+                        <button onClick={() => handlePageClick(totalPages)} disabled={page === totalPages} aria-label={t('lastPage')}>»</button>
+                    </div>
+                  </div>
+                </div>
               )}
             </>
           )}
 
           {!loading && !error && filteredTours.length === 0 && (
-            <Box className={styles.noResults} role="alert">
-              <Typography variant="h5" className={styles.noResultsText}>
-                {t('noToursFound')}
-              </Typography>
+            <div className={styles.noResults} role="alert">
+              <h3 className={styles.noResultsText}>{t('noToursFound')}</h3>
               {search && (
-                <Button
-                  variant="text"
+                <button
                   onClick={() => {
                     setSearch('');
                     setSuggestion('');
@@ -313,11 +325,11 @@ export default function ToursPage() {
                   className={styles.clearSearchButton}
                 >
                   {t('clearSearch')}
-                </Button>
+                </button>
               )}
-            </Box>
+            </div>
           )}
-        </Container>
+        </section>
       </Layout>
     </>
   );

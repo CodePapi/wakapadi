@@ -1,10 +1,4 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import {
-  Button,
-  Typography,
-  Container,
-  Stack,
-} from '@mui/material';
 import Head from 'next/head';
 import Layout from '../components/Layout';
 import { useTranslation } from 'next-i18next';
@@ -170,114 +164,78 @@ export default function HomePage() {
         />
 
         <section className={styles.introSection}>
-          <Container maxWidth="lg">
+          <div className="mx-auto max-w-6xl px-4">
             <div className={styles.introGrid}>
               <div className={styles.introCopy}>
-                <Typography variant="h2" className={styles.introTitle}>
-                  {t('homeIntroTitle')}
-                </Typography>
-                <Typography className={styles.introText}>
-                  {t('homeIntroBody')}
-                </Typography>
-                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    className={styles.primaryAction}
+                <h2 className={styles.introTitle}>{t('homeIntroTitle')}</h2>
+                <p className={styles.introText}>{t('homeIntroBody')}</p>
+                <div className="flex flex-col sm:flex-row gap-3 mt-4">
+                  <button
+                    className={`${styles.primaryAction} px-5 py-3 rounded-md bg-primary text-white`}
                     onClick={() => router.push('/whois')}
                   >
                     {t('homeIntroPrimaryCta')}
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    className={styles.secondaryAction}
-                    onClick={() => router.push('/contact-us')}
-                  >
-                    {t('homeIntroSecondaryCta')}
-                  </Button>
-                </Stack>
+                  </button>
+                </div>
               </div>
               <div className={styles.introCard}>
-                <Typography variant="h3" className={styles.introCardTitle}>
-                  {t('homeSafetyTitle')}
-                </Typography>
-                <Typography className={styles.introCardText}>
-                  {t('homeSafetyBody')}
-                </Typography>
+                <h3 className={styles.introCardTitle}>{t('homeSafetyTitle')}</h3>
+                <p className={styles.introCardText}>{t('homeSafetyBody')}</p>
               </div>
             </div>
-          </Container>
+          </div>
         </section>
 
         <section className={styles.highlightsSection}>
-          <Container maxWidth="lg">
-            <Typography variant="h2" className={styles.sectionTitle}>
-              {t('homeHighlightsTitle')}
-            </Typography>
+          <div className="mx-auto max-w-6xl px-4">
+            <h2 className={styles.sectionTitle}>{t('homeHighlightsTitle')}</h2>
             <div className={styles.highlightGrid}>
               {highlights.map((item) => (
                 <div key={item.title} className={styles.highlightCard}>
-                  <Typography variant="h3" className={styles.highlightTitle}>
-                    {item.title}
-                  </Typography>
-                  <Typography className={styles.highlightText}>
-                    {item.body}
-                  </Typography>
+                  <h3 className={styles.highlightTitle}>{item.title}</h3>
+                  <p className={styles.highlightText}>{item.body}</p>
                 </div>
               ))}
             </div>
-          </Container>
+          </div>
         </section>
 
         <section className={styles.stepsSection}>
-          <Container maxWidth="lg">
-            <Typography variant="h2" className={styles.sectionTitle}>
-              {t('homeStepsTitle')}
-            </Typography>
+          <div className="mx-auto max-w-6xl px-4">
+            <h2 className={styles.sectionTitle}>{t('homeStepsTitle')}</h2>
             <div className={styles.stepsGrid}>
               {steps.map((step, index) => (
                 <div key={step.title} className={styles.stepCard}>
                   <div className={styles.stepNumber}>{index + 1}</div>
-                  <Typography variant="h3" className={styles.stepTitle}>
-                    {step.title}
-                  </Typography>
-                  <Typography className={styles.stepText}>
-                    {step.body}
-                  </Typography>
+                  <h3 className={styles.stepTitle}>{step.title}</h3>
+                  <p className={styles.stepText}>{step.body}</p>
                 </div>
               ))}
             </div>
-          </Container>
+          </div>
         </section>
 
-        <section className={styles.ctaSection}>
-          <Container maxWidth="lg" className={styles.ctaInner}>
+        <section className={`${styles.ctaSection}`}>
+          <div className={`mx-auto max-w-6xl px-4 ${styles.ctaInner}`}>
             <div>
-              <Typography variant="h2" className={styles.ctaTitle}>
-                {t('homeCtaTitle')}
-              </Typography>
-              <Typography className={styles.ctaText}>
-                {t('homeCtaBody')}
-              </Typography>
+              <h2 className={styles.ctaTitle}>{t('homeCtaTitle')}</h2>
+              <p className={styles.ctaText}>{t('homeCtaBody')}</p>
             </div>
             <div className={styles.ctaActions}>
-              <Button
-                variant="contained"
-                color="primary"
-                className={styles.primaryAction}
+              <button
+                className={`${styles.primaryAction} px-5 py-3 rounded-md bg-primary text-white`}
                 onClick={() => router.push('/whois')}
               >
                 {t('homeCtaPrimary')}
-              </Button>
-              <Button
-                variant="outlined"
-                className={styles.secondaryAction}
+              </button>
+              <button
+                className={`${styles.secondaryAction} px-5 py-3 rounded-md border border-white/30 text-white`}
                 onClick={() => router.push('/tours')}
               >
                 {t('homeCtaSecondary')}
-              </Button>
+              </button>
             </div>
-          </Container>
+          </div>
         </section>
       </Layout>
     </>
