@@ -9,7 +9,7 @@ Wakapadi is a social platform that connects people nearby—locals, travelers, a
 ## Table of Contents
 - [Features](#features)
 - [Architecture](#architecture)
-- [Setup & Installation](#setup--installation)
+- [Setup & Installation](#setup--installation) 
 - [Usage](#usage)
 - [Development](#development)
 - [Contributing](#contributing)
