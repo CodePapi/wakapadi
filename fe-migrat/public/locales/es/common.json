@@ -7,6 +7,8 @@
   "homePageDescription": "Descubre visitas guiadas en tu ciudad o mientras viajas. Filtra por ubicación, explora puntos destacados y conéctate con asistentes locales.",
   "homeIntroPrimaryCta": "Ver quién está cerca",
   "homeIntroSecondaryCta": "Explorar tours",
+  "userHiddenToast": "Usuario ocultado",
+  "whoisYouNotListed": "No aparecerás en esta lista",
   "heroCtaExplore": "Explorar tours",
   "heroCtaMeet": "Conocer gente cerca",
 
@@ -114,5 +116,15 @@
   "contactFaqTwoQ": "¿Puedo solicitar una ciudad o proveedor de tours?",
   "contactFaqTwoA": "Sí — elige “Sugerencia” e incluye la ciudad y el nombre del proveedor.",
   "contactFaqThreeQ": "Necesito ayuda con inicio de sesión o chat.",
-  "contactFaqThreeA": "Selecciona “Consulta” y añade capturas o detalles que nos ayuden a reproducirlo."
+  "contactFaqThreeA": "Selecciona “Consulta” y añade capturas o detalles que nos ayuden a reproducirlo.",
+  "whoisFindNearby": "Buscar cerca",
+  "whoisAllowLocationTitle": "Permitir ubicación para 'Cerca'",
+  "whoisAllowLocationBody": "Usamos ubicación aproximada para mostrar viajeros cerca. Tus coordenadas exactas no se comparten públicamente; solo la distancia aproximada. También puedes ingresar una ciudad manualmente.",
+  "whoisAllow": "Permitir ubicación",
+  "cancel": "Cancelar",
+  "whoisEnterCityManualLabel": "O ingresa la ciudad manualmente",
+  "exampleCity": "p.ej. Lisboa",
+  "whoisUseCity": "Usar",
+  "whoisRequestingLocation": "Solicitando ubicación…"
 }
+

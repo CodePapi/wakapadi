@@ -21,10 +21,12 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ensureAnonymousSession } from '../lib/anonymousAuth'
 import { useTranslation } from '../lib/i18n'
+import { safeStorage } from '../lib/storage'
 
 export default function NearbyUserCard({ user }: { user: User }) {
   const { t } = useTranslation()
   const [highlight, setHighlight] = useState(false)
+  const [hidden, setHidden] = useState(false)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -83,18 +85,39 @@ export default function NearbyUserCard({ user }: { user: User }) {
         {user.profileVisible === true && user.bio && <div className="mt-1 text-xs text-gray-600 truncate">{user.bio}</div>}
       </div>
 
-      <div className="flex flex-col items-end gap-2">
-        <button onClick={async () => {
-            try {
-              await ensureAnonymousSession()
-            } catch (e) {}
-            const id = user._id || user.id
-            if (id) navigate(`/chat/${encodeURIComponent(id)}`)
-          }}
-          className="text-sm px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-        >{t('chat') || 'Chat'}</button>
-        <button className="text-xs px-2 py-1 border rounded text-gray-700">{t('hide') || 'Hide'}</button>
-      </div>
+      {!hidden && (
+        <div className="flex flex-col items-end gap-2">
+          <button onClick={async () => {
+              try { await ensureAnonymousSession() } catch (e) {}
+              const id = user._id || user.id
+              if (id) navigate(`/chat/${encodeURIComponent(id)}`)
+            }}
+            aria-label={t('chat') || 'Chat'}
+            className="text-sm px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 flex items-center"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            {t('chat') || 'Chat'}
+          </button>
+
+          <button onClick={() => {
+              const id = user._id || user.id
+              if (!id) return
+              try {
+                const raw = safeStorage.getItem('whois_hidden_v1')
+                const arr = raw ? JSON.parse(raw) as string[] : []
+                const next = Array.from(new Set([id, ...arr]))
+                safeStorage.setItem('whois_hidden_v1', JSON.stringify(next))
+              } catch (e) { console.warn('hide save failed', e) }
+              // remove locally and notify listeners
+              setHidden(true)
+              try { window.dispatchEvent(new CustomEvent('wakapadi:whois:hidden', { detail: id })) } catch (e) {}
+              try { window.dispatchEvent(new CustomEvent('wakapadi:toast', { detail: { text: t('userHiddenToast') || 'User hidden' } })) } catch (e) {}
+            }}
+            aria-label={t('hide') || 'Hide'}
+            className="text-xs px-2 py-1 border rounded text-gray-700"
+          >{t('hide') || 'Hide'}</button>
+        </div>
+      )}
     </article>
   )
 }

@@ -5,6 +5,7 @@ import { api } from '../lib/api'
 import { safeStorage } from '../lib/storage'
 import { io } from 'socket.io-client'
 import { useTranslation } from '../lib/i18n'
+import { ensureAnonymousSession } from '../lib/anonymousAuth'
 
 const toRadians = (value: number) => (value * Math.PI) / 180
 const haversineKm = (lat1: number, lng1: number, lat2: number, lng2: number) => {
@@ -26,6 +27,7 @@ export default function Whois() {
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
   const [currentCoords, setCurrentCoords] = useState<{ lat: number; lng: number } | null>(null)
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [toast, setToast] = useState<{ id: string; text: string } | null>(null)
   const [showLocationPrompt, setShowLocationPrompt] = useState(false)
   const [manualCity, setManualCity] = useState('')
@@ -38,7 +40,40 @@ export default function Whois() {
       const userId = safeStorage.getItem('userId') || ''
       const qs = `?city=${encodeURIComponent(targetCity)}&page=${pageNum}&limit=15${userId ? `&userId=${encodeURIComponent(userId)}` : ''}`
       const res: any = await api.get(`/whois/nearby${qs}`, { cache: 'no-store' })
-      const data = Array.isArray(res?.data) ? res.data : []
+      let data = Array.isArray(res?.data) ? res.data : []
+      // filter out locally hidden users
+      try {
+        const raw = safeStorage.getItem('whois_hidden_v1')
+        const hidden = raw ? (JSON.parse(raw) as string[]) : []
+        if (hidden.length) data = data.filter((d: any) => {
+          const id = d._id || d.id || d.userId
+          return !hidden.includes(id)
+        })
+      } catch (e) {}
+
+      // Exclude the current user from results (defensive guard)
+      try {
+        const me = currentUserId || safeStorage.getItem('userId') || ''
+        if (me) {
+          data = data.filter((d: any) => {
+            const id = (d.userId || d._id || d.id || '').toString()
+            return id !== me
+          })
+        }
+      } catch (e) {}
+
+      // filter out obvious deleted-account markers returned by the API
+      try {
+        data = data.filter((d: any) => {
+          if (!d) return false
+          if (d.deleted === true) return false
+          if (d.isDeleted === true) return false
+          if (d.removed === true) return false
+          if (d.accountDeleted === true) return false
+          if (typeof d.status === 'string' && d.status.toLowerCase() === 'deleted') return false
+          return true
+        })
+      } catch (e) {}
 
       const augmented = data.map((u: any) => {
         if (!currentCoords || !u.coordinates) return { ...u, distanceKm: null }
@@ -62,6 +97,32 @@ export default function Whois() {
       setLoadingMore(false)
     }
   }, [currentCoords])
+
+  // Ensure we have an anonymous session & current user id
+  useEffect(() => {
+    let mounted = true
+    ;(async () => {
+      try {
+        const session = await ensureAnonymousSession()
+        if (!mounted) return
+        if (session?.userId) setCurrentUserId(session.userId)
+      } catch (e) {
+        // ignore
+      }
+    })()
+    return () => { mounted = false }
+  }, [])
+
+  // listen for hide events from cards to remove users immediately
+  useEffect(() => {
+    const onHide = (ev: any) => {
+      const id = ev?.detail
+      if (!id) return
+      setUsers((prev) => prev.filter((u) => (u._id || u.id || u.userId) !== id))
+    }
+    window.addEventListener('wakapadi:whois:hidden', onHide as EventListener)
+    return () => window.removeEventListener('wakapadi:whois:hidden', onHide as EventListener)
+  }, [])
 
   const pingPresence = async (targetCity: string) => {
     try {
@@ -211,12 +272,29 @@ export default function Whois() {
     }
   }, [fetchNearby])
 
+  // Listen for local hide toast events
+  useEffect(() => {
+    const onToast = (ev: any) => {
+      const d = ev?.detail
+      if (!d || !d.text) return
+      try {
+        setToast({ id: String(Date.now()), text: d.text })
+        setTimeout(() => setToast(null), 3200)
+      } catch (e) {}
+    }
+    window.addEventListener('wakapadi:toast', onToast as EventListener)
+    return () => window.removeEventListener('wakapadi:toast', onToast as EventListener)
+  }, [])
+
   return (
     <section aria-labelledby="whois-heading" className="container mx-auto px-4 sm:px-6 lg:px-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 id="whois-heading" className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{t('whoisNearby')}</h2>
           <p className="mt-2 text-gray-600 dark:text-gray-300">{t('whoisDescription')}</p>
+          {currentUserId && (
+            <div className="mt-2 text-sm text-gray-600 dark:text-gray-300">{t('whoisYouNotListed') || "You won't appear in this list"}</div>
+          )}
         </div>
         <div className="text-sm text-gray-700">{t('whoisSafetyWarning')}</div>
       </div>
@@ -269,13 +347,13 @@ export default function Whois() {
         {/* Toast for new nearby user */}
         {toast && (
           <div className="fixed bottom-6 right-6 z-50">
-            <div className="bg-white border shadow px-4 py-2 rounded-md text-sm">{toast.text}</div>
+            <div className="bg-white text-gray-900 border shadow px-4 py-2 rounded-md text-sm dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700">{toast.text}</div>
           </div>
         )}
 
         <div className="grid gap-3 mt-4">
           {loading && users.length === 0 ? (
-            Array.from({ length: 3 }).map((_, i) => <div key={i} className="p-3 bg-gray-100 rounded animate-pulse h-20" />)
+            Array.from({ length: 3 }).map((_, i) => <div key={i} className="p-3 bg-gray-100 dark:bg-gray-800 rounded animate-pulse h-20" />)
           ) : users.length > 0 ? (
             users.map((u) => <NearbyUserCard key={u._id || u.id} user={u} />)
           ) : (
@@ -289,8 +367,8 @@ export default function Whois() {
                   <li>{t('whoisNoTravelersOptionThree')}</li>
                 </ul>
                 <div className="mt-3 flex justify-center gap-3">
-                  <button onClick={() => fetchNearby(city, 1)} className="px-4 py-2 border rounded">{t('retry')}</button>
-                  <a href="/tours" className="px-4 py-2 bg-white border rounded-md">{t('heroCtaExplore')}</a>
+                  <button onClick={() => fetchNearby(city, 1)} className="px-4 py-2 border rounded dark:border-gray-700 dark:text-gray-100">{t('retry')}</button>
+                  <a href="/tours" className="px-4 py-2 bg-white dark:bg-gray-800 border rounded-md dark:border-gray-700 dark:text-gray-100">{t('heroCtaExplore')}</a>
                 </div>
               </div>
             ) : (

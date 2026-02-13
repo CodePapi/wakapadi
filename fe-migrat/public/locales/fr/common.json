@@ -97,6 +97,8 @@
   "homeIntroBody": "Découvrez des tours gratuits, connectez-vous avec des voyageurs proches et gardez vos plans organisés.",
   "homeIntroPrimaryCta": "Voir qui est proche",
   "homeIntroSecondaryCta": "Voir les visites",
+  "userHiddenToast": "Utilisateur masqué",
+  "whoisYouNotListed": "Vous n'apparaîtrez pas dans cette liste",
   "toursBrowseTitle": "Voir les visites",
   "toursTitle": "Visites",
   "toursSubtitle": "Découvrez des expériences locales sélectionnées.",
@@ -160,5 +162,15 @@
   "contactFormStatusError": "Échec de l'envoi",
   "contactResponseTitle": "Délai de réponse",
   "contactResponseBody": "Nous répondons généralement sous 24 à 48 heures les jours ouvrés.",
-  "contactFaqTitle": "Questions fréquentes"
+  "contactFaqTitle": "Questions fréquentes",
+  "whoisFindNearby": "Trouver à proximité",
+  "whoisAllowLocationTitle": "Autoriser la localisation pour 'À proximité'",
+  "whoisAllowLocationBody": "Nous utilisons la localisation approximative pour afficher les voyageurs à proximité. Vos coordonnées exactes ne sont pas partagées publiquement — seule la distance approximative est utilisée. Vous pouvez aussi saisir une ville manuellement.",
+  "whoisAllow": "Autoriser la localisation",
+  "cancel": "Annuler",
+  "whoisEnterCityManualLabel": "Ou saisir la ville manuellement",
+  "exampleCity": "ex. Lisbonne",
+  "whoisUseCity": "Utiliser",
+  "whoisRequestingLocation": "Demande de localisation…"
 }
+

@@ -327,6 +327,8 @@
   "whoisGuestError": "Could not start guest session. Please try again.",
   "continueAsGuest": "Continue as guest",
   "chatWithAssistant": "Chat with the tour assistant",
+  "userHiddenToast": "User hidden",
+  "whoisYouNotListed": "You won't appear in this list",
   "traveler": "Traveler",
   "chatbotAvatarAlt": "Bot avatar",
   "chatbotHelpfulPrompt": "Was this helpful?",

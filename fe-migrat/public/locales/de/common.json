@@ -7,6 +7,8 @@
   "homePageDescription": "Finde geführte Stadttouren in deiner Stadt oder auf Reisen. Nach Ort filtern, Highlights entdecken und mit lokalen Tour‑Assistenten in Kontakt treten.",
   "homeIntroPrimaryCta": "Sieh, wer in der Nähe ist",
   "homeIntroSecondaryCta": "Touren durchsuchen",
+  "userHiddenToast": "Benutzer ausgeblendet",
+  "whoisYouNotListed": "Sie erscheinen nicht in dieser Liste",
   "heroCtaExplore": "Touren erkunden",
   "heroCtaMeet": "Personen in der Nähe treffen",
 
@@ -111,4 +113,15 @@
   "tourSaveAria": "Tour speichern",
   "tourUnsaveAria": "Tour aus Favoriten entfernen",
   "tourShareAria": "Tour teilen"
+,
+  "whoisFindNearby": "In der Nähe finden",
+  "whoisAllowLocationTitle": "Standort für 'In der Nähe' erlauben",
+  "whoisAllowLocationBody": "Wir verwenden ungefähren Standort, um Reisende in deiner Nähe anzuzeigen. Deine genauen Koordinaten werden nicht öffentlich geteilt — nur die ungefähre Entfernung. Du kannst auch eine Stadt manuell eingeben.",
+  "whoisAllow": "Standort erlauben",
+  "cancel": "Abbrechen",
+  "whoisEnterCityManualLabel": "Oder Stadt manuell eingeben",
+  "exampleCity": "z. B. Lissabon",
+  "whoisUseCity": "Verwenden",
+  "whoisRequestingLocation": "Standort wird angefordert…"
 }
+
