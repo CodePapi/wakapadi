@@ -13,7 +13,7 @@ export default function NotificationsDropdown() {
   const [panelStyle, setPanelStyle] = useState<React.CSSProperties | undefined>(undefined)
   const [isDesktop, setIsDesktop] = useState<boolean>(() => typeof window !== 'undefined' ? window.innerWidth > 650 : true)
   const currentUserId = safeStorage.getItem('userId') || ''
-  const { notifications, markAllRead, markReadFromUser, lastNotification, connected } = useNotifications(currentUserId)
+  const { notifications, markAllRead, markReadFromUser, lastNotification } = useNotifications(currentUserId)
   const navigate = useNavigate()
   const [toastOpen, setToastOpen] = useState(false)
   const { t } = useTranslation()
