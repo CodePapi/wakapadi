@@ -44,3 +44,41 @@ body {
 	a:hover { color: #747bff }
 	button { background-color: #f9f9f9 }
 }
+
+/* Header / nav tweaks for clearer active/hover states and mobile touch targets */
+header nav a {
+	transition: color 160ms ease, background-color 140ms ease, border-color 160ms ease;
+	padding-bottom: 0.25rem;
+}
+
+/* NavLink active state (react-router sets aria-current="page") */
+header nav a[aria-current="page"] {
+	color: #2563eb; /* slightly deeper blue */
+	font-weight: 700;
+	border-bottom-width: 3px !important;
+	border-bottom-color: rgba(37,99,235,0.95) !important;
+	padding-bottom: 0.4rem;
+}
+
+header nav a:hover {
+	color: #1e40af;
+}
+
+/* Mobile menu: full-width touchable items */
+#mobile-menu a, #mobile-menu button {
+	display: block;
+	width: 100%;
+	padding: 0.9rem 0.75rem;
+	border-radius: 10px;
+	text-align: left;
+}
+
+#mobile-menu a:hover, #mobile-menu button:hover {
+	background: rgba(37,99,235,0.06);
+}
+
+/* Slightly larger tap targets on mobile */
+@media (max-width: 640px) {
+	header nav a { font-size: 1rem }
+	#mobile-menu a, #mobile-menu button { padding: 1rem 0.75rem }
+}

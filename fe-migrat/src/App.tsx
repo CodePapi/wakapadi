@@ -60,6 +60,9 @@ function Header() {
   const [open, setOpen] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => Boolean(localStorage.getItem('token')))
   const navigate = useNavigate()
+  const sizeClass = 'text-sm'
+  const activeClass = `${sizeClass} text-blue-600 font-semibold border-b-2 border-blue-600 pb-1`
+  const inactiveClass = `${sizeClass} text-gray-700 hover:text-gray-900 hover:border-b-2 hover:border-gray-300 pb-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 rounded`
 
   const handleLogin = () => {
     try {
@@ -90,8 +93,8 @@ function Header() {
             <div className="flex items-center gap-3">
               {isLoggedIn ? (
                 <>
-                  <NavLink to="/profile" className="text-sm text-gray-700 hover:text-gray-900">{t('profile')}</NavLink>
-                  <NavLink to="/chat" className="text-sm text-gray-700 hover:text-gray-900">{t('chat')}</NavLink>
+                  <NavLink to="/profile" className={({ isActive }) => (isActive ? activeClass : inactiveClass)}>{t('profile')}</NavLink>
+                  <NavLink to="/chat" className={({ isActive }) => (isActive ? activeClass : inactiveClass)}>{t('chat')}</NavLink>
                   <button onClick={() => performLogout()} type="button" className="text-sm text-red-600 ml-2">{t('logout') || 'Logout'}</button>
                 </>
               ) : (
@@ -142,8 +145,8 @@ function Header() {
             <div className="flex flex-col gap-2">
               {isLoggedIn ? (
                 <>
-                  <NavLink to="/profile" className="text-sm text-gray-700">{t('profile')}</NavLink>
-                  <NavLink to="/chat" className="text-sm text-gray-700">{t('chat')}</NavLink>
+                  <NavLink to="/profile" onClick={() => setOpen(false)} className={({ isActive }) => (isActive ? 'block w-full text-left px-3 py-2 text-blue-600 font-semibold' : 'block w-full text-left px-3 py-2 text-gray-700 hover:bg-gray-50')}>{t('profile')}</NavLink>
+                  <NavLink to="/chat" onClick={() => setOpen(false)} className={({ isActive }) => (isActive ? 'block w-full text-left px-3 py-2 text-blue-600 font-semibold' : 'block w-full text-left px-3 py-2 text-gray-700 hover:bg-gray-50')}>{t('chat')}</NavLink>
                   <button onClick={() => performLogout()} type="button" className="text-sm text-red-600 text-left">{t('logout') || 'Logout'}</button>
                 </>
               ) : (
@@ -157,18 +160,22 @@ function Header() {
   )
 }
 
-function NavTexts({ mobile }: { mobile?: boolean }) {
+function NavTexts({ mobile, onNavigate }: { mobile?: boolean; onNavigate?: () => void }) {
   const { t } = useTranslation()
   const sizeClass = mobile ? 'text-base' : 'text-sm'
   const activeClass = `${sizeClass} text-blue-600 font-semibold border-b-2 border-blue-600 pb-1`
   const inactiveClass = `${sizeClass} text-gray-700 hover:text-gray-900 hover:border-b-2 hover:border-gray-300 pb-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 rounded`
 
+  const handleClick = () => {
+    try { if (mobile && onNavigate) onNavigate() } catch (e) {}
+  }
+
   return (
     <>
-      <NavLink to="/whois" className={({ isActive }) => (isActive ? activeClass : inactiveClass)}>{t('whoisNearby')}</NavLink>
-      <NavLink to="/tours" className={({ isActive }) => (isActive ? activeClass : inactiveClass)}>{t('toursBrowseTitle')}</NavLink>
-      <NavLink to="/saved" className={({ isActive }) => (isActive ? activeClass : inactiveClass)}>{t('savedLabel') || 'Saved'}</NavLink>
-      <NavLink to="/contact-us" className={({ isActive }) => (isActive ? activeClass : inactiveClass)}>{t('contactUs')}</NavLink>
+      <NavLink to="/whois" onClick={handleClick} className={({ isActive }) => (isActive ? activeClass : inactiveClass)}>{t('whoisNearby')}</NavLink>
+      <NavLink to="/tours" onClick={handleClick} className={({ isActive }) => (isActive ? activeClass : inactiveClass)}>{t('toursBrowseTitle')}</NavLink>
+      <NavLink to="/saved" onClick={handleClick} className={({ isActive }) => (isActive ? activeClass : inactiveClass)}>{t('savedLabel') || 'Saved'}</NavLink>
+      <NavLink to="/contact-us" onClick={handleClick} className={({ isActive }) => (isActive ? activeClass : inactiveClass)}>{t('contactUs')}</NavLink>
     </>
   )
 }
