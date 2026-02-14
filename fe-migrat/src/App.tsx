@@ -176,16 +176,26 @@ function NavTexts({ mobile }: { mobile?: boolean }) {
 // Logout handler mirrored from legacy frontend behavior
 export async function performLogout() {
   try {
-    // attempt to delete auth session on server
-    await api.del('/auth/me')
+    // Instead of deleting the account, mark the user as hidden (not visible)
+    // so they won't appear on the whois page. Call this while still
+    // authenticated (before clearing token).
+    try {
+      const token = localStorage.getItem('token')
+      if (token) {
+        await api.patch('/whois', { visible: false })
+      }
+    } catch (e) {
+      console.warn('failed to update presence during logout', e)
+    }
   } catch (err) {
-    // ignore server-side cleanup failures
     console.warn('logout cleanup failed', err)
   } finally {
+    // Clear local session, but keep the browser/device id so anonymous login
+    // can be reused later. Also set a logout block to prevent immediate
+    // auto-relogin.
     try { localStorage.removeItem('token') } catch {}
     try { localStorage.removeItem('userId') } catch {}
     try { localStorage.removeItem('authProvider') } catch {}
-    // keep device id so login can reuse device info; prevent immediate auto-relogin
     try { setLogoutBlock() } catch {}
     // reload to reset UI/state
     window.location.href = '/'

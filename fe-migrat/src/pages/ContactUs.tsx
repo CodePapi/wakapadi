@@ -27,27 +27,27 @@ export default function ContactUs() {
   return (
     <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-2xl font-semibold mb-2">{t('contactTitle')}</h1>
-        <p className="text-sm text-gray-600 mb-6">{t('contactHeroBody')}</p>
+        <h1 className="text-2xl font-semibold mb-2 text-gray-900 dark:text-white">{t('contactTitle')}</h1>
+        <p className="text-sm text-gray-600 dark:text-gray-300 mb-6">{t('contactHeroBody')}</p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <form onSubmit={handleSubmit} className="md:col-span-2 bg-white p-6 rounded-lg shadow-sm">
+          <form onSubmit={handleSubmit} className="md:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm text-gray-900 dark:text-gray-100">
             <h2 className="text-lg font-medium mb-2">{t('contactFormTitle')}</h2>
-            <p className="text-sm text-gray-600 mb-4">{t('contactSubtitle')}</p>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">{t('contactSubtitle')}</p>
 
             <label className="block mb-3">
               <div className="text-sm mb-1">{t('contactFormNameLabel')}</div>
-              <input name="name" required value={form.name} onChange={handleChange} className="w-full border rounded px-3 py-2" />
+              <input id="name" name="name" required value={form.name} onChange={handleChange} className="w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </label>
 
             <label className="block mb-3">
               <div className="text-sm mb-1">{t('contactFormEmailLabel')}</div>
-              <input name="email" type="email" required value={form.email} onChange={handleChange} className="w-full border rounded px-3 py-2" />
+              <input id="email" name="email" type="email" required value={form.email} onChange={handleChange} className="w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </label>
 
             <label className="block mb-3">
               <div className="text-sm mb-1">{t('contactFormTypeLabel')}</div>
-              <select name="type" value={form.type} onChange={handleChange} className="w-full border rounded px-3 py-2">
+              <select id="type" name="type" value={form.type} onChange={handleChange} className="w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option value="inquiry">{t('contactFormTypeInquiry')}</option>
                 <option value="complaint">{t('contactFormTypeComplaint')}</option>
                 <option value="feedback">{t('contactFormTypeFeedback')}</option>
@@ -58,26 +58,34 @@ export default function ContactUs() {
 
             <label className="block mb-4">
               <div className="text-sm mb-1">{t('contactFormMessageLabel')}</div>
-              <textarea name="message" required value={form.message} onChange={handleChange} rows={6} className="w-full border rounded px-3 py-2" />
+              <textarea id="message" name="message" required value={form.message} onChange={handleChange} rows={6} className="w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </label>
 
             <div className="flex items-center gap-3">
-              <button type="submit" disabled={status === 'sending'} className="px-5 py-2 bg-blue-600 text-white rounded-md font-semibold">{t('contactFormSubmit')}</button>
-              {status === 'sending' && <span className="text-sm text-gray-600">{t('contactFormStatusSending')}</span>}
-              {status === 'success' && <span className="text-sm text-green-600">{t('contactFormStatusSuccess')}</span>}
-              {status === 'error' && <span className="text-sm text-red-600">{t('contactFormStatusError')}</span>}
+              <button
+                type="submit"
+                disabled={status === 'sending'}
+                aria-busy={status === 'sending'}
+                className={`px-5 py-2 rounded-md font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 ${status === 'sending' ? 'bg-blue-400 text-white cursor-wait' : 'bg-blue-600 text-white'}`}>
+                {t('contactFormSubmit')}
+              </button>
+              <div aria-live="polite" className="min-h-[1.25rem]">
+                {status === 'sending' && <span className="text-sm text-gray-600 dark:text-gray-300">{t('contactFormStatusSending')}</span>}
+                {status === 'success' && <span className="text-sm text-green-600">{t('contactFormStatusSuccess')}</span>}
+                {status === 'error' && <span className="text-sm text-red-600">{t('contactFormStatusError')}</span>}
+              </div>
             </div>
           </form>
 
           <aside className="space-y-4">
-            <div className="p-4 bg-gray-50 rounded">
+            <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded text-gray-900 dark:text-gray-100">
               <h3 className="font-semibold">{t('contactWaysTitle')}</h3>
-              <p className="text-sm text-gray-600">{t('contactWaysBody')}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">{t('contactWaysBody')}</p>
             </div>
 
-            <div className="p-4 bg-gray-50 rounded">
+            <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded text-gray-900 dark:text-gray-100">
               <h3 className="font-semibold">{t('contactResponseTitle')}</h3>
-              <p className="text-sm text-gray-600">{t('contactResponseBody')}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">{t('contactResponseBody')}</p>
             </div>
           </aside>
         </div>
