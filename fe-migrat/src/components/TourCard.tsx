@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from '../lib/i18n'
 
 type Tour = {
@@ -80,7 +80,6 @@ export default function TourCard({ tour, highlight }: { tour: Tour; highlight?: 
   }
 
   const scheduleItems = useMemo(() => parseSchedule(tour.recurringSchedule), [tour.recurringSchedule])
-  const [showSchedule, setShowSchedule] = useState(false)
 
   const capitalizeWords = (s: string) => s.split(/\s+/).map(w => w ? (w[0].toUpperCase() + w.slice(1)) : w).join(' ')
   const locationDisplay = tour.location ? capitalizeWords(String(tour.location).trim()) : ''

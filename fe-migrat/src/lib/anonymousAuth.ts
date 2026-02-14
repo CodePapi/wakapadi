@@ -1,7 +1,7 @@
 import { api } from './api'
 import { safeStorage } from './storage'
 
-const DEVICE_KEY = 'wakapadi_device_id'
+const BROWSER_KEY = 'wakapadi_browser_id'
 const PENDING_PROFILE_KEY = 'wakapadi_pending_profile_edits'
 const LOGOUT_BLOCK_KEY = 'wakapadi_logout_block'
 export function setLogoutBlock() {
@@ -18,36 +18,40 @@ export async function ensureAnonymousSession() {
     // respect explicit logout block: do not auto-create sessions after user logged out
     if (isLogoutBlocked()) return null
     // proceed normally: create/restore session using device id
-    const existingUser = safeStorage.getItem('userId')
-    const existingToken = safeStorage.getItem('token')
+    // choose storage scope: 'session' uses sessionStorage (per-tab), otherwise localStorage (per-browser)
+    const scope = (typeof import.meta !== 'undefined' && (import.meta as any).env && (import.meta as any).env.VITE_ANON_SCOPE) || 'browser'
+    const useSession = scope === 'session'
+    const storage: Storage | null = (typeof window !== 'undefined') ? (useSession ? window.sessionStorage : window.localStorage) : null
+
+    const existingUser = storage ? storage.getItem('userId') : safeStorage.getItem('userId')
+    const existingToken = storage ? storage.getItem('token') : safeStorage.getItem('token')
     if (existingUser && existingToken) {
       // already have a session
       // but still attempt to flush pending edits if any
       await flushPendingProfileEdits()
       return { userId: existingUser, token: existingToken }
     }
-
-    let deviceId = safeStorage.getItem(DEVICE_KEY)
+    let deviceId = storage ? storage.getItem(BROWSER_KEY) : safeStorage.getItem(BROWSER_KEY)
     if (!deviceId) {
       // prefer browser crypto.randomUUID when available
       const gen = (typeof crypto !== 'undefined' && (crypto as any).randomUUID) ? (crypto as any).randomUUID() : null
-      deviceId = gen || `d-${Math.random().toString(36).slice(2, 12)}`
-      try { safeStorage.setItem(DEVICE_KEY, deviceId as string) } catch {}
+      deviceId = gen || `b-${Math.random().toString(36).slice(2, 12)}`
+      try { if (storage) storage.setItem(BROWSER_KEY, deviceId as string); else safeStorage.setItem(BROWSER_KEY, deviceId as string) } catch {}
     }
 
     const res = await api.post('/auth/anonymous', { deviceId })
     const data = res?.data || res
     if (data?.token) {
-      try { safeStorage.setItem('token', data.token) } catch {}
+      try { if (storage) storage.setItem('token', data.token); else safeStorage.setItem('token', data.token) } catch {}
     }
     if (data?.userId) {
-      try { safeStorage.setItem('userId', data.userId) } catch {}
+      try { if (storage) storage.setItem('userId', data.userId); else safeStorage.setItem('userId', data.userId) } catch {}
     }
     if (data?.username) {
-      try { safeStorage.setItem('username', data.username) } catch {}
+      try { if (storage) storage.setItem('username', data.username); else safeStorage.setItem('username', data.username) } catch {}
     }
     // mark auth provider for logout behaviour parity
-    try { safeStorage.setItem('authProvider', data?.anonymous ? 'anonymous' : 'local') } catch {}
+    try { if (storage) storage.setItem('authProvider', data?.anonymous ? 'anonymous' : 'local'); else safeStorage.setItem('authProvider', data?.anonymous ? 'anonymous' : 'local') } catch {}
 
     await flushPendingProfileEdits()
 
@@ -62,8 +66,13 @@ export async function ensureAnonymousSession() {
   }
 }
 
-export function clearDeviceId() {
-  try { safeStorage.removeItem(DEVICE_KEY) } catch {}
+export function clearBrowserId() {
+  try {
+    // clear from both storages
+    try { if (typeof window !== 'undefined') window.sessionStorage.removeItem(BROWSER_KEY) } catch {}
+    try { if (typeof window !== 'undefined') window.localStorage.removeItem(BROWSER_KEY) } catch {}
+    safeStorage.removeItem(BROWSER_KEY)
+  } catch {}
 }
 
 
@@ -98,4 +107,4 @@ async function flushPendingProfileEdits() {
   }
 }
 
-export default { ensureAnonymousSession, clearDeviceId, savePendingProfileEdits }
+export default { ensureAnonymousSession, clearBrowserId, savePendingProfileEdits }

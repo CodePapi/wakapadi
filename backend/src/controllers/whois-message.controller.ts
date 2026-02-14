@@ -37,25 +37,26 @@ export class WhoisMessageController {
     await this.messageService.markMessagesAsRead(req.user!.id, body.fromUserId, body.messageIds);
     return { success: true };
   }
-  @Get(':userId/:otherId') // Changed 'chat/:userId' to just ':userId' for cleaner routing, assuming it's the primary chat thread endpoint
+  @Get(':otherId')
   async getChat(
     @Req() req: AuthRequest,
-    @Param('userId') userId: string,
     @Param('otherId') otherId: string,
     @Query('page') page = '1',
     @Query('limit') limit = '20'
   ) {
-    // This fetches the conversation history, including reactions
+    // Fetch conversation between the authenticated user and the requested other user
+    const currentUserId = req.user!.id
     const result = await this.messageService.getConversation(
-      req.user!.id,
-      userId,
+      currentUserId,
+      otherId,
       parseInt(page),
       parseInt(limit)
     );
-const otherUser = await this.userService.getPreferences(otherId)
+
+    const otherUser = await this.userService.getPreferences(otherId)
     return {
       otherUser,
-      messages: result.messages, // These messages will now include the 'reactions' array and populated user data
+      messages: result.messages, // These messages will include 'reactions' and populated user info
       meta: {
         page: result.page,
         total: result.total,

@@ -1,30 +1,33 @@
 export const safeStorage = {
   getItem(key: string) {
     if (typeof window === 'undefined') return null;
-    const storage = window.localStorage;
-    if (!storage || typeof storage.getItem !== 'function') return null;
     try {
-      return storage.getItem(key);
+      const scope = (typeof import.meta !== 'undefined' && (import.meta as any).env && (import.meta as any).env.VITE_ANON_SCOPE) || 'browser'
+      const storage = scope === 'session' ? window.sessionStorage : window.localStorage
+      if (!storage || typeof storage.getItem !== 'function') return null
+      return storage.getItem(key)
     } catch {
-      return null;
+      return null
     }
   },
   setItem(key: string, value: string) {
     if (typeof window === 'undefined') return;
-    const storage = window.localStorage;
-    if (!storage || typeof storage.setItem !== 'function') return;
     try {
-      storage.setItem(key, value);
+      const scope = (typeof import.meta !== 'undefined' && (import.meta as any).env && (import.meta as any).env.VITE_ANON_SCOPE) || 'browser'
+      const storage = scope === 'session' ? window.sessionStorage : window.localStorage
+      if (!storage || typeof storage.setItem !== 'function') return
+      storage.setItem(key, value)
     } catch {
       // ignore
     }
   },
   removeItem(key: string) {
     if (typeof window === 'undefined') return;
-    const storage = window.localStorage;
-    if (!storage || typeof storage.removeItem !== 'function') return;
     try {
-      storage.removeItem(key);
+      const scope = (typeof import.meta !== 'undefined' && (import.meta as any).env && (import.meta as any).env.VITE_ANON_SCOPE) || 'browser'
+      const storage = scope === 'session' ? window.sessionStorage : window.localStorage
+      if (!storage || typeof storage.removeItem !== 'function') return
+      storage.removeItem(key)
     } catch {
       // ignore
     }

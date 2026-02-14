@@ -33,11 +33,24 @@ export function useNotifications(currentUserId: string) {
 
   useEffect(() => {
     if (!currentUserId) return
+    // attempt to fetch existing notifications from server (optional endpoint)
+    ;(async () => {
+      try {
+        const res = await api.get('/notifications')
+        if (res && res.data && Array.isArray(res.data)) {
+          setNotifications(res.data.slice(0, 20))
+        }
+      } catch (err) {
+        // server may not implement notifications endpoint; ignore
+      }
+    })()
     const SOCKET = import.meta.env.VITE_SOCKET_URL || ''
     const socket = io(SOCKET || undefined, { path: '/socket.io', transports: ['websocket'], auth: { token: safeStorage.getItem('token') } })
-    socket.emit('joinNotifications', { userId: currentUserId })
-
-    socket.on('connect', () => setConnected(true))
+    // attempt to join notifications room on initial connect and on reconnects
+    socket.on('connect', () => {
+      setConnected(true)
+      try { socket.emit('joinNotifications', { userId: currentUserId }) } catch (err) {}
+    })
     socket.on('disconnect', () => setConnected(false))
     socket.on('connect_error', () => setConnected(false))
 

@@ -17,6 +17,7 @@ import { CityModule } from './modules/city.module';
 import { ContactModule } from './modules/contact.module';
 import { GeolocationModule } from './modules/geolocation..module';
 import { FeedbackModule } from './modules/feedback.module';
+import { NotificationsModule } from './modules/notifications.module';
 
 @Module({
   imports: [
@@ -37,7 +38,9 @@ import { FeedbackModule } from './modules/feedback.module';
     WhoisModule,
     ContactModule,
     GeolocationModule,
-    FeedbackModule
+    FeedbackModule,
+    // Notifications
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

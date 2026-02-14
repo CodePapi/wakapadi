@@ -47,10 +47,13 @@ export class WhoisController {
   @Get('nearby')
   async nearby(@Req() req: AuthRequest) {
     const city = (req.query.city as string) || '';
-    const userId = req.query.userId as string;
     const lat = req.query.lat as string | undefined;
     const lon = req.query.lon as string | undefined;
-    return this.whoisService.getNearby(city, userId, lat, lon);
+    // Prefer authenticated user id from request (AuthGuard) when available
+    const authUserId = req.user?.id as string | undefined;
+    const queryUserId = req.query.userId as string | undefined;
+    const effectiveUserId = authUserId && authUserId.trim() !== '' ? authUserId : queryUserId;
+    return this.whoisService.getNearby(city, effectiveUserId, lat, lon);
   }
 
   @UseGuards(AuthGuard)

@@ -145,6 +145,14 @@ export default function Whois() {
     setPage(1)
     setGeoInProgress(true)
 
+    // ensure we have an anonymous session so we can reliably exclude current user
+    try {
+      const session = await ensureAnonymousSession()
+      if (session?.userId) setCurrentUserId(session.userId)
+    } catch (e) {
+      // continue — presence/fetch will still run but may not exclude self until session created
+    }
+
     if (!navigator.geolocation) {
       setError('Geolocation is not available in your browser')
       setLoading(false)
@@ -373,8 +381,10 @@ export default function Whois() {
                     setPage(1)
                     setLoading(true)
                     try {
-                      await pingPresence(normalized)
-                      await fetchNearby(normalized, 1)
+                        // ensure session exists so we can exclude current user
+                        try { const session = await ensureAnonymousSession(); if (session?.userId) setCurrentUserId(session.userId) } catch (e) {}
+                        await pingPresence(normalized)
+                        await fetchNearby(normalized, 1)
                     } catch (e) {
                       console.warn('manual city fetch failed', e)
                       setError('Failed to load nearby users')

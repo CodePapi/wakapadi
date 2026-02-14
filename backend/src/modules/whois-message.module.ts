@@ -9,10 +9,12 @@ import {
 import { WhoisGateway } from '../gateways/whois.gateway';
 import { User, UserSchema } from '../schemas/user.schema';
 import { UserModule } from './users.module';
+import { NotificationsModule } from './notifications.module';
 
 @Module({
   imports: [
     UserModule,
+    NotificationsModule,
     MongooseModule.forFeature([
       { name: WhoisMessage.name, schema: WhoisMessageSchema },
       { name: User.name, schema: UserSchema }, // ✅ ADD THIS LINE

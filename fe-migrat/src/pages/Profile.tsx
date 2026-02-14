@@ -100,7 +100,12 @@ export default function Profile() {
   return (
     <section className="container mx-auto px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto">
-        <h2 className="text-2xl font-semibold">{t('profileTitle')}</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-semibold">{t('profileTitle')}</h2>
+          <div className="text-xs text-gray-500">
+            <span className="font-mono px-2 py-1 bg-gray-100 rounded">id: {safeStorage.getItem('userId') || 'none'}</span>
+          </div>
+        </div>
         <div className="mt-4 grid gap-4 max-w-xl">
           <label className="block">
             <div className="text-sm text-gray-600">{t('profileDisplayNameLabel')}</div>
