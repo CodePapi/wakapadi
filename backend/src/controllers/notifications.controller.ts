@@ -14,8 +14,10 @@ export class NotificationsController {
   async list(@Req() req: AuthRequest) {
     const userId = req.user!.id
     const items = await this.svc.getNotificationsForUser(userId)
+    // only return unread notifications to the client (UI shows activity needing attention)
+    const unread = (items || []).filter((it: any) => !it.read)
     // map to client shape
-    return items.map((it) => {
+    return unread.map((it) => {
       const created = (it as any).createdAt
       return {
         fromUserId: (it.fromUserId as any)?.toString(),
@@ -37,5 +39,22 @@ export class NotificationsController {
       await this.svc.markReadFromUser(userId, body.fromUserId)
     }
     return { success: true }
+  }
+
+  @Get('all')
+  async listAll(@Req() req: AuthRequest) {
+    const userId = req.user!.id
+    const items = await this.svc.getNotificationsForUser(userId, 200)
+    return items.map((it) => {
+      const created = (it as any).createdAt
+      return {
+        fromUserId: (it.fromUserId as any)?.toString(),
+        fromUsername: it.fromUsername,
+        messagePreview: it.messagePreview,
+        createdAt: created ? new Date(created).toISOString() : undefined,
+        conversationId: it.conversationId,
+        read: it.read,
+      }
+    })
   }
 }
