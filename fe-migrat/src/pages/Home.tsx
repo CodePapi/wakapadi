@@ -221,7 +221,7 @@ export default function Home() {
             {nearbyLoading && <div className="text-sm text-gray-600">{t('loadingNearby') || 'Loading nearby travelers…'}</div>}
 
             {!nearbyLoading && nearby.length > 0 && nearby.map((u) => (
-              <NearbyUserCard key={u._id || u.id} user={u} />
+              <NearbyUserCard key={u.userId || u._id || u.id} user={u} />
             ))}
 
             {!nearbyLoading && nearby.length === 0 && (

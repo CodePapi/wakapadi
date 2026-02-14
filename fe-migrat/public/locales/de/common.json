@@ -10,6 +10,10 @@
   "userHiddenToast": "Benutzer ausgeblendet",
   "whoisYouNotListed": "Sie erscheinen nicht in dieser Liste",
   "distanceLabel": "Entfernung",
+  "locationLabel": "Ort",
+  "away": "entfernt",
+  "avatar": "Avatar",
+  "anonymousBadge": "Anonym",
   "heroCtaExplore": "Touren erkunden",
   "heroCtaMeet": "Personen in der Nähe treffen",
 

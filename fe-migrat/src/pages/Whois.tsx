@@ -48,7 +48,7 @@ export default function Whois() {
         const raw = safeStorage.getItem('whois_hidden_v1')
         const hidden = raw ? (JSON.parse(raw) as string[]) : []
         if (hidden.length) data = data.filter((d: any) => {
-          const id = d._id || d.id || d.userId
+          const id = d.userId || d._id || d.id
           return !hidden.includes(id)
         })
       } catch (e) {}
@@ -87,8 +87,8 @@ export default function Whois() {
 
       setUsers((prev) => {
         if (pageNum === 1) return augmented
-        const existingIds = new Set(prev.map((p) => p._id))
-        const filtered = augmented.filter((a: any) => !existingIds.has(a._id))
+        const existingIds = new Set(prev.map((p) => (p.userId || p._id || p.id)))
+        const filtered = augmented.filter((a: any) => !existingIds.has(a.userId || a._id || a.id))
         return [...prev, ...filtered]
       })
 
@@ -122,7 +122,7 @@ export default function Whois() {
     const onHide = (ev: any) => {
       const id = ev?.detail
       if (!id) return
-      setUsers((prev) => prev.filter((u) => (u._id || u.id || u.userId) !== id))
+      setUsers((prev) => prev.filter((u) => (u.userId || u._id || u.id) !== id))
     }
     window.addEventListener('wakapadi:whois:hidden', onHide as EventListener)
     return () => window.removeEventListener('wakapadi:whois:hidden', onHide as EventListener)
@@ -199,7 +199,68 @@ export default function Whois() {
   }
 
   useEffect(() => {
-    // initial mount: no-op
+    // On initial mount: try to use a previously stored device location, or request device location
+    let mounted = true
+
+    const tryStoredOrPrompt = async () => {
+      try {
+        // if we already have a city set, skip
+        if (!mounted) return
+        const stored = safeStorage.getItem('last_device_coords')
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored)
+            if (parsed?.lat && parsed?.lng) {
+              setCurrentCoords({ lat: Number(parsed.lat), lng: Number(parsed.lng) })
+              // reverse geocode to get city and fetch
+              try {
+                const geo: any = await api.get(`/geolocation/reverse?lat=${parsed.lat}&lon=${parsed.lng}`, { cache: 'no-store' })
+                const detectedCity = (geo?.data?.address?.city || geo?.data?.address?.town || geo?.data?.address?.village || '').trim().toLowerCase()
+                if (detectedCity) {
+                  setCity(detectedCity)
+                  await pingPresence(detectedCity)
+                  await fetchNearby(detectedCity, 1)
+                  return
+                }
+              } catch (e) {
+                // fallthrough to prompt
+              }
+            }
+          } catch (e) {}
+        }
+
+        // If no stored coords, attempt to request device location (this may prompt the user)
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(async (pos) => {
+            if (!mounted) return
+            const { latitude, longitude } = pos.coords
+            // persist for future visits
+            try { safeStorage.setItem('last_device_coords', JSON.stringify({ lat: latitude, lng: longitude })) } catch (e) {}
+            setCurrentCoords({ lat: latitude, lng: longitude })
+            try {
+              const geo: any = await api.get(`/geolocation/reverse?lat=${latitude}&lon=${longitude}`, { cache: 'no-store' })
+              const detectedCity = (geo?.data?.address?.city || geo?.data?.address?.town || geo?.data?.address?.village || '').trim().toLowerCase()
+              if (detectedCity) {
+                setCity(detectedCity)
+                await pingPresence(detectedCity)
+                await fetchNearby(detectedCity, 1)
+              }
+            } catch (e) {
+              console.warn('reverse geocode failed on mount', e)
+            }
+          }, (err) => {
+            // user denied or error; leave UI as-is (they can click the button)
+            console.warn('device location not available on mount', err)
+          }, { timeout: 8000 })
+        }
+      } catch (e) {
+        console.warn('initial location attempt failed', e)
+      }
+    }
+
+    tryStoredOrPrompt()
+
+    return () => { mounted = false }
   }, [])
 
   // live updates: subscribe to userOnline/userOffline and refresh nearby list
@@ -236,7 +297,8 @@ export default function Whois() {
         let found = false
         setUsers((prev) => {
           const next = prev.map((u) => {
-            if (u._id === userId || u.id === userId) {
+            const cid = (u.userId || u._id || u.id)
+            if (cid === userId) {
               found = true
               return { ...u, active: true, lastSeen: null }
             }
@@ -267,7 +329,7 @@ export default function Whois() {
               }
               // dedupe: ensure we don't already have this id (race guard)
               setUsers((prev) => {
-                if (prev.some((p) => p._id === userId || p.id === userId)) return prev
+                if (prev.some((p) => ((p.userId || p._id || p.id) === userId))) return prev
                 return [item, ...prev]
               })
               // show toast for new nearby user
@@ -294,7 +356,7 @@ export default function Whois() {
         recentActivity.set(userId, nowTs)
         // mark user offline in the current list if present
         const now = new Date().toISOString()
-        setUsers((prev) => prev.map((u) => (u._id === userId || u.id === userId ? { ...u, active: false, lastSeen: now } : u)))
+        setUsers((prev) => prev.map((u) => ((u.userId || u._id || u.id) === userId ? { ...u, active: false, lastSeen: now } : u)))
       } catch (e) {
         console.warn('userOffline handler error', e)
       }
@@ -415,7 +477,7 @@ export default function Whois() {
           {loading && users.length === 0 ? (
             Array.from({ length: 3 }).map((_, i) => <div key={i} className="p-3 bg-gray-100 dark:bg-gray-800 rounded animate-pulse h-20" />)
           ) : users.length > 0 ? (
-            users.map((u) => <NearbyUserCard key={u._id || u.id} user={u} />)
+            users.map((u) => <NearbyUserCard key={u.userId || u._id || u.id} user={u} />)
           ) : (
             city && !loading ? (
               <div className="text-center text-gray-600 space-y-3">

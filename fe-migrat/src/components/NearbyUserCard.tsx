@@ -39,6 +39,11 @@ export default function NearbyUserCard({ user }: { user: User }) {
 
   const avatar = user.avatarUrl || user.avatar
   const displayName = user.anonymous ? (t('anonymousTraveler') || 'Anonymous Traveler') : (user.username || user.name || t('traveler') || 'Traveler')
+  const city = (user as any).city || (user as any).location || ''
+  const formatCity = (c: string) => {
+    if (!c) return ''
+    return c.split(' ').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ')
+  }
   const formatDistance = (u: User) => {
     if (u.distance) return u.distance
     if (typeof u.distanceKm === 'number' && u.distanceKm !== null) {
@@ -61,7 +66,7 @@ export default function NearbyUserCard({ user }: { user: User }) {
       <div className="relative flex-shrink-0">
         <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
           {avatar ? (
-            <img src={avatar} alt={`${displayName} avatar`} className="w-full h-full object-cover" />
+            <img src={avatar} alt={`${displayName} ${t('avatar') || 'avatar'}`} className="w-full h-full object-cover" />
           ) : (
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" className="text-gray-300"><path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0 2c-4.418 0-8 2.239-8 5v1h16v-1c0-2.761-3.582-5-8-5z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
           )}
@@ -80,14 +85,17 @@ export default function NearbyUserCard({ user }: { user: User }) {
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <div className="text-sm font-medium text-gray-900 truncate">{displayName}</div>
-            {user.anonymous && <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-100 px-2 py-0.5 rounded">anonymous</span>}
+            {user.anonymous && <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-100 px-2 py-0.5 rounded">{t('anonymousBadge') || 'Anonymous'}</span>}
           </div>
           <div className="text-xs text-gray-500 dark:text-gray-300">
+            {city && (
+              <span className="mr-2">{(t('locationLabel') || 'Location')}: {formatCity(String(city))}</span>
+            )}
             {distanceStr !== '—' ? (
               <span>
                 <span className="font-medium mr-1">{t('distanceLabel') || 'Distance'}:</span>
                 <span className="mr-1">{distanceStr}</span>
-                <span className="text-gray-500 dark:text-gray-300">{t('near') || 'near'}</span>
+                <span className="text-gray-500 dark:text-gray-300">{t('away') || 'away'}</span>
               </span>
             ) : (
               '—'
@@ -100,8 +108,8 @@ export default function NearbyUserCard({ user }: { user: User }) {
       {!hidden && (
         <div className="flex flex-col items-end gap-2">
           <button onClick={async () => {
-              try { await ensureAnonymousSession() } catch (e) {}
-              const id = user._id || user.id
+                try { await ensureAnonymousSession() } catch (e) {}
+                  const id = (user as any).userId || user._id || user.id
               if (id) navigate(`/chat/${encodeURIComponent(id)}`)
             }}
             aria-label={t('chat') || 'Chat'}
@@ -112,7 +120,7 @@ export default function NearbyUserCard({ user }: { user: User }) {
           </button>
 
           <button onClick={() => {
-              const id = user._id || user.id
+              const id = (user as any).userId || user._id || user.id
               if (!id) return
               try {
                 const raw = safeStorage.getItem('whois_hidden_v1')
