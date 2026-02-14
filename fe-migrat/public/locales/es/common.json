@@ -147,5 +147,13 @@
   "profileVisibilityLabel": "Visibilidad del perfil",
   "profileSocialsInvalid": "Uno o más enlaces sociales no son URLs válidas",
   "profileSaving": "Guardando..."
+  ,"peerTitle": "Perfil del viajero"
+  ,"profileNoBio": "No hay biografía proporcionada."
+  ,"profileNoLanguages": "No hay idiomas listados."
+  ,"profileNoInterests": "No hay intereses de viaje listados."
+  ,"profileNoInstagram": "Sin Instagram"
+  ,"profileNoTwitter": "Sin Twitter"
+  ,"profileNoWebsite": "Sin sitio web"
+  ,"back": "Atrás"
 }
 

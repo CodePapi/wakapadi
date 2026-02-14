@@ -144,5 +144,13 @@
   "profileVisibilityLabel": "Profil-Sichtbarkeit",
   "profileSocialsInvalid": "Einer oder mehrere Social-Links sind ungültige URLs",
   "profileSaving": "Speichern..."
+  ,"peerTitle": "Reisendenprofil"
+  ,"profileNoBio": "Keine Biografie angegeben."
+  ,"profileNoLanguages": "Keine Sprachen aufgelistet."
+  ,"profileNoInterests": "Keine Reiseinteressen angegeben."
+  ,"profileNoInstagram": "Kein Instagram"
+  ,"profileNoTwitter": "Kein Twitter"
+  ,"profileNoWebsite": "Keine Website"
+  ,"back": "Zurück"
 }
 

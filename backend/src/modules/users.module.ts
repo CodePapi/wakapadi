@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UsersService } from '../services/user.service';
 import { UsersController } from '../controllers/users.controller';
+import { PublicUsersController } from '../controllers/public-users.controller';
 import { User, UserSchema } from '../schemas/user.schema';
 import { UserReport, UserReportSchema } from '../schemas/user-report.schema';
 import { UserBlock, UserBlockSchema } from '../schemas/user-block.schema';
@@ -16,7 +17,7 @@ import { UserBlock, UserBlockSchema } from '../schemas/user-block.schema';
     ]),
     
   ],
-  controllers: [UsersController],
+  controllers: [UsersController, PublicUsersController],
   providers: [UsersService],
   exports: [MongooseModule, UsersService],
 })

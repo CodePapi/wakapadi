@@ -192,5 +192,14 @@
   "profileVisibilityLabel": "Visibilité du profil",
   "profileSocialsInvalid": "Un ou plusieurs liens sociaux ne sont pas des URL valides",
   "profileSaving": "Enregistrement..."
+
+  ,"peerTitle": "Profil du voyageur"
+  ,"profileNoBio": "Aucune bio fournie."
+  ,"profileNoLanguages": "Aucune langue répertoriée."
+  ,"profileNoInterests": "Aucun centre d'intérêt répertorié."
+  ,"profileNoInstagram": "Pas d'Instagram"
+  ,"profileNoTwitter": "Pas de Twitter"
+  ,"profileNoWebsite": "Pas de site web"
+  ,"back": "Retour"
 }
 

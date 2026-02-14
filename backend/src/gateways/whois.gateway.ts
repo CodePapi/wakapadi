@@ -191,7 +191,7 @@ export class WhoisGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
 
       const messagePayload = {
-        _id: savedMessage._id.toString(),
+        _id: String((savedMessage as any)._id),
         message: savedMessage.message,
         fromUserId: savedMessage.fromUserId.toString(),
         toUserId: savedMessage.toUserId.toString(),
@@ -304,7 +304,7 @@ export class WhoisGateway implements OnGatewayConnection, OnGatewayDisconnect {
         // Emit the reaction update to all clients in the conversation room
         const roomName = [fromUserId, data.toUserId].sort().join('-'); // Assuming toUserId is the other chat participant
         this.server.to(roomName).emit('message:reaction', {
-          messageId: updatedMessage._id.toString(),
+          messageId: String((updatedMessage as any)._id),
           reaction: {
             emoji: data.emoji,
             fromUserId: String(fromUserId), // User who added the reaction
