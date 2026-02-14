@@ -94,7 +94,7 @@ export default function ProfileModal({ open, onClose, profile }: any) {
         </div>
 
         <div className="mt-6 flex flex-col md:flex-row gap-2">
-          <button onClick={() => handleMessage(userid)} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded">Message</button>
+          <button onClick={() => handleMessage(userid)} className="flex-1 px-4 py-2 bg-blue-600 text-gray-700 dark:text-gray-100 rounded hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300">Message</button>
           <button onClick={() => handleReport(userid)} className="flex-1 px-4 py-2 border rounded">Report</button>
           <button onClick={() => handleBlock(userid)} className="flex-1 px-4 py-2 text-red-600 border rounded">Block</button>
         </div>

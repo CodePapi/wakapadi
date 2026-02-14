@@ -61,15 +61,16 @@ export default function ContactUs() {
               <textarea id="message" name="message" required value={form.message} onChange={handleChange} rows={6} className="w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </label>
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col gap-3">
               <button
                 type="submit"
                 disabled={status === 'sending'}
                 aria-busy={status === 'sending'}
-                className={`px-5 py-2 rounded-md font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 ${status === 'sending' ? 'bg-blue-400 text-white cursor-wait' : 'bg-blue-600 text-white'}`}>
+                className={`${status === 'sending' ? 'bg-blue-400 text-white cursor-wait' : 'bg-blue-600 text-gray-700 dark:text-gray-100 hover:bg-blue-700'} w-full px-5 py-2 rounded-md font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300`}
+              >
                 {t('contactFormSubmit')}
               </button>
-              <div aria-live="polite" className="min-h-[1.25rem]">
+              <div aria-live="polite" className="min-h-[1.25rem] text-sm">
                 {status === 'sending' && <span className="text-sm text-gray-600 dark:text-gray-300">{t('contactFormStatusSending')}</span>}
                 {status === 'success' && <span className="text-sm text-green-600">{t('contactFormStatusSuccess')}</span>}
                 {status === 'error' && <span className="text-sm text-red-600">{t('contactFormStatusError')}</span>}

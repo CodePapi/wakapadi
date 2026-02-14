@@ -355,7 +355,7 @@ export default function ChatConversation() {
 
         <div className="mt-4 flex gap-2">
           <input ref={inputRef} value={text} onChange={(e) => handleChange(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }} placeholder="Write a message" className="flex-1 px-3 py-2 border rounded" />
-          <button onClick={send} className="px-4 py-2 bg-blue-600 text-white rounded">Send</button>
+          <button onClick={send} className="px-4 py-2 bg-blue-600 text-gray-700 dark:text-gray-100 rounded hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300">Send</button>
         </div>
       </div>
       </div>

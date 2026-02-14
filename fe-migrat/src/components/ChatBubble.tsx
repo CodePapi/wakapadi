@@ -70,10 +70,16 @@ export default function ChatBubble({
           {reactions && reactions.length > 0 && (
             <div className="text-xs text-gray-700 dark:text-gray-100 px-2 py-0.5 bg-white dark:bg-zinc-700 rounded flex items-center gap-2">
               <div className="flex items-center gap-1">
-                {Array.from(reactions.reduce((map: Map<string, number>, r: any) => {
-                  map.set(r.emoji, (map.get(r.emoji) || 0) + 1)
-                  return map
-                }, new Map())).map(([emoji, count]) => (
+                {(
+                  Array.from(reactions.reduce((map: Map<string, number>, r: any) => {
+                    map.set(r.emoji, (map.get(r.emoji) || 0) + 1)
+                    return map
+                  }, new Map()) as Map<string, number>).entries() as IterableIterator<[string, number]>
+                ? Array.from((reactions.reduce((map: Map<string, number>, r: any) => {
+                    map.set(r.emoji, (map.get(r.emoji) || 0) + 1)
+                    return map
+                  }, new Map()) as Map<string, number>).entries() as IterableIterator<[string, number]>) as [string, number][]
+                : []).map(([emoji, count]) => (
                   <span key={emoji} className="inline-flex items-center px-1 py-0.5 bg-transparent rounded">{emoji}{count > 1 ? ` ${count}` : ''}</span>
                 ))}
               </div>

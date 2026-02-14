@@ -22,7 +22,6 @@ import { useNavigate } from 'react-router-dom'
 import { ensureAnonymousSession } from '../lib/anonymousAuth'
 import { useTranslation } from '../lib/i18n'
 import { safeStorage } from '../lib/storage'
-
 export default function NearbyUserCard({ user }: { user: User }) {
   const { t } = useTranslation()
   const [highlight, setHighlight] = useState(false)
@@ -32,8 +31,8 @@ export default function NearbyUserCard({ user }: { user: User }) {
   useEffect(() => {
     if (user.active) {
       setHighlight(true)
-      const t = setTimeout(() => setHighlight(false), 2200)
-      return () => clearTimeout(t)
+      const timer = setTimeout(() => setHighlight(false), 2200)
+      return () => clearTimeout(timer)
     }
   }, [user.active])
 
@@ -44,12 +43,12 @@ export default function NearbyUserCard({ user }: { user: User }) {
     if (!c) return ''
     return c.split(' ').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ')
   }
+
   const formatDistance = (u: User) => {
     if (u.distance) return u.distance
     if (typeof u.distanceKm === 'number' && u.distanceKm !== null) {
       if (u.distanceKm < 1) {
         const m = Math.round(u.distanceKm * 1000)
-        // round to nearest 25m for perceived anonymity
         const approx = Math.round(m / 25) * 25
         return `≈ ${approx} m`
       }
@@ -62,7 +61,7 @@ export default function NearbyUserCard({ user }: { user: User }) {
   const distanceStr = formatDistance(user)
 
   return (
-    <article className={`flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 bg-white dark:bg-gray-800 dark:border-gray-700 border rounded-lg shadow-sm transition-transform duration-200 ${highlight ? 'scale-101 ring-2 ring-green-300/60' : ''}`}>
+    <article className={`flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm transition-transform duration-200 ${highlight ? 'scale-101 ring-2 ring-green-300/60' : ''}`}>
       <div className="relative flex-shrink-0">
         <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
           {avatar ? (
@@ -82,12 +81,18 @@ export default function NearbyUserCard({ user }: { user: User }) {
       </div>
 
       <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <div className="text-sm font-medium text-gray-900 truncate">{displayName}</div>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+            <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{displayName}</div>
             {user.anonymous && <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-100 px-2 py-0.5 rounded">{t('anonymousBadge') || 'Anonymous'}</span>}
+            <div className="text-xs text-gray-500 dark:text-gray-300 mt-1 sm:mt-0 sm:hidden">
+              {city ? `${t('locationLabel') || 'Location'}: ${formatCity(String(city))}` : ''}
+              {city && distanceStr !== '—' ? ' · ' : ''}
+              {distanceStr !== '—' ? `${t('distanceLabel') || 'Distance'}: ${distanceStr} ${t('away') || 'away'}` : ''}
+            </div>
           </div>
-          <div className="text-xs text-gray-500 dark:text-gray-300">
+
+          <div className="hidden sm:block text-xs text-gray-500 dark:text-gray-300">
             {city && (
               <span className="mr-2">{(t('locationLabel') || 'Location')}: {formatCity(String(city))}</span>
             )}
@@ -102,21 +107,21 @@ export default function NearbyUserCard({ user }: { user: User }) {
             )}
           </div>
         </div>
-        {user.profileVisible === true && user.bio && <div className="mt-1 text-xs text-gray-600 truncate">{user.bio}</div>}
+        {user.profileVisible === true && user.bio && <div className="mt-1 text-xs text-gray-600 dark:text-gray-300 truncate">{user.bio}</div>}
       </div>
 
       {!hidden && (
-        <div className="flex flex-col items-end gap-2">
+        <div className="flex flex-col sm:flex-col items-stretch sm:items-end gap-2 w-full sm:w-auto">
           <button onClick={async () => {
                 try { await ensureAnonymousSession() } catch (e) {}
                   const id = (user as any).userId || user._id || user.id
               if (id) navigate(`/chat/${encodeURIComponent(id)}`)
             }}
             aria-label={t('chat') || 'Chat'}
-            className="text-sm px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 flex items-center"
+            className="w-full sm:w-auto text-sm px-3 py-2 bg-blue-700 text-gray-700 dark:text-gray-100 rounded-md shadow-sm hover:bg-blue-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 dark:bg-blue-500 dark:hover:bg-blue-600 flex items-center justify-center border border-transparent"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            {t('chat') || 'Chat'}
+            <span>{t('chat') || 'Chat'}</span>
           </button>
 
           <button onClick={() => {
@@ -128,16 +133,16 @@ export default function NearbyUserCard({ user }: { user: User }) {
                 const next = Array.from(new Set([id, ...arr]))
                 safeStorage.setItem('whois_hidden_v1', JSON.stringify(next))
               } catch (e) { console.warn('hide save failed', e) }
-              // remove locally and notify listeners
               setHidden(true)
               try { window.dispatchEvent(new CustomEvent('wakapadi:whois:hidden', { detail: id })) } catch (e) {}
               try { window.dispatchEvent(new CustomEvent('wakapadi:toast', { detail: { text: t('userHiddenToast') || 'User hidden' } })) } catch (e) {}
             }}
             aria-label={t('hide') || 'Hide'}
-            className="text-xs px-2 py-1 border rounded text-gray-700"
+            className="w-full sm:w-auto text-xs px-2 py-1 border border-gray-200 rounded text-gray-700 bg-gray-50 hover:bg-gray-100 dark:text-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-300"
           >{t('hide') || 'Hide'}</button>
         </div>
       )}
     </article>
   )
 }
+

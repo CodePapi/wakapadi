@@ -204,6 +204,13 @@ export default function Whois() {
 
     const tryStoredOrPrompt = async () => {
       try {
+        // ensure we have a session early so fetchNearby can exclude current user
+        try {
+          const session = await ensureAnonymousSession()
+          if (session?.userId) setCurrentUserId(session.userId)
+        } catch (e) {
+          // ignore session errors
+        }
         // if we already have a city set, skip
         if (!mounted) return
         const stored = safeStorage.getItem('last_device_coords')
@@ -217,11 +224,11 @@ export default function Whois() {
                 const geo: any = await api.get(`/geolocation/reverse?lat=${parsed.lat}&lon=${parsed.lng}`, { cache: 'no-store' })
                 const detectedCity = (geo?.data?.address?.city || geo?.data?.address?.town || geo?.data?.address?.village || '').trim().toLowerCase()
                 if (detectedCity) {
-                  setCity(detectedCity)
-                  await pingPresence(detectedCity)
-                  await fetchNearby(detectedCity, 1)
-                  return
-                }
+                    setCity(detectedCity)
+                    await pingPresence(detectedCity)
+                    await fetchNearby(detectedCity, 1)
+                    return
+                  }
               } catch (e) {
                 // fallthrough to prompt
               }
@@ -242,6 +249,8 @@ export default function Whois() {
               const detectedCity = (geo?.data?.address?.city || geo?.data?.address?.town || geo?.data?.address?.village || '').trim().toLowerCase()
               if (detectedCity) {
                 setCity(detectedCity)
+                // ensure session again before ping/fetch
+                try { const session = await ensureAnonymousSession(); if (session?.userId) setCurrentUserId(session.userId) } catch (e) {}
                 await pingPresence(detectedCity)
                 await fetchNearby(detectedCity, 1)
               }
@@ -407,7 +416,10 @@ export default function Whois() {
         <VisibilityToggle />
 
         <div className="mt-3">
-          <button onClick={() => setShowLocationPrompt(true)} className="px-4 py-2 bg-blue-600 text-white rounded-md">{t('whoisFindNearby')}</button>
+          <button
+            onClick={() => setShowLocationPrompt(true)}
+            className="px-4 py-2 bg-blue-600 text-gray-700 dark:text-gray-100 rounded-md hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:bg-blue-500 dark:hover:bg-blue-600"
+          >{t('whoisFindNearby')}</button>
         </div>
 
         {/* Location permission explanation / fallback */}
@@ -424,7 +436,7 @@ export default function Whois() {
                     setShowLocationPrompt(false)
                     try { await handleFindNearby() } finally { setGeoInProgress(false) }
                   }}
-                  className="px-4 py-2 bg-green-600 text-white rounded-md"
+                  className="px-4 py-2 bg-green-600 text-gray-700 dark:text-gray-100 rounded-md hover:bg-green-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
                 >
                   {t('whoisAllow')}
                 </button>
@@ -453,7 +465,7 @@ export default function Whois() {
                     } finally {
                       setLoading(false)
                     }
-                  }} className="px-3 py-2 bg-blue-600 text-white rounded-md">{t('whoisUseCity')}</button>
+                  }} className="px-3 py-2 bg-blue-600 text-gray-700 dark:text-gray-100 rounded-md hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300">{t('whoisUseCity')}</button>
                 </div>
               </div>
             </div>

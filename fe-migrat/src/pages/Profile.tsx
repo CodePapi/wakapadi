@@ -156,11 +156,11 @@ export default function Profile() {
             </div>
           </div>
 
-          <div className="flex gap-2 items-center">
-            <button onClick={save} disabled={saving || !canSave} className={`px-4 py-2 rounded ${!canSave ? 'bg-gray-300 text-gray-600 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'} focus:outline-none focus:ring-2 focus:ring-blue-500`}>
+          <div className="flex flex-col gap-2">
+            <button onClick={save} disabled={saving || !canSave} className={`w-full px-4 py-2 rounded ${!canSave ? 'bg-gray-300 text-gray-600 cursor-not-allowed' : 'bg-blue-600 text-gray-700 dark:text-gray-100 hover:bg-blue-700 shadow-sm'} focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300`}>
               {saving ? t('profileSaving') : t('profileSaveButton')}
             </button>
-            <div aria-live="polite" className="min-h-[1rem]">
+            <div aria-live="polite" className="min-h-[1rem] text-sm">
               {saveStatus === 'success' && <span className="text-sm text-green-600">{t('profileSaveSuccess')}</span>}
               {saveStatus === 'error' && <span className="text-sm text-red-600">{t('profileSaveError')}</span>}
             </div>
