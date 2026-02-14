@@ -54,7 +54,7 @@ export class WhoisMessageService implements OnModuleInit {
       read: populatedMessage.read,
       username: populatedMessage.fromUserId.username,
       avatar: populatedMessage.fromUserId.avatarUrl || 'default_avatar.jpg',
-      reactions: populatedMessage.reactions || [],
+      reactions: (populatedMessage.reactions || []).map((r: any) => ({ emoji: r.emoji, fromUserId: String(r.fromUserId) })),
     };
   
     // Only emit to the conversation room, not directly to users
@@ -159,7 +159,7 @@ export class WhoisMessageService implements OnModuleInit {
         read: msg.toUserId._id.toString() === userId ? true : msg.read,
         username: msg.fromUserId.username,
         avatar: msg.fromUserId.avatarUrl || 'default_avatar.jpg',
-        reactions: msg.reactions || [],
+        reactions: (msg.reactions || []).map((r: any) => ({ emoji: r.emoji, fromUserId: String(r.fromUserId) })),
       })),
     };
   }

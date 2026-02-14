@@ -54,7 +54,7 @@ export default function ChatBubble({
   }
 
   return (
-    <div className={`p-2 rounded max-w-md ${fromSelf ? 'bg-blue-50 self-end ml-auto text-gray-900 dark:bg-blue-900/40 dark:text-white' : 'bg-gray-100 mr-auto text-gray-900 dark:bg-gray-800 dark:text-gray-100'} relative`}> 
+    <div className={`p-2 rounded max-w-[80%] sm:max-w-md ${fromSelf ? 'bg-blue-50 self-end ml-auto text-gray-900 dark:bg-blue-900/40 dark:text-white' : 'bg-gray-100 mr-auto text-gray-900 dark:bg-gray-800 dark:text-gray-100'} relative`}> 
       {!fromSelf && (
         <div className="flex items-center gap-2">
           <button onClick={() => onShowProfile && onShowProfile()} className="w-7 h-7 rounded-full bg-gray-200 dark:bg-zinc-700 dark:text-white flex items-center justify-center text-xs font-semibold">{(username||'T').charAt(0).toUpperCase()}</button>
@@ -69,7 +69,14 @@ export default function ChatBubble({
         <div className="flex items-center gap-2">
           {reactions && reactions.length > 0 && (
             <div className="text-xs text-gray-700 dark:text-gray-100 px-2 py-0.5 bg-white dark:bg-zinc-700 rounded flex items-center gap-2">
-              <div>{reactions.map((r: any) => r.emoji).join(' ')}</div>
+              <div className="flex items-center gap-1">
+                {Array.from(reactions.reduce((map: Map<string, number>, r: any) => {
+                  map.set(r.emoji, (map.get(r.emoji) || 0) + 1)
+                  return map
+                }, new Map())).map(([emoji, count]) => (
+                  <span key={emoji} className="inline-flex items-center px-1 py-0.5 bg-transparent rounded">{emoji}{count > 1 ? ` ${count}` : ''}</span>
+                ))}
+              </div>
               {pendingReactionEmoji && (
                 <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
                   <span className="w-3 h-3 rounded-full bg-gray-400 animate-pulse inline-block" aria-hidden="true" />

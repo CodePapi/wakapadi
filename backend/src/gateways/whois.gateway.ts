@@ -191,15 +191,15 @@ export class WhoisGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
 
       const messagePayload = {
-        _id: savedMessage._id,
+        _id: savedMessage._id.toString(),
         message: savedMessage.message,
         fromUserId: savedMessage.fromUserId.toString(),
         toUserId: savedMessage.toUserId.toString(),
         createdAt: savedMessage.createdAt.toISOString(),
         read: savedMessage.read,
         username: senderUser?.username || 'Unknown',
-        avatar: senderUser?.avatarUrl|| `https://i.pravatar.cc/40?u=${savedMessage.fromUserId.toString()}`,
-        reactions: savedMessage.reactions || [],
+        avatar: senderUser?.avatarUrl|| `https://i.pravatar.cc/40?u=${(savedMessage as any).fromUserId.toString()}`,
+        reactions: ((savedMessage as any).reactions || []).map((r: any) => ({ emoji: r.emoji, fromUserId: String(r.fromUserId) })),
         tempId: data.tempId, // Crucial for frontend optimistic updates
       };
 
@@ -304,10 +304,10 @@ export class WhoisGateway implements OnGatewayConnection, OnGatewayDisconnect {
         // Emit the reaction update to all clients in the conversation room
         const roomName = [fromUserId, data.toUserId].sort().join('-'); // Assuming toUserId is the other chat participant
         this.server.to(roomName).emit('message:reaction', {
-          messageId: updatedMessage._id,
+          messageId: updatedMessage._id.toString(),
           reaction: {
             emoji: data.emoji,
-            fromUserId: fromUserId, // User who added the reaction
+            fromUserId: String(fromUserId), // User who added the reaction
           },
         });
         console.log(`Reaction ${data.emoji} added by ${fromUserId} to message ${data.messageId}. Emitted to room ${roomName}.`);

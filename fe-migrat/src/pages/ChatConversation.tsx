@@ -76,6 +76,19 @@ export default function ChatConversation() {
             // update dedupe sets: remove tempId, add server id
             try { messagesRef.current.delete(msg.tempId) } catch (e) {}
             if (msg._id) try { messagesRef.current.add(msg._id) } catch (e) {}
+            // replay any pending reactions that targeted the optimistic tempId
+            try {
+              const me = safeStorage.getItem('userId')
+              const pendingKey = `${msg.tempId}:${me}`
+              const pending = pendingReactionsRef.current.get(pendingKey)
+              if (pending && msg._id && socketRef.current) {
+                // send using backend expected shape: { messageId, emoji, toUserId }
+                socketRef.current.emit('message:reaction', { messageId: msg._id, emoji: pending.emoji, toUserId: userId })
+                // move pending entry to the new message id key so timeouts/cleanup still work
+                pendingReactionsRef.current.delete(pendingKey)
+                pendingReactionsRef.current.set(`${msg._id}:${me}`, pending)
+              }
+            } catch (e) {}
             return next
           }
         }
@@ -306,7 +319,8 @@ export default function ChatConversation() {
                   )
 
                       if (socketRef.current && messageId) {
-                    socketRef.current.emit('message:reaction', { messageId, reaction: { emoji, fromUserId: me }, toUserId: userId })
+                    // emit in the shape the backend expects: `messageId` + `emoji` + `toUserId`
+                    socketRef.current.emit('message:reaction', { messageId, emoji, toUserId: userId })
                     try {
                       const key = `${messageId}:${me}`
                       const timer = window.setTimeout(() => {
