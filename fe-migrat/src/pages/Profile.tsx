@@ -21,6 +21,7 @@ export default function Profile() {
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<any>(null)
   const [saving, setSaving] = useState(false)
+  const [saveStatus, setSaveStatus] = useState<'idle'|'success'|'error'>('idle')
   const { t } = useTranslation()
 
   useEffect(() => {
@@ -48,6 +49,7 @@ export default function Profile() {
 
   const save = async () => {
     setSaving(true)
+    setSaveStatus('idle')
     let payload: any = null
     try {
       payload = {
@@ -57,15 +59,21 @@ export default function Profile() {
         languages: data.languages || [],
         travelPrefs: data.travelPrefs || [],
         socials: data.socials || {},
+        avatarUrl: data.avatarUrl,
       }
-      await api.put('/users/preferences', payload)
+      const res: any = await api.patch('/users/preferences', payload)
+      const updated = res?.data || res
+      if (updated) setData(updated)
+      setSaveStatus('success')
+      // clear success after a short delay
+      setTimeout(() => setSaveStatus('idle'), 3000)
     } catch (err) {
       console.error('save failed', err)
-      // If saving failed because we're not authenticated yet, persist edits locally and let
-      // the anonymous session helper flush them when a token becomes available.
+      setSaveStatus('error')
       try {
         if (payload) anonymousAuth.savePendingProfileEdits(payload)
       } catch {}
+      setTimeout(() => setSaveStatus('idle'), 3000)
     } finally {
       setSaving(false)
     }
@@ -102,57 +110,60 @@ export default function Profile() {
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-semibold">{t('profileTitle')}</h2>
-          <div className="text-xs text-gray-500">
-            <span className="font-mono px-2 py-1 bg-gray-100 rounded">id: {safeStorage.getItem('userId') || 'none'}</span>
-          </div>
         </div>
         <div className="mt-4 grid gap-4 max-w-xl">
           <label className="block">
-            <div className="text-sm text-gray-600">{t('profileDisplayNameLabel')}</div>
-            <input value={data.username || ''} onChange={(e) => setData({ ...data, username: e.target.value })} className="w-full px-3 py-2 border rounded" />
+            <div className="text-sm mb-1 text-gray-800 dark:text-gray-200">{t('profileDisplayNameLabel')}</div>
+            <input id="username" value={data.username || ''} onChange={(e) => setData({ ...data, username: e.target.value })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
             {!usernameValid && <div className="text-xs text-red-600">{t('profileDisplayNameRequired')}</div>}
           </label>
 
           <label className="block">
-            <div className="text-sm text-gray-600">{t('profileBioLabel')}</div>
-            <textarea value={data.bio || ''} onChange={(e) => setData({ ...data, bio: e.target.value })} className="w-full px-3 py-2 border rounded" rows={3} />
+            <div className="text-sm mb-1 text-gray-800 dark:text-gray-200">{t('profileBioLabel')}</div>
+            <textarea id="bio" value={data.bio || ''} onChange={(e) => setData({ ...data, bio: e.target.value })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" rows={3} />
             {!bioValid && <div className="text-xs text-red-600">{t('profileBioTooLong')}</div>}
           </label>
 
           <label className="block">
-            <div className="text-sm text-gray-600">{t('profileVisibilityLabel')}</div>
-            <select value={String(Boolean(data.profileVisible))} onChange={(e) => setData({ ...data, profileVisible: e.target.value === 'true' })} className="px-3 py-2 border rounded">
+            <div className="text-sm mb-1 text-gray-800 dark:text-gray-200">{t('profileVisibilityLabel')}</div>
+            <select id="profileVisible" value={String(Boolean(data.profileVisible))} onChange={(e) => setData({ ...data, profileVisible: e.target.value === 'true' })} className="px-3 py-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
               <option value="true">{t('profileVisibilityOn')}</option>
               <option value="false">{t('profileVisibilityOff')}</option>
             </select>
           </label>
 
           <div>
-            <div className="text-sm text-gray-600">{t('profileLanguagesLabel')}</div>
+            <div className="text-sm text-gray-800 dark:text-gray-200">{t('profileLanguagesLabel')}</div>
             <div className="mt-2">
               <TagInput value={data.languages || []} onChange={(v) => setData({ ...data, languages: v })} placeholder="Add language (e.g. English)" />
             </div>
           </div>
 
           <div>
-            <div className="text-sm text-gray-600">{t('profileTravelInterestsLabel')}</div>
+            <div className="text-sm text-gray-800 dark:text-gray-200">{t('profileTravelInterestsLabel')}</div>
             <div className="mt-2">
               <TagInput value={data.travelPrefs || []} onChange={(v) => setData({ ...data, travelPrefs: v })} placeholder="e.g. hiking, food" />
             </div>
           </div>
 
           <div>
-            <div className="text-sm text-gray-600">{t('profileSocialTitle')}</div>
+            <div className="text-sm text-gray-800 dark:text-gray-200">{t('profileSocialTitle')}</div>
             <div className="mt-2 grid gap-2">
-              <input value={data.socials?.instagram || ''} onChange={(e) => updateSocial('instagram', e.target.value)} placeholder="Instagram URL or username" className="w-full px-3 py-2 border rounded" />
-              <input value={data.socials?.twitter || ''} onChange={(e) => updateSocial('twitter', e.target.value)} placeholder="Twitter URL or username" className="w-full px-3 py-2 border rounded" />
-              <input value={data.socials?.website || ''} onChange={(e) => updateSocial('website', e.target.value)} placeholder="Website (https://example.com)" className="w-full px-3 py-2 border rounded" />
+              <input id="instagram" value={data.socials?.instagram || ''} onChange={(e) => updateSocial('instagram', e.target.value)} placeholder="Instagram URL or username" className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <input id="twitter" value={data.socials?.twitter || ''} onChange={(e) => updateSocial('twitter', e.target.value)} placeholder="Twitter URL or username" className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <input id="website" value={data.socials?.website || ''} onChange={(e) => updateSocial('website', e.target.value)} placeholder="Website (https://example.com)" className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
               {!socialsValid && <div className="text-xs text-red-600">{t('profileSocialsInvalid')}</div>}
             </div>
           </div>
 
-          <div className="flex gap-2">
-            <button onClick={save} disabled={saving || !canSave} className={`px-4 py-2 ${!canSave ? 'bg-gray-300 text-gray-600' : 'bg-blue-600 text-white'} rounded`}>{saving ? t('profileSaving') : t('profileSaveButton')}</button>
+          <div className="flex gap-2 items-center">
+            <button onClick={save} disabled={saving || !canSave} className={`px-4 py-2 rounded ${!canSave ? 'bg-gray-300 text-gray-600 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'} focus:outline-none focus:ring-2 focus:ring-blue-500`}>
+              {saving ? t('profileSaving') : t('profileSaveButton')}
+            </button>
+            <div aria-live="polite" className="min-h-[1rem]">
+              {saveStatus === 'success' && <span className="text-sm text-green-600">{t('profileSaveSuccess')}</span>}
+              {saveStatus === 'error' && <span className="text-sm text-red-600">{t('profileSaveError')}</span>}
+            </div>
           </div>
         </div>
       </div>

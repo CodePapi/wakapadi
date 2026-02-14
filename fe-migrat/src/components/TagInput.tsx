@@ -56,7 +56,14 @@ export default function TagInput({ value, onChange, placeholder, suggestions = [
           placeholder={placeholder}
           className="flex-1 px-3 py-2 border rounded bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700"
         />
-        <button type="button" onClick={() => add()} className="px-3 py-2 bg-gray-100 border rounded dark:bg-gray-700 dark:text-gray-100">Add</button>
+        <button
+          type="button"
+          onClick={() => add()}
+          aria-label="Add tag"
+          className="px-3 py-2 bg-gray-100 border rounded text-gray-800 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600"
+        >
+          Add
+        </button>
       </div>
 
       {open && filteredSuggestions.length > 0 && (
@@ -77,9 +84,18 @@ export default function TagInput({ value, onChange, placeholder, suggestions = [
 
       <div className="mt-2 flex flex-wrap gap-2">
         {value.map((t) => (
-          <span key={t} className="inline-flex items-center gap-2 px-2 py-1 bg-gray-100 rounded text-sm">
-            {t}
-            <button onClick={() => remove(t)} className="text-xs text-red-600">×</button>
+          <span
+            key={t}
+            className="inline-flex items-center gap-2 px-2 py-1 bg-gray-100 text-gray-900 rounded text-sm dark:bg-gray-700 dark:text-gray-100"
+          >
+            <span className="truncate max-w-xs">{t}</span>
+            <button
+              onClick={() => remove(t)}
+              aria-label={`Remove ${t}`}
+              className="text-xs text-red-600 hover:text-red-700 ml-1"
+            >
+              ×
+            </button>
           </span>
         ))}
       </div>

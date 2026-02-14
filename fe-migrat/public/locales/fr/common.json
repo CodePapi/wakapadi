@@ -173,6 +173,24 @@
   "whoisEnterCityManualLabel": "Ou saisir la ville manuellement",
   "exampleCity": "ex. Lisbonne",
   "whoisUseCity": "Utiliser",
-  "whoisRequestingLocation": "Demande de localisation…"
+  "whoisRequestingLocation": "Demande de localisation…",
+  "profileTitle": "Votre profil",
+  "profileLoading": "Chargement de votre profil...",
+  "profileLoadingAria": "Chargement des données du profil",
+  "profileVisibilityOn": "Afficher mon vrai nom aux voyageurs à proximité",
+  "profileVisibilityOff": "Masquer mon vrai nom (m'apparaître comme anonyme)",
+  "profileTravelInterestsLabel": "Centres d'intérêt",
+  "profileLanguagesLabel": "Langues",
+  "profileSocialTitle": "Réseaux sociaux",
+  "profileSaveButton": "Enregistrer les modifications",
+  "profileSaveSuccess": "Profil mis à jour avec succès !",
+  "profileSaveError": "Échec de la mise à jour du profil",
+  "profileDisplayNameLabel": "Nom affiché",
+  "profileDisplayNameRequired": "Le nom affiché est requis",
+  "profileBioLabel": "Bio",
+  "profileBioTooLong": "La bio doit contenir au maximum 300 caractères",
+  "profileVisibilityLabel": "Visibilité du profil",
+  "profileSocialsInvalid": "Un ou plusieurs liens sociaux ne sont pas des URL valides",
+  "profileSaving": "Enregistrement..."
 }
 

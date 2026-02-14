@@ -42,6 +42,19 @@ export class UsersService {
       },
     };
 
+    // Allow updating profile text fields
+    if (typeof data.username === 'string' && data.username.trim() !== '') {
+      update.username = data.username.trim();
+    }
+
+    if (typeof data.bio === 'string') {
+      update.bio = data.bio;
+    }
+
+    if (typeof data.avatarUrl === 'string') {
+      update.avatarUrl = data.avatarUrl;
+    }
+
     if (typeof data.profileVisible === 'boolean') {
       update.profileVisible = data.profileVisible;
     }
