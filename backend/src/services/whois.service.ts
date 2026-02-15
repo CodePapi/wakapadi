@@ -26,9 +26,35 @@ export class WhoisService {
     const expiresAt = new Date(now.getTime() + 6 * 60 * 60 * 1000); // 6 hours
     const normalizedCity = data.city?.trim().toLowerCase() || 'unknown';
 
+    // Defensive: coerce coordinates to numbers if provided, otherwise drop invalid coords
+    const payload: any = { ...data };
+    // Debug: log incoming coordinates for diagnostics
+    try {
+      if (payload.coordinates) {
+        console.debug('whois.pingPresence received coordinates:', JSON.stringify(payload.coordinates));
+      } else {
+        console.debug('whois.pingPresence received no coordinates for userId:', userId);
+      }
+    } catch (e) {
+      // ignore logging errors
+    }
+    if (payload.coordinates) {
+      try {
+        const lat = Number((payload.coordinates as any).lat);
+        const lng = Number((payload.coordinates as any).lng);
+        if (!Number.isNaN(lat) && !Number.isNaN(lng)) {
+          payload.coordinates = { lat, lng };
+        } else {
+          delete payload.coordinates;
+        }
+      } catch (e) {
+        delete payload.coordinates;
+      }
+    }
+
     return this.whoisModel.findOneAndUpdate(
       { userId },
-      { ...data, city: normalizedCity, expiresAt, visible: true },
+      { ...payload, city: normalizedCity, expiresAt, visible: true },
       { upsert: true, new: true },
     );
   }
@@ -53,17 +79,40 @@ export class WhoisService {
     // Fetch all visible presences for the city
     const visibleUsers = await this.whoisModel.find(query).lean();
 
+    // Defensive normalization: coerce any stored coordinates (strings) to numbers so distance can be computed
+    visibleUsers.forEach((vu: any) => {
+      if (vu && vu.coordinates) {
+        try {
+          const lat = Number((vu.coordinates as any).lat)
+          const lng = Number((vu.coordinates as any).lng)
+          if (!Number.isNaN(lat) && !Number.isNaN(lng)) {
+            vu.coordinates = { lat, lng }
+          } else {
+            delete vu.coordinates
+          }
+        } catch (e) {
+          delete vu.coordinates
+        }
+      }
+    })
+
     // Collect all userIds that are present and valid
-    const userIds = visibleUsers
-      .map((u) => u.userId)
-      .filter((id) => id && typeof id === 'object' && id.toString);
+      // Normalize userIds to strings so we can query the users collection reliably.
+      const userIds = visibleUsers
+        .map((u) => {
+          if (!u.userId) return null;
+          if (typeof u.userId === 'string') return u.userId;
+          if (typeof u.userId === 'object' && u.userId.toString) return u.userId.toString();
+          return null;
+        })
+        .filter((id) => !!id);
 
     // Batch fetch all user details
     const userMap = new Map();
     if (userIds.length > 0) {
       const users = await this.userModel
-        .find({ _id: { $in: userIds } })
-        .select('_id username profileVisible')
+          .find({ _id: { $in: userIds } })
+          .select('_id username profileVisible avatar')
         .lean();
       users.forEach((u) => userMap.set(u._id.toString(), u));
     }
@@ -83,7 +132,7 @@ export class WhoisService {
     const originLon = lon ? parseFloat(lon) : null
 
     // Build the response in one pass
-    return visibleUsers.map((user) => {
+    const results = visibleUsers.map((user) => {
       const base = {
         _id: user._id,
         city: user.city,
@@ -141,6 +190,17 @@ export class WhoisService {
         username: foundUser.username || 'User',
       };
     });
+
+    // Debug: log a small sample so we can inspect coordinates/distance when troubleshooting
+    try {
+      // Limit output length to avoid noisy logs
+      const sample = results.slice(0, 6).map(r => ({ _id: r._id?.toString?.() || r._id, userId: r.userId, distanceKm: r.distanceKm, coordinates: r.coordinates }));
+      console.debug('whois.getNearby sample:', JSON.stringify(sample));
+    } catch (e) {
+      // ignore logging errors
+    }
+
+    return results;
   }
   
 

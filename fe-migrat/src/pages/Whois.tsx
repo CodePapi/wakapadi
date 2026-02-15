@@ -96,7 +96,20 @@ export default function Whois() {
           console.error('Failed to load seed whois:', err)
         }
       }
-      const latQs = currentCoords ? `&lat=${encodeURIComponent(String(currentCoords.lat))}&lon=${encodeURIComponent(String(currentCoords.lng))}` : ''
+      // prefer live coords, fall back to persisted device coords if available
+      let effectiveCoords = currentCoords
+      if (!effectiveCoords) {
+        try {
+          const raw = safeStorage.getItem('last_device_coords')
+          if (raw) {
+            const parsed = JSON.parse(raw)
+            if (parsed && typeof parsed.lat !== 'undefined' && typeof parsed.lng !== 'undefined') {
+              effectiveCoords = { lat: Number(parsed.lat), lng: Number(parsed.lng) }
+            }
+          }
+        } catch (e) {}
+      }
+      const latQs = effectiveCoords ? `&lat=${encodeURIComponent(String(effectiveCoords.lat))}&lon=${encodeURIComponent(String(effectiveCoords.lng))}` : ''
       const qs = `?city=${encodeURIComponent(targetCity)}&page=${pageNum}&limit=15${userId ? `&userId=${encodeURIComponent(userId)}` : ''}${latQs}`
       const res: any = await api.get(`/whois/nearby${qs}`, { cache: 'no-store' })
       let data = Array.isArray(res?.data) ? res.data : []
@@ -190,7 +203,24 @@ export default function Whois() {
       // only ping if we have an auth token
       const token = safeStorage.getItem('token')
       if (!token) return
-      await api.post('/whois/ping', { city: targetCity })
+      const payload: any = { city: targetCity }
+      // prefer live coords, fall back to persisted device coords
+      let coordsToSend = currentCoords
+      if (!coordsToSend) {
+        try {
+          const raw = safeStorage.getItem('last_device_coords')
+          if (raw) {
+            const parsed = JSON.parse(raw)
+            if (parsed && typeof parsed.lat !== 'undefined' && typeof parsed.lng !== 'undefined') {
+              coordsToSend = { lat: Number(parsed.lat), lng: Number(parsed.lng) }
+            }
+          }
+        } catch (e) {}
+      }
+      if (coordsToSend) payload.coordinates = { lat: Number(coordsToSend.lat), lng: Number(coordsToSend.lng) }
+      // debug outgoing ping payload
+      try { console.debug('whois.ping outgoing payload:', payload) } catch (e) {}
+      await api.post('/whois/ping', payload)
     } catch (err) {
       console.error('Ping presence failed:', err)
     }

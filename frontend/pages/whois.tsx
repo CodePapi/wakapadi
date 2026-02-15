@@ -99,8 +99,27 @@ export default function WhoIsNearby() {
       
       try {
         setError(null);
+        const params: any = { city: targetCity, userId: currentUserId, page: pageNum, limit: 15 };
+        // prefer live coords, fall back to persisted device coords
+        let effectiveCoords = currentCoords;
+        if (!effectiveCoords) {
+          try {
+            const raw = safeStorage.getItem('last_device_coords');
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              if (parsed && typeof parsed.lat !== 'undefined' && typeof parsed.lng !== 'undefined') {
+                effectiveCoords = { lat: Number(parsed.lat), lng: Number(parsed.lng) };
+              }
+            }
+          } catch (e) {}
+        }
+        if (effectiveCoords) {
+          params.lat = Number(effectiveCoords.lat);
+          params.lon = Number(effectiveCoords.lng);
+        }
+        try { console.debug('whois.fetchNearby params:', params) } catch (e) {}
         const res = await api.get('/whois/nearby', {
-          params: { city: targetCity, userId: currentUserId, page: pageNum, limit: 15 },
+          params,
           headers: { Authorization: `Bearer ${safeStorage.getItem('token') || ''}` },
         });
 
@@ -138,7 +157,23 @@ export default function WhoIsNearby() {
 
   const pingPresence = async (targetCity: string) => {
     try {
-      await api.post('/whois/ping', { city: targetCity });
+      const payload: any = { city: targetCity };
+      // prefer live coords, fall back to persisted device coords
+      let coordsToSend = currentCoords;
+      if (!coordsToSend) {
+        try {
+          const raw = safeStorage.getItem('last_device_coords');
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed && typeof parsed.lat !== 'undefined' && typeof parsed.lng !== 'undefined') {
+              coordsToSend = { lat: Number(parsed.lat), lng: Number(parsed.lng) };
+            }
+          }
+        } catch (e) {}
+      }
+      if (coordsToSend) payload.coordinates = { lat: Number(coordsToSend.lat), lng: Number(coordsToSend.lng) };
+      try { console.debug('whois.ping outgoing payload:', payload) } catch (e) {}
+      await api.post('/whois/ping', payload);
       // We don't fetchNearby here anymore because handleFindNearby calls it once anyway
     } catch (err) {
       console.error('Ping presence failed:', err);

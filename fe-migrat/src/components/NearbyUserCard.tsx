@@ -59,7 +59,46 @@ export default function NearbyUserCard({ user }: { user: User }) {
     return '—'
   }
 
-  const distanceStr = formatDistance(user)
+  // Fallback: compute distance from a stored device location if available
+  const computeFallbackDistance = (u: User) => {
+    try {
+      const raw = safeStorage.getItem('last_device_coords')
+      if (!raw) return null
+      const parsed = JSON.parse(raw)
+      if (!parsed || typeof parsed.lat === 'undefined' || typeof parsed.lng === 'undefined') return null
+      const originLat = Number(parsed.lat)
+      const originLng = Number(parsed.lng)
+      const dest = (u as any).coordinates || (u as any).coords || null
+      if (!dest || typeof dest.lat === 'undefined' || typeof dest.lng === 'undefined') return null
+      const destLat = Number(dest.lat)
+      const destLng = Number(dest.lng)
+      if (Number.isNaN(originLat) || Number.isNaN(originLng) || Number.isNaN(destLat) || Number.isNaN(destLng)) return null
+      const toRadians = (value: number) => (value * Math.PI) / 180
+      const haversineKm = (lat1: number, lng1: number, lat2: number, lng2: number) => {
+        const earthRadiusKm = 6371
+        const dLat = toRadians(lat2 - lat1)
+        const dLng = toRadians(lng2 - lng1)
+        const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) * Math.sin(dLng / 2) ** 2
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+        return earthRadiusKm * c
+      }
+      const km = haversineKm(originLat, originLng, destLat, destLng)
+      if (km < 1) {
+        const m = Math.round(km * 1000)
+        const approx = Math.round(m / 25) * 25
+        return `≈ ${approx} m`
+      }
+      return `≈ ${km.toFixed(1)} km`
+    } catch (e) {
+      return null
+    }
+  }
+
+  let distanceStr = formatDistance(user)
+  if (distanceStr === '—') {
+    const fallback = computeFallbackDistance(user)
+    if (fallback) distanceStr = fallback
+  }
 
   return (
     <article className={`flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm transition-transform duration-200 ${highlight ? 'scale-101 ring-2 ring-green-300/60' : ''}`}>
