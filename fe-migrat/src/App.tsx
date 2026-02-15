@@ -63,8 +63,8 @@ function Header() {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => Boolean(localStorage.getItem('token')))
   const navigate = useNavigate()
   const sizeClass = 'text-sm'
-  const activeClass = `${sizeClass} text-blue-600 font-semibold border-b-2 border-blue-600 pb-1`
-  const inactiveClass = `${sizeClass} text-gray-700 hover:text-gray-900 hover:border-b-2 hover:border-gray-300 pb-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 rounded`
+  const activeClass = `${sizeClass} text-blue-600 font-semibold border-b-2 border-blue-600 pb-1 min-w-0`
+  const inactiveClass = `${sizeClass} text-gray-700 hover:text-gray-900 hover:border-b-2 hover:border-gray-300 pb-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 rounded min-w-0`
 
   const handleLogin = () => {
     try {
@@ -82,21 +82,22 @@ function Header() {
 
   return (
     <header className="sticky top-0 z-50 bg-white/85 backdrop-blur-sm dark:bg-gray-900/85 border-b">
-      <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-        <Link to="/" aria-label="Wakapadi home" className="flex items-center gap-3">
+      <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-4">
+        <Link to="/" aria-label="Wakapadi home" className="flex items-center gap-3 flex-shrink-0">
           <img src="/logo1.svg" alt="Wakapadi" className="h-8" />
         </Link>
 
-        <div className="flex items-center gap-3">
-          <div className="hidden md:flex gap-3 items-center">
-            <nav aria-label="Main navigation" className="flex gap-4 items-center">
-              <NavTexts />
-            </nav>
+        <nav aria-label="Main navigation" className="hidden md:flex flex-1 flex-wrap items-center justify-center gap-4 min-w-0">
+          <NavTexts />
+        </nav>
+
+        <div className="flex items-center gap-3 flex-shrink-0">
+          <div className="hidden md:flex items-center gap-3">
             <div className="flex items-center gap-3">
               {isLoggedIn ? (
                 <>
-                  <NavLink to="/profile" className={({ isActive }) => (isActive ? activeClass : inactiveClass)}>{t('profile')}</NavLink>
-                  <NavLink to="/chat" className={({ isActive }) => (isActive ? activeClass : inactiveClass)}>{t('chat')}</NavLink>
+                  <NavLink to="/profile" className={({ isActive }) => (isActive ? activeClass : inactiveClass)}><span className="block truncate max-w-[8rem] md:max-w-[10rem] lg:max-w-none">{t('profile')}</span></NavLink>
+                  <NavLink to="/chat" className={({ isActive }) => (isActive ? activeClass : inactiveClass)}><span className="block truncate max-w-[8rem] md:max-w-[10rem] lg:max-w-none">{t('chat')}</span></NavLink>
                   <button onClick={() => performLogout()} type="button" className="text-sm text-red-600 ml-2">{t('logout') || 'Logout'}</button>
                 </>
               ) : (
@@ -172,12 +173,14 @@ function NavTexts({ mobile, onNavigate }: { mobile?: boolean; onNavigate?: () =>
     try { if (mobile && onNavigate) onNavigate() } catch (e) {}
   }
 
+  const spanClass = mobile ? 'block truncate' : 'block truncate max-w-[10rem] md:max-w-[12rem] lg:max-w-none'
+
   return (
     <>
-      <NavLink to="/whois" onClick={handleClick} className={({ isActive }) => (isActive ? activeClass : inactiveClass)}>{t('whoisNearby')}</NavLink>
-      <NavLink to="/tours" onClick={handleClick} className={({ isActive }) => (isActive ? activeClass : inactiveClass)}>{t('toursBrowseTitle')}</NavLink>
-      <NavLink to="/saved" onClick={handleClick} className={({ isActive }) => (isActive ? activeClass : inactiveClass)}>{t('savedLabel') || 'Saved'}</NavLink>
-      <NavLink to="/contact-us" onClick={handleClick} className={({ isActive }) => (isActive ? activeClass : inactiveClass)}>{t('contactUs')}</NavLink>
+      <NavLink to="/whois" onClick={handleClick} className={({ isActive }) => (isActive ? activeClass : inactiveClass)}><span className={spanClass}>{t('whoisNearby')}</span></NavLink>
+      <NavLink to="/tours" onClick={handleClick} className={({ isActive }) => (isActive ? activeClass : inactiveClass)}><span className={spanClass}>{t('toursBrowseTitle')}</span></NavLink>
+      <NavLink to="/saved" onClick={handleClick} className={({ isActive }) => (isActive ? activeClass : inactiveClass)}><span className={spanClass}>{t('savedLabel') || 'Saved'}</span></NavLink>
+      <NavLink to="/contact-us" onClick={handleClick} className={({ isActive }) => (isActive ? activeClass : inactiveClass)}><span className={spanClass}>{t('contactUs')}</span></NavLink>
     </>
   )
 }
