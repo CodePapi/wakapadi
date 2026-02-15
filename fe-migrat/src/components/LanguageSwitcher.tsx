@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from '../lib/i18n'
 
 const LOCALES = [
@@ -9,24 +10,78 @@ const LOCALES = [
 
 export default function LanguageSwitcher() {
   const { lang, setLang } = useTranslation()
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement | null>(null)
+  const buttonRef = useRef<HTMLButtonElement | null>(null)
+  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties | undefined>(undefined)
 
-  const onChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const next = e.target.value
+  useEffect(() => {
+    function onDoc(e: MouseEvent) {
+      if (!ref.current) return
+      if (!ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('click', onDoc)
+    return () => document.removeEventListener('click', onDoc)
+  }, [])
+
+  useEffect(() => {
+    if (!open || !buttonRef.current) return
+    const rect = buttonRef.current.getBoundingClientRect()
+    const preferredWidth = 160
+    const spaceRight = window.innerWidth - rect.left
+    const left = rect.left + preferredWidth > window.innerWidth ? Math.max(8, window.innerWidth - preferredWidth - 8) : rect.left
+    const top = rect.bottom + 8
+    setDropdownStyle({ position: 'fixed', left: Math.round(left), top: Math.round(top), width: preferredWidth, zIndex: 99999 })
+  }, [open])
+
+  const current = LOCALES.find((l) => l.code === lang) || LOCALES[0]
+
+  function choose(code: string) {
     try {
-      setLang(next)
+      setLang(code)
     } catch (err) {
-      // fallback to English if something goes wrong
       setLang('en')
     }
+    setOpen(false)
   }
 
   return (
-    <div className="flex items-center">
-      <select value={lang} onChange={onChange} className="px-2 py-1 border rounded text-sm">
-        {LOCALES.map((l) => (
-          <option key={l.code} value={l.code}>{l.flag} {l.label}</option>
-        ))}
-      </select>
+    <div ref={ref} className="relative">
+      <button
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen((s) => !s)}
+        ref={buttonRef}
+        className="flex items-center gap-2 px-2 py-1 rounded-full border bg-white/80 hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 text-sm"
+      >
+        <span className="text-lg leading-none">{current.flag}</span>
+        <span className="hidden sm:inline">{current.code.toUpperCase()}</span>
+        <svg width="14" height="14" viewBox="0 0 20 20" className="ml-1 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none">
+          <path d="M6 8l4 4 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+
+      {open && (
+        <ul
+          role="listbox"
+          aria-label="Select language"
+          style={dropdownStyle}
+          className="bg-white border rounded shadow-lg overflow-hidden"
+        >
+          {LOCALES.map((l) => (
+            <li
+              key={l.code}
+              role="option"
+              aria-selected={l.code === current.code}
+              onClick={() => choose(l.code)}
+              className={`flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-gray-50 ${l.code === current.code ? 'bg-gray-100' : ''}`}
+            >
+              <span className="text-lg leading-none">{l.flag}</span>
+              <span className="text-sm">{l.label}</span>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   )
 }
