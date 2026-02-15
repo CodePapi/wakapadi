@@ -119,11 +119,24 @@ export default function CitySearch({ value, onChange, options, placeholder, aria
       e.preventDefault();
       return;
     }
-    if (e.key === 'ArrowDown') { setFocusedIndex((i) => Math.min(i + 1, filtered.length - 1)); e.preventDefault(); }
-    else if (e.key === 'ArrowUp') { setFocusedIndex((i) => Math.max(i - 1, 0)); e.preventDefault(); }
-    else if (e.key === 'Enter') {
-      if (focusedIndex >= 0 && filtered[focusedIndex]) { commit(filtered[focusedIndex]); e.preventDefault(); }
-    } else if (e.key === 'Escape') { setOpen(false); setFocusedIndex(-1); }
+    if (e.key === 'ArrowDown') {
+      setFocusedIndex((i) => Math.min(i + 1, filtered.length - 1));
+      e.preventDefault();
+    } else if (e.key === 'ArrowUp') {
+      setFocusedIndex((i) => Math.max(i - 1, 0));
+      e.preventDefault();
+    } else if (e.key === 'Enter') {
+      if (focusedIndex >= 0 && filtered[focusedIndex]) {
+        commit(filtered[focusedIndex]);
+        e.preventDefault();
+      } else if (value.trim()) {
+        commit(value.trim()); // Allow free text commit
+        e.preventDefault();
+      }
+    } else if (e.key === 'Escape') {
+      setOpen(false);
+      setFocusedIndex(-1);
+    }
   };
 
   useEffect(() => {

@@ -64,22 +64,7 @@ export default function Tours() {
     return () => clearTimeout(t)
   }, [fetchTours])
 
-  // If we landed here with a query coming from Home, and the locations list
-  // later loads, auto-select a matching title-cased location so the UI shows
-  // the canonical location value (and filters consistently).
-  useEffect(() => {
-    if (!q) return
-    if (!locationsList || locationsList.length === 0) return
-    const key = q.trim().toLowerCase()
-    if (!key) return
-    const exact = locationsList.find((l) => l.toLowerCase() === key)
-    const prefix = !exact && locationsList.find((l) => l.toLowerCase().startsWith(key))
-    const pick = exact || prefix
-    if (pick && pick !== q) {
-      setQ(pick)
-      setPage(1)
-    }
-  }, [locationsList, q, setQ, setPage])
+  // Removed effect that forced selection from dropdown to allow free text search
 
   // keep filters/page in the URL so they're persistent/shareable
   useEffect(() => {
