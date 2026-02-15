@@ -7,6 +7,8 @@
 	color-scheme: light dark;
 	color: rgba(255, 255, 255, 0.87);
 	background-color: #242424;
+	/* chat height variable (responsive override below) */
+	--chat-height: 60vh;
 	font-synthesis: none;
 	text-rendering: optimizeLegibility;
 	-webkit-font-smoothing: antialiased;
@@ -43,6 +45,41 @@ body {
 	:root { color: #213547; background-color: #ffffff }
 	a:hover { color: #747bff }
 	button { background-color: #f9f9f9 }
+}
+
+/* larger screens: increase chat area height */
+@media (min-width: 640px) {
+	:root { --chat-height: 70vh }
+}
+
+/* Chat container styling: subtle border, radius and shadow so input stays visually anchored */
+.chat-wrapper {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	height: var(--chat-height);
+	border-radius: 10px;
+	overflow: hidden;
+	border: 1px solid rgba(0,0,0,0.06);
+	background-color: rgba(255,255,255,0.02);
+	box-shadow: 0 6px 18px rgba(2,6,23,0.04);
+}
+
+.chat-messages {
+	flex: 1 1 auto;
+	overflow-y: auto;
+	padding: 0.5rem;
+}
+
+/* Hide visible scroll indicator for chat messages while keeping scroll functionality */
+.chat-messages {
+	-ms-overflow-style: none; /* IE and Edge */
+	scrollbar-width: none; /* Firefox */
+}
+.chat-messages::-webkit-scrollbar { display: none; } /* Chrome, Safari, Opera */
+
+@media (prefers-color-scheme: light) {
+	.chat-wrapper { background-color: #ffffff; border: 1px solid rgba(15,23,42,0.06); box-shadow: 0 6px 18px rgba(2,6,23,0.04) }
 }
 
 /* Header / nav tweaks for clearer active/hover states and mobile touch targets */

@@ -304,8 +304,8 @@ export default function ChatConversation() {
           <button onClick={() => navigate(-1)} className="text-sm text-blue-600">Back</button>
         </div>
 
-        <div className="mt-4 flex flex-col gap-2 h-[60vh] sm:h-[70vh]">
-          <div ref={messagesContainerRef} className="flex-1 flex flex-col overflow-y-auto p-2 space-y-2">
+        <div className="mt-4 chat-wrapper">
+          <div ref={messagesContainerRef} className="chat-messages space-y-2">
           {messages.map((m) => (
             <ChatBubble
               key={m._id || m.tempId}
@@ -370,9 +370,9 @@ export default function ChatConversation() {
 
         <div className="text-sm text-gray-500">{otherTyping ? 'Typing…' : ''}</div>
 
-        <div className="mt-4 flex gap-2 items-end">
-          <textarea ref={inputRef} value={text} onChange={(e) => handleChange(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }} placeholder="Write a message" rows={2} className="chat-textarea flex-1 px-3 py-2 border rounded resize-none" />
-          <button onClick={send} className="px-4 py-2 bg-blue-600 text-gray-700 dark:text-gray-100 rounded hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300">Send</button>
+        <div className="mt-4 flex gap-2 items-stretch">
+          <textarea ref={inputRef} value={text} onChange={(e) => handleChange(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }} placeholder="Write a message" rows={2} className="chat-textarea flex-1 h-full px-3 py-2 border rounded resize-none" />
+          <button onClick={send} className="h-full px-4 bg-blue-50 dark:bg-blue-600 text-black dark:text-gray-100 rounded border border-blue-600 hover:bg-blue-100 dark:hover:bg-blue-700 hover:border-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 relative z-20 shadow-sm hover:shadow-md transition-colors duration-150">Send</button>
         </div>
       </div>
       </div>
