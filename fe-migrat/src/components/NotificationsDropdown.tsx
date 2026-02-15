@@ -155,7 +155,7 @@ export default function NotificationsDropdown({ triggerClassName, iconClassName 
     return (
       <>
         <div className="relative">
-            <button id="notifications-button" ref={buttonRef} aria-haspopup="true" aria-expanded={open} aria-controls="notifications-pop" onClick={() => setOpen((v) => !v)} className={triggerClassName ?? 'p-2 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 relative'}>
+            <button id="notifications-button" ref={buttonRef} aria-haspopup="true" aria-expanded={open} aria-controls="notifications-pop" onClick={() => setOpen((v) => !v)} className={triggerClassName ?? 'p-2 rounded-full hover:bg-gray-100  relative' } style={{background:"inherit"}}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className={iconClassName ?? 'text-gray-700 dark:text-gray-200'}><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0 1 18 14.158V11c0-3.07-1.64-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.64 5.36 6 7.92 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 1 1-6 0v-1m6 0H9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
               {notifications.length > 0 && (
                 <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-medium leading-none text-white bg-red-600 rounded-full">{notifications.reduce((s, n) => s + (n.count || 1), 0)}</span>

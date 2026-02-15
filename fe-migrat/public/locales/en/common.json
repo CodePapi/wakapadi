@@ -1,5 +1,5 @@
 {
-  "homeTitle": "Discover Free Walking Tours",
+  "homeTitle": "Meet people around you. Explore together. One city at a time",
   "homeSubtitle": "Travel smarter, meet new people, and explore like a local",
   "searchPlaceholder": "Search by City",
   "homeSearchPlaceholder": "Search tours or places",
@@ -65,8 +65,7 @@
   "noUsersFound": "No users found nearby.",
   "loginPrompt": "Log in to see people nearby.",
   "signIn": "Sign in",
-  "homePageTitle": "Explore Free Walking Tours Near You",
-  "homePageDescription": "Discover guided walking tours in your city or while you travel. Filter by location, explore highlights, and connect with local tour assistants.",
+  "homePageDescription": "Discover free walking tours wherever you go, and connect with locals while exploring.",
   "paginationNavigation": "Pagination navigation",
   "noToursFound": "No tours found for your search.",
   "clearSearch": "Clear search",

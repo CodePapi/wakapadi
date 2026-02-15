@@ -1,18 +1,15 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useEffect, useRef, useState, useCallback } from 'react'
-import VisibilityToggle from '../components/VisibilityToggle'
-import NearbyUserCard from '../components/NearbyUserCard'
 import { useTranslation } from '../lib/i18n'
 import { api } from '../lib/api'
+
 
 export default function Home() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
   const debounceRef = useRef<number | null>(null)
-  const [nearby, setNearby] = useState<any[]>([])
-  const [nearbyLoading, setNearbyLoading] = useState(false)
-  const [nearbyError, setNearbyError] = useState<string | null>(null)
+
 
   // Debounced search -> navigate to /tours?q=...
   const handleSearchChange = useCallback((value: string) => {
@@ -95,25 +92,7 @@ export default function Home() {
     navigator.geolocation.getCurrentPosition(onSuccess, onError, { maximumAge: 1000 * 60 * 60 * 24 })
   }, [])
 
-  useEffect(() => {
-    let mounted = true
-    const load = async () => {
-      setNearbyLoading(true)
-      setNearbyError(null)
-      try {
-          const res: any = await api.get('/whois/nearby?limit=3', { cache: 'no-store' })
-          const list = Array.isArray(res?.data) ? res.data : []
-          if (mounted) setNearby(list)
-        } catch (e) {
-          console.error('Failed to load nearby shortcuts', e)
-          if (mounted) setNearbyError(t('fetchError', { data: t('whoisNearby') || 'nearby users' }))
-        } finally {
-          if (mounted) setNearbyLoading(false)
-        }
-    }
-    load()
-    return () => { mounted = false }
-  }, [])
+
 
   const highlights = [
     { title: t('homeHighlightToursTitle'), body: t('homeHighlightToursBody') },
@@ -130,7 +109,7 @@ export default function Home() {
   return (
     <main aria-labelledby="home-heading" className="container mx-auto px-4 sm:px-6 lg:px-8">
       <section className="text-center max-w-3xl mx-auto py-12">
-        <h1 id="home-heading" className="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-gray-100">{t('homePageTitle') || t('homeTitle')}</h1>
+        <h1 id="home-heading" className="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-gray-100">{ t('homeTitle')}</h1>
         <p className="mt-4 text-gray-600 dark:text-gray-300">{t('homePageDescription') || t('homeSubtitle')}</p>
 
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -208,31 +187,6 @@ export default function Home() {
           </div>
           <div className="mx-auto">
             <img src="/hero-travel.png" alt="Travel" className="rounded-lg shadow-md max-w-full h-auto" />
-          </div>
-        </div>
-      </section>
-
-      <section className="py-8">
-        <div className="mx-auto max-w-3xl px-4">
-          <div className="mb-4 text-sm text-gray-600">{t('homeShortcuts')}</div>
-          <div className="grid gap-3">
-            <VisibilityToggle />
-
-            {nearbyLoading && <div className="text-sm text-gray-600">{t('loadingNearby') || 'Loading nearby travelers…'}</div>}
-
-            {!nearbyLoading && nearby.length > 0 && nearby.map((u) => (
-              <NearbyUserCard key={u.userId || u._id || u.id} user={u} />
-            ))}
-
-            {!nearbyLoading && nearby.length === 0 && (
-              <div className="text-sm text-gray-600">{t('homeNoTravelersMessage') || 'No travelers nearby right now — try exploring tours or come back later.'}</div>
-            )}
-
-            {nearbyError && <div className="text-sm text-red-600">{nearbyError}</div>}
-
-            <div className="pt-2">
-              <Link to="/whois" className="text-sm text-blue-600 hover:underline">{t('homeViewMoreNearby') || 'View more travelers nearby'}</Link>
-            </div>
           </div>
         </div>
       </section>
