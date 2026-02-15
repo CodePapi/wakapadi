@@ -28,7 +28,6 @@ export default function LanguageSwitcher() {
     if (!open || !buttonRef.current) return
     const rect = buttonRef.current.getBoundingClientRect()
     const preferredWidth = 160
-    const spaceRight = window.innerWidth - rect.left
     const left = rect.left + preferredWidth > window.innerWidth ? Math.max(8, window.innerWidth - preferredWidth - 8) : rect.left
     const top = rect.bottom + 8
     setDropdownStyle({ position: 'fixed', left: Math.round(left), top: Math.round(top), width: preferredWidth, zIndex: 99999 })

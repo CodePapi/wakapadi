@@ -9,6 +9,7 @@ import SafetyNotice from './SafetyNotice';
 import { ensureAnonymousSession, setLogoutBlock } from '../lib/anonymousAuth';
 import { useTranslation } from '../lib/i18n';
 import { api } from '../lib/api';
+import { useRef } from 'react';
 
 export default function NavBar() {
   const { t } = useTranslation();
@@ -81,9 +82,33 @@ export default function NavBar() {
       }
     >
       {icon}
-      <span className="hidden sm:inline-block">{label}</span>
+      <span title={label} className="hidden sm:inline-block nav-label max-w-[10rem] truncate">{label}</span>
     </NavLink>
   );
+
+  const navRef = useRef<HTMLDivElement | null>(null)
+  const [compactNav, setCompactNav] = useState(false)
+
+  // labels used for dependency so effect runs when language changes
+  const navLabels = [
+    t('whoisNearby'),
+    t('toursBrowseTitle'),
+    t('savedLabel') || 'Saved',
+    t('contactUs'),
+  ]
+
+  useEffect(() => {
+    function checkOverflow() {
+      if (!navRef.current) return setCompactNav(false)
+      const labels = Array.from(navRef.current.querySelectorAll<HTMLElement>('.nav-label'))
+      const anyOverflow = labels.some((el) => el.scrollWidth > el.clientWidth)
+      setCompactNav(anyOverflow)
+    }
+
+    checkOverflow()
+    window.addEventListener('resize', checkOverflow)
+    return () => window.removeEventListener('resize', checkOverflow)
+  }, [navLabels.join('|')])
 
   return (
     <header
@@ -104,7 +129,8 @@ export default function NavBar() {
 
         <nav
           aria-label="Primary"
-          className="hidden md:flex flex-1 justify-center items-center"
+          ref={navRef}
+          className={`hidden md:flex flex-1 justify-center items-center ${compactNav ? 'text-sm' : ''}`}
         >
           <div className="flex items-center gap-2 bg-transparent">
             <NavItem
@@ -132,7 +158,11 @@ export default function NavBar() {
 
         <div className="flex items-center gap-3 ml-auto">
           <div className="hidden sm:flex items-center gap-2">
-            <button
+          
+
+            {isLoggedIn ? (
+                <>
+                  <button
               aria-label="Open chat"
               onClick={async () => {
                 if (!localStorage.getItem('token')) {
@@ -147,8 +177,6 @@ export default function NavBar() {
             >
               <SvgChat />
             </button>
-
-            {isLoggedIn ? (
               <div className="flex items-center gap-2">
                 <Link
                   to="/profile"
@@ -157,6 +185,7 @@ export default function NavBar() {
                 >
                   <SvgAvatar />
                 </Link>
+                <NotificationsDropdown />
                 <button
                   onClick={() => performLogout()}
                   aria-label={t('logout') || 'Logout'}
@@ -165,11 +194,13 @@ export default function NavBar() {
                   {t('logout') || 'Logout'}
                 </button>
               </div>
+                </>
             ) : (
               <button onClick={handleLogin} className="text-sm text-blue-600">
                 {t('login')}
               </button>
             )}
+
             <VisibilityIndicator />
             <LanguageSwitcher />
             <LocaleStatus />
