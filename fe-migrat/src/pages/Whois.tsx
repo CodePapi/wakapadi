@@ -6,6 +6,7 @@ import { safeStorage } from '../lib/storage'
 import { io } from 'socket.io-client'
 import { useTranslation } from '../lib/i18n'
 import { ensureAnonymousSession } from '../lib/anonymousAuth'
+import { getAnonymousHandleForId, anonymousLabel } from '../lib/anonymousNames'
 
 const toRadians = (value: number) => (value * Math.PI) / 180
 const haversineKm = (lat1: number, lng1: number, lat2: number, lng2: number) => {
@@ -639,11 +640,11 @@ export default function Whois() {
                     <div key={id} className="flex items-center justify-between p-2 border rounded">
                       <div className="flex items-center gap-2">
                         {hiddenProfiles[id]?.avatar ? (
-                          <img src={hiddenProfiles[id].avatar} alt={hiddenProfiles[id].username} className="w-8 h-8 rounded-full" />
+                          <img src={hiddenProfiles[id].avatar} alt={(hiddenProfiles[id]?.profileVisible === false ? anonymousLabel(undefined, id) : hiddenProfiles[id]?.username) || id} className="w-8 h-8 rounded-full" />
                         ) : (
-                          <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-xs">{(hiddenProfiles[id]?.username || id).charAt(0)}</div>
+                          <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-xs">{((hiddenProfiles[id]?.profileVisible === false ? anonymousLabel(undefined, id) : hiddenProfiles[id]?.username) || id).charAt(0)}</div>
                         )}
-                        <div className="text-sm truncate">{hiddenProfiles[id]?.username || id}</div>
+                        <div className="text-sm truncate">{hiddenProfiles[id]?.profileVisible === false ? anonymousLabel(undefined, id) : (hiddenProfiles[id]?.username || id)}</div>
                       </div>
                       <div className="flex gap-2">
                         <button onClick={() => { unhideUser(id) }} className="px-2 py-1 bg-green-600 text-white rounded text-xs">Unhide</button>

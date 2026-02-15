@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { api } from '../lib/api'
 import { safeStorage } from '../lib/storage'
+import { anonymousLabel, getAnonymousHandleForId } from '../lib/anonymousNames'
+import { useTranslation } from '../lib/i18n'
 import ProfileModal from '../components/ProfileModal'
 
 export default function ChatInbox() {
@@ -63,7 +65,9 @@ export default function ChatInbox() {
             {convos.length === 0 && <div className="text-gray-600">No conversations yet — start by messaging someone from #Whois Nearby.</div>}
             {convos.map((c) => {
               const otherId = resolveOtherId(c)
-              const username = c.otherUser?.username || c.otherUser?.name || c.otherName || 'Traveler'
+              const { t } = useTranslation()
+              const anonPrefix = (t('anonymousTraveler') || 'Anonymous')
+              const username = (c.otherUser?.profileVisible === false ) ? `${anonPrefix} ${getAnonymousHandleForId(otherId)}` : (c.otherUser?.username || c.otherUser?.name || c.otherName || 'Traveler')
               const last = c.lastMessage || c.last || null
               const unread = last && !last.read && last.fromUserId !== me
               const avatar = c.otherUser?.avatarUrl || c.avatarUrl || (otherId ? `https://i.pravatar.cc/48?u=${otherId}` : '')

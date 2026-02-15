@@ -219,6 +219,7 @@ export class WhoisMessageService implements OnModuleInit {
             username: '$otherUser.username',
             avatarUrl: '$otherUser.avatarUrl',
             email: '$otherUser.email', // add more fields as needed
+            profileVisible: '$otherUser.profileVisible',
           }
         }
       },
@@ -309,11 +310,13 @@ export class WhoisMessageService implements OnModuleInit {
                 _id: '$toUser._id',
                 username: '$toUser.username',
                 avatar: '$toUser.avatar', // Assuming avatar exists in User schema
+                profileVisible: '$toUser.profileVisible',
               },
               {
                 _id: '$fromUser._id', // If toUserId is current user
                 username: '$fromUser.username',
                 avatar: '$fromUser.avatar', // Assuming avatar exists in User schema
+                profileVisible: '$fromUser.profileVisible',
               },
             ],
           },

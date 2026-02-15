@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
+import { anonymousLabel, getAnonymousHandleForId } from '../lib/anonymousNames'
+import { useTranslation } from '../lib/i18n'
 import { createPortal } from 'react-dom'
 import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
@@ -8,6 +10,7 @@ import ChatBubble from '../components/ChatBubble'
 import ProfileModal from '../components/ProfileModal'
 
 export default function ChatConversation() {
+  const { t } = useTranslation()
   const { userId } = useParams()
   const navigate = useNavigate()
   const [messages, setMessages] = useState<any[]>([])
@@ -360,11 +363,11 @@ export default function ChatConversation() {
         <div className="mt-4 chat-wrapper">
           <div className="chat-header px-3 py-2 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-zinc-700 flex items-center justify-center text-lg font-semibold">{(otherUserMeta?.username||otherUserMeta?.name||'T').charAt(0).toUpperCase()}</div>
-              <div>
-                <div className="font-semibold text-lg">{otherUserMeta?.username || otherUserMeta?.name || 'Chat'}</div>
-                <div className="text-xs text-gray-500">{otherTyping ? 'Typing…' : otherUserMeta?.status || ''}</div>
-              </div>
+              <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-zinc-700 flex items-center justify-center text-lg font-semibold">{((otherUserMeta?.profileVisible === false ? anonymousLabel(undefined, userId || otherUserMeta?.id || otherUserMeta?._id || otherUserMeta?.userId) : (otherUserMeta?.username||otherUserMeta?.name||'T'))).charAt(0).toUpperCase()}</div>
+                  <div>
+                    <div className="font-semibold text-lg">{otherUserMeta?.profileVisible === false ? anonymousLabel(t('anonymousTraveler') || 'Anonymous', (userId || otherUserMeta?.id || otherUserMeta?._id || otherUserMeta?.userId)) : (otherUserMeta?.username || otherUserMeta?.name || 'Chat')}</div>
+                    <div className="text-xs text-gray-500">{otherTyping ? 'Typing…' : otherUserMeta?.status || ''}</div>
+                  </div>
             </div>
             <div className="flex items-center gap-2">
               <button onClick={() => handleShowProfile(userId || otherUserMeta?.id || otherUserMeta?._id || otherUserMeta?.userId)} aria-label="Conversation info" title="Info" className="p-2 rounded hover:bg-gray-100 dark:hover:bg-zinc-700"><svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 9v2m0 4h.01M21 12A9 9 0 1 1 3 12a9 9 0 0 1 18 0z" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
@@ -390,13 +393,13 @@ export default function ChatConversation() {
                   }
                   const next = messages[i + 1]
                   const showAvatar = !m.fromSelf && (!next || next.fromUserId !== m.fromUserId)
-                  const avatarLetter = (m.fromUserName || otherUserMeta?.username || otherUserMeta?.name || 'T').charAt(0).toUpperCase()
+                    const avatarLetter = ((otherUserMeta?.profileVisible === false && !m.fromSelf) ? anonymousLabel(undefined, m.fromUserId || userId).charAt(0) : (m.fromUserName || otherUserMeta?.username || otherUserMeta?.name || 'T')).charAt(0).toUpperCase()
                   nodes.push(
                       <ChatBubble
                         key={m._id || m.tempId}
                         message={m.message}
                         fromSelf={!!m.fromSelf}
-                        username={m.fromUserName || otherUserMeta?.username || otherUserMeta?.name}
+                        username={(otherUserMeta?.profileVisible === false && !m.fromSelf) ? anonymousLabel(t('anonymousTraveler') || 'Anonymous', m.fromUserId || userId) : (m.fromUserName || otherUserMeta?.username || otherUserMeta?.name)}
                         avatarLetter={avatarLetter}
                         showAvatar={showAvatar}
                         createdAt={m.createdAt}

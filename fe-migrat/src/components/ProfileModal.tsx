@@ -1,4 +1,6 @@
 import { useEffect, useRef } from 'react'
+import { anonymousLabel } from '../lib/anonymousNames'
+import { useTranslation } from '../lib/i18n'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
 
@@ -60,15 +62,16 @@ export default function ProfileModal({ open, onClose, profile }: any) {
   }
 
   const userid = profile?._id || profile?.userId
+  const { t } = useTranslation()
 
   return (
     <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40" onClick={handleBackdrop} role="dialog" aria-modal="true">
       <div ref={dialogRef} className="bg-white dark:bg-zinc-900 rounded-t-xl md:rounded-lg shadow-xl w-full md:max-w-md p-6">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
-            <img src={profile?.avatar || `https://i.pravatar.cc/80?u=${userid||profile?.username||'anon'}`} alt={`${profile?.username || 'Traveler'} avatar`} className="w-16 h-16 rounded-full object-cover" />
+            <img src={profile?.avatar || `https://i.pravatar.cc/80?u=${userid||profile?.username||'anon'}`} alt={`${profile?.profileVisible === false ? anonymousLabel(undefined, userid) : (profile?.username || 'Traveler')} avatar`} className="w-16 h-16 rounded-full object-cover" />
             <div>
-              <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">{profile?.username || profile?.name || 'Traveler'}</div>
+              <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">{profile?.profileVisible === false ? anonymousLabel(t('anonymousTraveler') || 'Anonymous', userid) : (profile?.username || profile?.name || 'Traveler')}</div>
               {profile?.bio && <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">{profile.bio}</div>}
             </div>
           </div>

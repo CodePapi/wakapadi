@@ -21,6 +21,7 @@ type User = {
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ensureAnonymousSession } from '../lib/anonymousAuth'
+import { anonymousLabel, getAnonymousHandleForId } from '../lib/anonymousNames'
 import { useTranslation } from '../lib/i18n'
 import { safeStorage } from '../lib/storage'
 export default function NearbyUserCard({ user }: { user: User }) {
@@ -38,7 +39,8 @@ export default function NearbyUserCard({ user }: { user: User }) {
   }, [user.active])
 
   const avatar = user.avatarUrl || user.avatar
-  const displayName = user.anonymous ? (t('anonymousTraveler') || 'Anonymous Traveler') : (user.username || user.name || t('traveler') || 'Traveler')
+  const anonPrefix = t('anonymousTraveler') || 'Anonymous'
+  const displayName = (user.profileVisible === false || user.anonymous) ? `${anonPrefix} ${getAnonymousHandleForId(user.userId || user._id || user.id || user.name)}` : (user.username || user.name || t('traveler') || 'Traveler')
   const city = (user as any).city || (user as any).location || ''
   const formatCity = (c: string) => {
     if (!c) return ''
