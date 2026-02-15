@@ -51,7 +51,7 @@ export default function Profile() {
     setSaving(true)
     setSaveStatus('idle')
     let payload: any = null
-    try {
+      try {
       payload = {
         username: data.username,
         bio: data.bio,
@@ -59,7 +59,6 @@ export default function Profile() {
         languages: data.languages || [],
         travelPrefs: data.travelPrefs || [],
         socials: data.socials || {},
-        avatarUrl: data.avatarUrl,
       }
       const res: any = await api.patch('/users/preferences', payload)
       const updated = res?.data || res
@@ -111,6 +110,9 @@ export default function Profile() {
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-semibold">{t('profileTitle')}</h2>
         </div>
+
+        {/* Avatar editing removed: default avatar will be used for privacy */}
+
         <div className="mt-4 grid gap-4 max-w-xl">
           <label className="block">
             <div className="text-sm mb-1 text-gray-800 dark:text-gray-200">{t('profileDisplayNameLabel')}</div>
@@ -120,38 +122,48 @@ export default function Profile() {
 
           <label className="block">
             <div className="text-sm mb-1 text-gray-800 dark:text-gray-200">{t('profileBioLabel')}</div>
-            <textarea id="bio" value={data.bio || ''} onChange={(e) => setData({ ...data, bio: e.target.value })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" rows={3} />
-            {!bioValid && <div className="text-xs text-red-600">{t('profileBioTooLong')}</div>}
+            <textarea id="bio" value={data.bio || ''} onChange={(e) => setData({ ...data, bio: e.target.value })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" rows={4} />
+            <div className="flex items-center justify-between mt-1">
+              {!bioValid && <div className="text-xs text-red-600">{t('profileBioTooLong')}</div>}
+              <div className="text-xs text-gray-500">{(data.bio || '').length}/300</div>
+            </div>
           </label>
 
-          <label className="block">
-            <div className="text-sm mb-1 text-gray-800 dark:text-gray-200">{t('profileVisibilityLabel')}</div>
-            <select id="profileVisible" value={String(Boolean(data.profileVisible))} onChange={(e) => setData({ ...data, profileVisible: e.target.value === 'true' })} className="px-3 py-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="true">{t('profileVisibilityOn')}</option>
-              <option value="false">{t('profileVisibilityOff')}</option>
-            </select>
-          </label>
+          <div className="block">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm mb-1 text-gray-800 dark:text-gray-200">{t('profileVisibilityLabel')}</div>
+                <div className="text-xs text-gray-500">{t('profileVisibilityHelp')}</div>
+              </div>
+              <div>
+                <label className="inline-flex items-center">
+                  <input type="checkbox" checked={Boolean(data.profileVisible)} onChange={(e) => setData({ ...data, profileVisible: e.target.checked })} className="form-checkbox h-5 w-5 text-blue-600" />
+                  <span className="ml-2 text-sm text-gray-700 dark:text-gray-200">{data.profileVisible ? t('profileVisibilityOn') : t('profileVisibilityOff')}</span>
+                </label>
+              </div>
+            </div>
+          </div>
 
           <div>
             <div className="text-sm text-gray-800 dark:text-gray-200">{t('profileLanguagesLabel')}</div>
             <div className="mt-2">
-              <TagInput value={data.languages || []} onChange={(v) => setData({ ...data, languages: v })} placeholder="Add language (e.g. English)" />
+              <TagInput value={data.languages || []} onChange={(v) => setData({ ...data, languages: v })} placeholder={t('profileLanguagesPlaceholder') || ''} />
             </div>
           </div>
 
           <div>
             <div className="text-sm text-gray-800 dark:text-gray-200">{t('profileTravelInterestsLabel')}</div>
             <div className="mt-2">
-              <TagInput value={data.travelPrefs || []} onChange={(v) => setData({ ...data, travelPrefs: v })} placeholder="e.g. hiking, food" />
+              <TagInput value={data.travelPrefs || []} onChange={(v) => setData({ ...data, travelPrefs: v })} placeholder={t('profileTravelPlaceholder') || ''} />
             </div>
           </div>
 
           <div>
             <div className="text-sm text-gray-800 dark:text-gray-200">{t('profileSocialTitle')}</div>
             <div className="mt-2 grid gap-2">
-              <input id="instagram" value={data.socials?.instagram || ''} onChange={(e) => updateSocial('instagram', e.target.value)} placeholder="Instagram URL or username" className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-              <input id="twitter" value={data.socials?.twitter || ''} onChange={(e) => updateSocial('twitter', e.target.value)} placeholder="Twitter URL or username" className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-              <input id="website" value={data.socials?.website || ''} onChange={(e) => updateSocial('website', e.target.value)} placeholder="Website (https://example.com)" className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <input id="instagram" value={data.socials?.instagram || ''} onChange={(e) => updateSocial('instagram', e.target.value)} placeholder={t('profileInstagramPlaceholder') || ''} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <input id="twitter" value={data.socials?.twitter || ''} onChange={(e) => updateSocial('twitter', e.target.value)} placeholder={t('profileTwitterPlaceholder') || ''} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <input id="website" value={data.socials?.website || ''} onChange={(e) => updateSocial('website', e.target.value)} placeholder={t('profileWebsitePlaceholder') || ''} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
               {!socialsValid && <div className="text-xs text-red-600">{t('profileSocialsInvalid')}</div>}
             </div>
           </div>

@@ -370,6 +370,8 @@
   "profileTravelInterestsHelp": "Select your preferred travel activities.",
   "profileLanguagesLabel": "Languages",
   "profileLanguagesHelp": "Indicate the languages you speak.",
+  "profileLanguagesPlaceholder": "e.g. English, Français",
+  "profileTravelPlaceholder": "e.g. Culture, Food, Photography",
   "profileGenderLabel": "Gender (optional)",
   "profileGenderUndisclosed": "Prefer not to say",
   "profileGenderFemale": "Female",
@@ -397,6 +399,7 @@
   "profileDeleteAction": "Delete my anonymous account",
   "profileDeleteError": "Could not delete account. Please try again.",
   "profileDisplayNameLabel": "Display name",
+  
   "profileDisplayNameRequired": "Display name is required",
   "profileBioLabel": "Bio",
   "profileBioTooLong": "Bio must be 300 characters or less",
