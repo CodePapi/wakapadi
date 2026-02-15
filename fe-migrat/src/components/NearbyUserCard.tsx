@@ -1,6 +1,7 @@
 type User = {
   id?: string
   _id?: string
+  userId: string
   username?: string
   name?: string
   anonymous?: boolean
@@ -109,23 +110,32 @@ export default function NearbyUserCard({ user }: { user: User }) {
         </div>
         {user.profileVisible === true && user.bio && <div className="mt-1 text-xs text-gray-600 dark:text-gray-300 truncate">{user.bio}</div>}
       </div>
-
       {!hidden && (
         <div className="flex flex-col sm:flex-col items-stretch sm:items-end gap-2 w-full sm:w-auto">
-          <button onClick={async () => {
-                try { await ensureAnonymousSession() } catch (e) {}
-                  const id = (user as any).userId || user._id || user.id
-              if (id) navigate(`/chat/${encodeURIComponent(id)}`)
+          {user.userId&&<button onClick={async () => {
+                try {
+                  const session = await ensureAnonymousSession()
+                  const id = (user as any).userId 
+                  if (!session || !session.token) {
+                    try { safeStorage.setItem('wakapadi_return_to', window.location.pathname + window.location.search + window.location.hash) } catch (e) {}
+                    navigate('/login')
+                    return
+                  }
+                  if (id) navigate(`/chat/${encodeURIComponent(id)}`)
+                } catch (e) {
+                  try { safeStorage.setItem('wakapadi_return_to', window.location.pathname + window.location.search + window.location.hash) } catch (err) {}
+                  navigate('/login')
+                }
             }}
             aria-label={t('chat') || 'Chat'}
             className="w-full sm:w-auto text-sm px-3 py-2 bg-blue-700 text-gray-700 dark:text-gray-100 rounded-md shadow-sm hover:bg-blue-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 dark:bg-blue-500 dark:hover:bg-blue-600 flex items-center justify-center border border-transparent"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             <span>{t('chat') || 'Chat'}</span>
-          </button>
+          </button>}
 
           <button onClick={() => {
-              const id = (user as any).userId || user._id || user.id
+              const id = (user as any).userId 
               if (!id) return
               try {
                 const raw = safeStorage.getItem('whois_hidden_v1')
