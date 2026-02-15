@@ -565,7 +565,7 @@ export default function Whois() {
       <div className="mt-6 space-y-4">
         <VisibilityToggle />
 
-        <div className="mt-3">
+       <>{safeStorage.getItem('userId') &&<div className="mt-3">
           <button
             onClick={() => setShowLocationPrompt(true)}
             className="px-4 py-2 bg-blue-600 text-gray-700 dark:text-gray-100 rounded-md hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:bg-blue-500 dark:hover:bg-blue-600"
@@ -575,7 +575,7 @@ export default function Whois() {
             className="ml-3 px-3 py-2 border rounded-md text-sm"
           >Manage hidden users</button>
         </div>
-
+}</>
         {/* Location permission explanation / fallback */}
         {showLocationPrompt && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-40">
