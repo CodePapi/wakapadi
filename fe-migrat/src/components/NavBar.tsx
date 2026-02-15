@@ -2,8 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import NotificationsDropdown from './NotificationsDropdown';
 import LanguageSwitcher from './LanguageSwitcher';
-import LocaleStatus from './LocaleStatus';
-import VisibilityIndicator from './VisibilityIndicator';
+// LocaleStatus and VisibilityIndicator removed from header; imports cleaned up
 import PendingSyncNotice from './PendingSyncNotice';
 import SafetyNotice from './SafetyNotice';
 import { ensureAnonymousSession, setLogoutBlock } from '../lib/anonymousAuth';
@@ -205,10 +204,11 @@ export default function NavBar() {
                 {t('login')}
               </button>
             )}
+          </div>
 
-            <VisibilityIndicator />
+          {/* Mobile-only language switcher placed left of the hamburger */}
+          <div className="md:hidden mr-2 flex items-center">
             <LanguageSwitcher />
-            <LocaleStatus />
           </div>
 
           <div className="hidden lg:flex items-center ml-4 space-x-4">
@@ -301,16 +301,6 @@ export default function NavBar() {
                   {t('login')}
                 </button>
               )}
-            </div>
-
-            <div className="pt-2 border-t mt-2 flex flex-col gap-2">
-              <div className="flex items-center gap-2">
-                <LanguageSwitcher />
-                <LocaleStatus />
-              </div>
-              <div className="flex items-center gap-2">
-                <VisibilityIndicator />
-              </div>
             </div>
           </div>
         </div>
