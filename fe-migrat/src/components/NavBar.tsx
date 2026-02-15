@@ -82,12 +82,17 @@ export default function NavBar() {
       }
     >
       {icon}
-      <span title={label} className="hidden sm:inline-block nav-label max-w-[10rem] truncate">{label}</span>
+      <span
+        title={label}
+        className="hidden sm:inline-block nav-label max-w-[10rem] truncate"
+      >
+        {label}
+      </span>
     </NavLink>
   );
 
-  const navRef = useRef<HTMLDivElement | null>(null)
-  const [compactNav, setCompactNav] = useState(false)
+  const navRef = useRef<HTMLDivElement | null>(null);
+  const [compactNav, setCompactNav] = useState(false);
 
   // labels used for dependency so effect runs when language changes
   const navLabels = [
@@ -95,20 +100,22 @@ export default function NavBar() {
     t('toursBrowseTitle'),
     t('savedLabel') || 'Saved',
     t('contactUs'),
-  ]
+  ];
 
   useEffect(() => {
     function checkOverflow() {
-      if (!navRef.current) return setCompactNav(false)
-      const labels = Array.from(navRef.current.querySelectorAll<HTMLElement>('.nav-label'))
-      const anyOverflow = labels.some((el) => el.scrollWidth > el.clientWidth)
-      setCompactNav(anyOverflow)
+      if (!navRef.current) return setCompactNav(false);
+      const labels = Array.from(
+        navRef.current.querySelectorAll<HTMLElement>('.nav-label'),
+      );
+      const anyOverflow = labels.some((el) => el.scrollWidth > el.clientWidth);
+      setCompactNav(anyOverflow);
     }
 
-    checkOverflow()
-    window.addEventListener('resize', checkOverflow)
-    return () => window.removeEventListener('resize', checkOverflow)
-  }, [navLabels.join('|')])
+    checkOverflow();
+    window.addEventListener('resize', checkOverflow);
+    return () => window.removeEventListener('resize', checkOverflow);
+  }, [navLabels.join('|')]);
 
   return (
     <header
@@ -158,43 +165,41 @@ export default function NavBar() {
 
         <div className="flex items-center gap-3 ml-auto">
           <div className="hidden sm:flex items-center gap-2">
-          
-
             {isLoggedIn ? (
-                <>
-                  <button
-              aria-label="Open chat"
-              onClick={async () => {
-                if (!localStorage.getItem('token')) {
-                  try {
-                    localStorage.setItem('wakapadi_return_to', '/chat');
-                  } catch {}
-                  await ensureAnonymousSession().catch(() => {});
-                }
-                navigate('/chat');
-              }}
-              className="p-2 rounded hover:bg-gray-100"
-            >
-              <SvgChat />
-            </button>
-              <div className="flex items-center gap-2">
-                <Link
-                  to="/profile"
-                  className="p-2 rounded hover:bg-gray-100"
-                  aria-label={t('profile')}
-                >
-                  <SvgAvatar />
-                </Link>
-                <NotificationsDropdown />
+              <>
                 <button
-                  onClick={() => performLogout()}
-                  aria-label={t('logout') || 'Logout'}
-                  className="text-sm text-red-600 ml-2 hidden md:inline-block"
+                  aria-label="Open chat"
+                  onClick={async () => {
+                    if (!localStorage.getItem('token')) {
+                      try {
+                        localStorage.setItem('wakapadi_return_to', '/chat');
+                      } catch {}
+                      await ensureAnonymousSession().catch(() => {});
+                    }
+                    navigate('/chat');
+                  }}
+                  className="p-2 rounded hover:bg-gray-100"
                 >
-                  {t('logout') || 'Logout'}
+                  <SvgChat />
                 </button>
-              </div>
-                </>
+                <div className="flex items-center gap-2">
+                  <Link
+                    to="/profile"
+                    className="p-2 rounded hover:bg-gray-100"
+                    aria-label={t('profile')}
+                  >
+                    <SvgAvatar />
+                  </Link>
+                  <NotificationsDropdown />
+                  <button
+                    onClick={() => performLogout()}
+                    aria-label={t('logout') || 'Logout'}
+                    className="text-sm text-red-600 ml-2 hidden md:inline-block"
+                  >
+                    {t('logout') || 'Logout'}
+                  </button>
+                </div>
+              </>
             ) : (
               <button onClick={handleLogin} className="text-sm text-blue-600">
                 {t('login')}
@@ -329,16 +334,22 @@ export function MobileBottomNav({
     : 'sm:hidden fixed bottom-4 left-1/2 -translate-x-1/2 bg-white/95 border rounded-full shadow-lg px-3 py-2 flex gap-4';
 
   const iconSize = inline ? 14 : 18;
+  const itemSizeClass = inline ? 'w-7 h-7' : 'w-8 h-8';
 
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const handleLogin = () => {
     try {
-      const loc = window.location.pathname + window.location.search + window.location.hash
-      try { localStorage.setItem('wakapadi_return_to', loc) } catch {}
+      const loc =
+        window.location.pathname +
+        window.location.search +
+        window.location.hash;
+      try {
+        localStorage.setItem('wakapadi_return_to', loc);
+      } catch {}
     } catch {}
-    navigate('/login')
-  }
+    navigate('/login');
+  };
 
   return (
     <nav
@@ -350,36 +361,46 @@ export function MobileBottomNav({
       className={baseClass}
     >
       <Link
+        to="/"
+        aria-label="Home"
+        className={`${itemSizeClass} flex items-center justify-center rounded hover:bg-gray-100`}
+      >
+        <SvgHome size={iconSize} />
+      </Link>
+
+      <Link
         to="/whois"
         aria-label="Nearby"
-        className="p-1 rounded hover:bg-gray-100"
+        className={`${itemSizeClass} flex items-center justify-center rounded hover:bg-gray-100`}
       >
         <SvgPeople size={iconSize} />
       </Link>
       <Link
         to="/tours"
         aria-label="Tours"
-        className="p-1 rounded hover:bg-gray-100"
+        className={`${itemSizeClass} flex items-center justify-center rounded hover:bg-gray-100`}
       >
         <SvgMap size={iconSize} />
       </Link>
 
       {isLoggedIn ? (
         <>
-          <div className="p-1 rounded hover:bg-gray-100">
+          <div
+            className={`${itemSizeClass} flex items-center justify-center rounded hover:bg-gray-100`}
+          >
             <NotificationsDropdown />
           </div>
           <Link
             to="/chat"
             aria-label="Chat"
-            className="p-1 rounded hover:bg-gray-100"
+            className={`${itemSizeClass} flex items-center justify-center rounded hover:bg-gray-100`}
           >
             <SvgChat size={iconSize} />
           </Link>
           <Link
             to="/profile"
             aria-label="Profile"
-            className="p-1 rounded hover:bg-gray-100"
+            className={`${itemSizeClass} flex items-center justify-center rounded hover:bg-gray-100`}
           >
             <SvgAvatar size={iconSize} />
           </Link>
@@ -387,7 +408,10 @@ export function MobileBottomNav({
           <button
             onClick={() => onLogout && onLogout()}
             aria-label="Logout"
-            className="p-1 rounded hover:bg-red-100 text-red-600"
+            style={{
+              background: 'none',
+            }}
+            className={`flex items-center justify-center rounded bg-red-50 hover:bg-red-100 text-red-600`}
           >
             <svg
               width={iconSize}
@@ -415,11 +439,16 @@ export function MobileBottomNav({
           </button>
         </>
       ) : (
-        <>
-          <button onClick={handleLogin} aria-label="Login" className="p-1 rounded hover:bg-gray-100">
-            <SvgAvatar size={iconSize} />
-          </button>
-        </>
+        <button
+          onClick={handleLogin}
+          aria-label="Login"
+          className={` flex items-center justify-center rounded hover:bg-gray-100`}
+          style={{
+            background: 'none',
+          }}
+        >
+          <SvgAvatar size={iconSize} />
+        </button>
       )}
     </nav>
   );
@@ -517,6 +546,26 @@ function SvgChat({ size = 18 }: { size?: number }) {
     >
       <path
         d="M21 15a2 2 0 0 1-2 2H8l-5 3V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+        stroke="currentColor"
+        strokeWidth="0.8"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+function SvgHome({ size = 18 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className="text-gray-700"
+    >
+      <path
+        d="M3 10.5L12 4l9 6.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.5z"
         stroke="currentColor"
         strokeWidth="0.8"
         fill="currentColor"
