@@ -5,6 +5,7 @@ import LanguageSwitcher from './LanguageSwitcher';
 // LocaleStatus and VisibilityIndicator removed from header; imports cleaned up
 import PendingSyncNotice from './PendingSyncNotice';
 import SafetyNotice from './SafetyNotice';
+import VisibilityIndicator from './VisibilityIndicator';
 import { ensureAnonymousSession, setLogoutBlock } from '../lib/anonymousAuth';
 import { useTranslation } from '../lib/i18n';
 import { api } from '../lib/api';
@@ -163,6 +164,9 @@ export default function NavBar() {
         </nav>
 
         <div className="flex items-center gap-3 ml-auto">
+          <div className="hidden sm:flex items-center mr-2">
+            <VisibilityIndicator />
+          </div>
           <div className="hidden sm:flex items-center gap-2">
             {isLoggedIn ? (
               <>
