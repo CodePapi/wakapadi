@@ -28,16 +28,7 @@ export class WhoisService {
 
     // Defensive: coerce coordinates to numbers if provided, otherwise drop invalid coords
     const payload: any = { ...data };
-    // Debug: log incoming coordinates for diagnostics
-    try {
-      if (payload.coordinates) {
-        console.debug('whois.pingPresence received coordinates:', JSON.stringify(payload.coordinates));
-      } else {
-        console.debug('whois.pingPresence received no coordinates for userId:', userId);
-      }
-    } catch (e) {
-      // ignore logging errors
-    }
+    // debug removed
     if (payload.coordinates) {
       try {
         const lat = Number((payload.coordinates as any).lat);
@@ -190,15 +181,6 @@ export class WhoisService {
         username: foundUser.username || 'User',
       };
     });
-
-    // Debug: log a small sample so we can inspect coordinates/distance when troubleshooting
-    try {
-      // Limit output length to avoid noisy logs
-      const sample = results.slice(0, 6).map(r => ({ _id: r._id?.toString?.() || r._id, userId: r.userId, distanceKm: r.distanceKm, coordinates: r.coordinates }));
-      console.debug('whois.getNearby sample:', JSON.stringify(sample));
-    } catch (e) {
-      // ignore logging errors
-    }
 
     return results;
   }

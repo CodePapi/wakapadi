@@ -29,6 +29,9 @@ export default function Whois() {
   const [currentCoords, setCurrentCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [toast, setToast] = useState<{ id: string; text: string } | null>(null)
+  const [hiddenList, setHiddenList] = useState<string[]>([])
+  const [showHiddenPanel, setShowHiddenPanel] = useState(false)
+  const [hiddenProfiles, setHiddenProfiles] = useState<Record<string, any>>({})
   const [showLocationPrompt, setShowLocationPrompt] = useState(false)
   const [manualCity, setManualCity] = useState('')
   const [geoInProgress, setGeoInProgress] = useState(false)
@@ -193,10 +196,71 @@ export default function Whois() {
       const id = ev?.detail
       if (!id) return
       setUsers((prev) => prev.filter((u) => (u.userId || u._id || u.id) !== id))
+      // refresh hidden list
+      try {
+        const raw = safeStorage.getItem('whois_hidden_v1')
+        const arr = raw ? JSON.parse(raw) as string[] : []
+        setHiddenList(arr)
+      } catch (e) {}
     }
     window.addEventListener('wakapadi:whois:hidden', onHide as EventListener)
     return () => window.removeEventListener('wakapadi:whois:hidden', onHide as EventListener)
   }, [])
+
+  // load hidden list on mount
+  useEffect(() => {
+    try {
+      const raw = safeStorage.getItem('whois_hidden_v1')
+      const arr = raw ? JSON.parse(raw) as string[] : []
+      setHiddenList(arr)
+    } catch (e) {}
+  }, [])
+
+  // fetch profile info for hidden IDs
+  useEffect(() => {
+    if (!hiddenList || hiddenList.length === 0) return
+    let mounted = true
+    ;(async () => {
+      const next: Record<string, any> = { ...hiddenProfiles }
+      for (const id of hiddenList) {
+        if (next[id]) continue
+        try {
+          const res: any = await api.get(`/users/preferences/${encodeURIComponent(id)}`, { cache: 'no-store' })
+          next[id] = {
+            username: res?.username || res?.data?.username || res?.data?.name || id,
+            avatar: res?.avatarUrl || res?.data?.avatarUrl || undefined,
+          }
+        } catch (e) {
+          next[id] = { username: id }
+        }
+      }
+      if (!mounted) return
+      setHiddenProfiles(next)
+    })()
+    return () => { mounted = false }
+  }, [hiddenList])
+
+  const unhideUser = (id: string) => {
+    try {
+      const raw = safeStorage.getItem('whois_hidden_v1')
+      const arr = raw ? JSON.parse(raw) as string[] : []
+      const next = arr.filter((x: string) => x !== id)
+      safeStorage.setItem('whois_hidden_v1', JSON.stringify(next))
+      setHiddenList(next)
+      // refresh nearby list
+      if (city) fetchNearby(city, 1)
+      try { window.dispatchEvent(new CustomEvent('wakapadi:toast', { detail: { text: 'User unhidden' } })) } catch (e) {}
+    } catch (e) { console.warn('unhide failed', e) }
+  }
+
+  const unhideAll = () => {
+    try {
+      safeStorage.setItem('whois_hidden_v1', JSON.stringify([]))
+      setHiddenList([])
+      if (city) fetchNearby(city, 1)
+      try { window.dispatchEvent(new CustomEvent('wakapadi:toast', { detail: { text: 'All users unhidden' } })) } catch (e) {}
+    } catch (e) { console.warn('unhide all failed', e) }
+  }
 
   const pingPresence = async (targetCity: string) => {
     try {
@@ -218,8 +282,7 @@ export default function Whois() {
         } catch (e) {}
       }
       if (coordsToSend) payload.coordinates = { lat: Number(coordsToSend.lat), lng: Number(coordsToSend.lng) }
-      // debug outgoing ping payload
-      try { console.debug('whois.ping outgoing payload:', payload) } catch (e) {}
+      // debug removed
       await api.post('/whois/ping', payload)
     } catch (err) {
       console.error('Ping presence failed:', err)
@@ -507,6 +570,10 @@ export default function Whois() {
             onClick={() => setShowLocationPrompt(true)}
             className="px-4 py-2 bg-blue-600 text-gray-700 dark:text-gray-100 rounded-md hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:bg-blue-500 dark:hover:bg-blue-600"
           >{t('whoisFindNearby')}</button>
+          <button
+            onClick={() => setShowHiddenPanel(true)}
+            className="ml-3 px-3 py-2 border rounded-md text-sm"
+          >Manage hidden users</button>
         </div>
 
         {/* Location permission explanation / fallback */}
@@ -554,6 +621,40 @@ export default function Whois() {
                     }
                   }} className="px-3 py-2 bg-blue-600 text-gray-700 dark:text-gray-100 rounded-md hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300">{t('whoisUseCity')}</button>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showHiddenPanel && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-40">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg max-w-md w-full">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Hidden users</h3>
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">Users you've hidden locally. Unhide to show them again.</p>
+              <div className="mt-4 space-y-2 max-h-64 overflow-auto">
+                {hiddenList.length === 0 ? (
+                  <div className="text-sm text-gray-600">No hidden users</div>
+                ) : (
+                  hiddenList.map((id) => (
+                    <div key={id} className="flex items-center justify-between p-2 border rounded">
+                      <div className="flex items-center gap-2">
+                        {hiddenProfiles[id]?.avatar ? (
+                          <img src={hiddenProfiles[id].avatar} alt={hiddenProfiles[id].username} className="w-8 h-8 rounded-full" />
+                        ) : (
+                          <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-xs">{(hiddenProfiles[id]?.username || id).charAt(0)}</div>
+                        )}
+                        <div className="text-sm truncate">{hiddenProfiles[id]?.username || id}</div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={() => { unhideUser(id) }} className="px-2 py-1 bg-green-600 text-white rounded text-xs">Unhide</button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+              <div className="mt-4 flex justify-end gap-2">
+                <button onClick={() => { unhideAll(); setShowHiddenPanel(false) }} className="px-3 py-2 border rounded">Unhide all</button>
+                <button onClick={() => setShowHiddenPanel(false)} className="px-3 py-2 bg-blue-600 text-white rounded">Close</button>
               </div>
             </div>
           </div>

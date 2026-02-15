@@ -173,7 +173,8 @@ export default function NearbyUserCard({ user }: { user: User }) {
             <span>{t('chat') || 'Chat'}</span>
           </button>}
 
-          <button onClick={() => {
+         <>
+         {safeStorage.getItem('userId') && <button onClick={() => {
               const id = (user as any).userId 
               if (!id) return
               try {
@@ -189,6 +190,8 @@ export default function NearbyUserCard({ user }: { user: User }) {
             aria-label={t('hide') || 'Hide'}
             className="w-full sm:w-auto text-xs px-2 py-1 border border-gray-200 rounded text-gray-700 bg-gray-50 hover:bg-gray-100 dark:text-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-300"
           >{t('hide') || 'Hide'}</button>
+          }
+         </>
         </div>
       )}
     </article>
