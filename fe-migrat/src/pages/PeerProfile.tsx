@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
 import { useTranslation } from '../lib/i18n'
+import VisibilityIndicator from '../components/VisibilityIndicator'
+import { ensureAnonymousSession } from '../lib/anonymousAuth'
 
 export default function PeerProfile() {
   const { userId } = useParams()
@@ -10,6 +12,7 @@ export default function PeerProfile() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<any>(null)
+  const [actionLoading, setActionLoading] = useState(false)
 
   useEffect(() => {
     if (!userId) return
@@ -41,20 +44,21 @@ export default function PeerProfile() {
 
   return (
     <section className="container mx-auto px-4 py-6">
-      <div className="max-w-3xl mx-auto bg-white dark:bg-gray-900 border border-gray-100 dark:border-zinc-800 rounded-lg shadow-sm p-6">
-        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
-          <img src={data?.avatarUrl || data?.avatar || `https://i.pravatar.cc/120?u=${userId}`} alt={data?.username || 'Traveler'} className="w-28 h-28 sm:w-32 sm:h-32 rounded-full object-cover ring-2 ring-gray-100 dark:ring-zinc-800" />
-          <div className="flex-1">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <h1 className="text-2xl font-semibold leading-tight">{data?.username || t('peerTitle') || 'Traveler'}</h1>
-                {typeof data?.profileVisible !== 'undefined' && (
-                  <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">{data.profileVisible ? t('profileVisibilityOn') : t('profileVisibilityOff')}</div>
-                )}
-              </div>
+      <div className="max-w-4xl mx-auto bg-white dark:bg-gray-900 border border-gray-100 dark:border-zinc-800 rounded-lg shadow-sm p-6">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-4">
+            <img src={data?.avatarUrl || data?.avatar || `https://i.pravatar.cc/160?u=${userId}`} alt={data?.username || 'Traveler'} className="w-28 h-28 sm:w-32 sm:h-32 rounded-full object-cover ring-2 ring-gray-100 dark:ring-zinc-800" />
+            <div>
+              <h1 className="text-2xl font-semibold leading-tight">{data?.username || t('peerTitle') || 'Traveler'}</h1>
+              {typeof data?.profileVisible !== 'undefined' && (
+                <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">{data.profileVisible ? t('profileVisibilityOn') : t('profileVisibilityOff')}</div>
+              )}
+              <div className="mt-3 text-gray-800 dark:text-gray-200 max-w-prose whitespace-pre-wrap">{data?.bio || <span className="text-sm text-gray-500">{t('profileNoBio') || 'No bio provided.'}</span>}</div>
             </div>
+          </div>
 
-            <div className="mt-4 text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{data?.bio || <span className="text-sm text-gray-500">{t('profileNoBio') || 'No bio provided.'}</span>}</div>
+          <div className="flex items-center gap-3">
+            <VisibilityIndicator />
           </div>
         </div>
 
@@ -79,9 +83,59 @@ export default function PeerProfile() {
           </div>
         </div>
 
-        <div className="mt-6 flex gap-3">
-          <button onClick={() => navigate(`/chat/${userId}`)} className="px-5 py-2 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded shadow">{t('chatWithAssistant') || 'Message'}</button>
-          <button onClick={() => window.history.back()} className="px-4 py-2 border rounded text-sm">{t('back') || 'Back'}</button>
+        <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex gap-3">
+            <button
+              onClick={async () => {
+                try {
+                  await ensureAnonymousSession()
+                } catch {}
+                navigate(`/chat/${userId}`)
+              }}
+              className="px-5 py-2 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded shadow"
+            >
+              {t('chatWithAssistant') || 'Message'}
+            </button>
+
+            <button onClick={() => window.history.back()} className="px-4 py-2 border rounded text-sm">{t('back') || 'Back'}</button>
+          </div>
+
+          <div className="flex gap-2">
+            <button
+              onClick={async () => {
+                if (!confirm(t('confirmBlock') || 'Block this user?')) return
+                setActionLoading(true)
+                try {
+                  await api.post(`/users/block/${encodeURIComponent(String(userId))}`)
+                  try { window.dispatchEvent(new CustomEvent('wakapadi:toast', { detail: { text: t('userBlocked') || 'User blocked' } })) } catch {}
+                } catch (e) {
+                  try { window.dispatchEvent(new CustomEvent('wakapadi:toast', { detail: { text: t('actionFailed') || 'Action failed' } })) } catch {}
+                } finally { setActionLoading(false) }
+              }}
+              disabled={actionLoading}
+              className="px-4 py-2 border rounded text-sm bg-white hover:bg-gray-50"
+            >
+              {t('blockUser') || 'Block'}
+            </button>
+
+            <button
+              onClick={async () => {
+                const reason = prompt(t('reportReasonPrompt') || 'Reason for report (optional)') || ''
+                if (reason === null) return
+                setActionLoading(true)
+                try {
+                  await api.post(`/users/report/${encodeURIComponent(String(userId))}`, { reason })
+                  try { window.dispatchEvent(new CustomEvent('wakapadi:toast', { detail: { text: t('reportSubmitted') || 'Report submitted' } })) } catch {}
+                } catch (e) {
+                  try { window.dispatchEvent(new CustomEvent('wakapadi:toast', { detail: { text: t('actionFailed') || 'Action failed' } })) } catch {}
+                } finally { setActionLoading(false) }
+              }}
+              disabled={actionLoading}
+              className="px-4 py-2 bg-red-50 text-red-600 rounded text-sm hover:bg-red-100"
+            >
+              {t('reportUser') || 'Report'}
+            </button>
+          </div>
         </div>
       </div>
     </section>

@@ -164,12 +164,14 @@ export default function NavBar() {
         </nav>
 
         <div className="flex items-center gap-3 ml-auto">
-          <div className="hidden sm:flex items-center mr-2">
-            <VisibilityIndicator />
-          </div>
+          
           <div className="hidden sm:flex items-center gap-2">
+
             {isLoggedIn ? (
               <>
+              <div className="hidden sm:flex items-center mr-2">
+            <VisibilityIndicator />
+          </div>
                 <button
                   aria-label="Open chat"
                   onClick={async () => {
