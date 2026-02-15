@@ -78,6 +78,9 @@ export default function WhoIsNearby() {
   const [hasMore, setHasMore] = useState(true);
   const [currentCoords, setCurrentCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [geoRequested, setGeoRequested] = useState(false);
+  const [hiddenList, setHiddenList] = useState<string[]>([]);
+  const [showHiddenPanel, setShowHiddenPanel] = useState(false);
+  const [hiddenProfiles, setHiddenProfiles] = useState<Record<string, any>>({});
 
   const [ref, inView] = useInView();
   const anonymousNameMap = useRef<Map<string, string>>(new Map());
@@ -99,8 +102,27 @@ export default function WhoIsNearby() {
       
       try {
         setError(null);
+        const params: any = { city: targetCity, userId: currentUserId, page: pageNum, limit: 15 };
+        // prefer live coords, fall back to persisted device coords
+        let effectiveCoords = currentCoords;
+        if (!effectiveCoords) {
+          try {
+            const raw = safeStorage.getItem('last_device_coords');
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              if (parsed && typeof parsed.lat !== 'undefined' && typeof parsed.lng !== 'undefined') {
+                effectiveCoords = { lat: Number(parsed.lat), lng: Number(parsed.lng) };
+              }
+            }
+          } catch (e) {}
+        }
+        if (effectiveCoords) {
+          params.lat = Number(effectiveCoords.lat);
+          params.lon = Number(effectiveCoords.lng);
+        }
+        // debug removed
         const res = await api.get('/whois/nearby', {
-          params: { city: targetCity, userId: currentUserId, page: pageNum, limit: 15 },
+          params,
           headers: { Authorization: `Bearer ${safeStorage.getItem('token') || ''}` },
         });
 
@@ -138,7 +160,23 @@ export default function WhoIsNearby() {
 
   const pingPresence = async (targetCity: string) => {
     try {
-      await api.post('/whois/ping', { city: targetCity });
+      const payload: any = { city: targetCity };
+      // prefer live coords, fall back to persisted device coords
+      let coordsToSend = currentCoords;
+      if (!coordsToSend) {
+        try {
+          const raw = safeStorage.getItem('last_device_coords');
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed && typeof parsed.lat !== 'undefined' && typeof parsed.lng !== 'undefined') {
+              coordsToSend = { lat: Number(parsed.lat), lng: Number(parsed.lng) };
+            }
+          }
+        } catch (e) {}
+      }
+      if (coordsToSend) payload.coordinates = { lat: Number(coordsToSend.lat), lng: Number(coordsToSend.lng) };
+      // debug removed
+      await api.post('/whois/ping', payload);
       // We don't fetchNearby here anymore because handleFindNearby calls it once anyway
     } catch (err) {
       console.error('Ping presence failed:', err);
@@ -209,6 +247,57 @@ export default function WhoIsNearby() {
       }
     })();
   }, []);
+
+  // load hidden list on mount
+  useEffect(() => {
+    try {
+      const raw = safeStorage.getItem('whois_hidden_v1');
+      const arr = raw ? JSON.parse(raw) as string[] : [];
+      setHiddenList(arr);
+    } catch (e) {}
+  }, []);
+
+  useEffect(() => {
+    if (!hiddenList || hiddenList.length === 0) return;
+    let mounted = true;
+    (async () => {
+      const next: Record<string, any> = { ...hiddenProfiles };
+      for (const id of hiddenList) {
+        if (next[id]) continue;
+        try {
+          const res: any = await api.get(`/users/preferences/${encodeURIComponent(id)}`);
+          const data = res?.data || res;
+          next[id] = { username: data?.username || data?.name || id, avatar: data?.avatarUrl };
+        } catch (e) {
+          next[id] = { username: id };
+        }
+      }
+      if (!mounted) return;
+      setHiddenProfiles(next);
+    })();
+    return () => { mounted = false; };
+  }, [hiddenList]);
+
+  const unhideUser = (id: string) => {
+    try {
+      const raw = safeStorage.getItem('whois_hidden_v1');
+      const arr = raw ? JSON.parse(raw) as string[] : [];
+      const next = arr.filter((x: string) => x !== id);
+      safeStorage.setItem('whois_hidden_v1', JSON.stringify(next));
+      setHiddenList(next);
+      if (city) fetchNearby(city, 1);
+      try { window.dispatchEvent(new CustomEvent('wakapadi:toast', { detail: { text: 'User unhidden' } })) } catch (e) {}
+    } catch (e) { console.warn('unhide failed', e) }
+  }
+
+  const unhideAll = () => {
+    try {
+      safeStorage.setItem('whois_hidden_v1', JSON.stringify([]));
+      setHiddenList([]);
+      if (city) fetchNearby(city, 1);
+      try { window.dispatchEvent(new CustomEvent('wakapadi:toast', { detail: { text: 'All users unhidden' } })) } catch (e) {}
+    } catch (e) { console.warn('unhide all failed', e) }
+  }
 
   useEffect(() => {
     const socket = getSocket();
@@ -281,6 +370,7 @@ export default function WhoIsNearby() {
               {t('findNearbyBtn')}
             </Button>
           )}
+          <Button variant="outlined" size="small" sx={{ ml: 2 }} onClick={() => setShowHiddenPanel(true)}>Manage hidden users</Button>
           {city && (
             <Chip 
               icon={<PlaceIcon />} 
@@ -293,6 +383,26 @@ export default function WhoIsNearby() {
       </section>
 
       <Container maxWidth="lg" sx={{ py: 4 }}>
+        {showHiddenPanel && (
+          <Box sx={{ mb: 3, p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+            <Typography variant="h6">Hidden users</Typography>
+            {hiddenList.length === 0 ? (
+              <Typography variant="body2">No hidden users</Typography>
+            ) : (
+              <List>
+                {hiddenList.map((id) => (
+                  <ListItem key={id} secondaryAction={<Button size="small" onClick={() => unhideUser(id)}>Unhide</Button>}>
+                    <Typography variant="body2" sx={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{id}</Typography>
+                  </ListItem>
+                ))}
+              </List>
+            )}
+            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 1 }}>
+              <Button size="small" onClick={() => { unhideAll(); setShowHiddenPanel(false); }}>Unhide all</Button>
+              <Button size="small" variant="contained" onClick={() => setShowHiddenPanel(false)}>Close</Button>
+            </Box>
+          </Box>
+        )}
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
         <Alert severity="info" sx={{ mb: 4 }}>{t('whoisSafetyWarning')}</Alert>
 

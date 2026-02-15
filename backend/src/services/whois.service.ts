@@ -26,9 +26,26 @@ export class WhoisService {
     const expiresAt = new Date(now.getTime() + 6 * 60 * 60 * 1000); // 6 hours
     const normalizedCity = data.city?.trim().toLowerCase() || 'unknown';
 
+    // Defensive: coerce coordinates to numbers if provided, otherwise drop invalid coords
+    const payload: any = { ...data };
+    // debug removed
+    if (payload.coordinates) {
+      try {
+        const lat = Number((payload.coordinates as any).lat);
+        const lng = Number((payload.coordinates as any).lng);
+        if (!Number.isNaN(lat) && !Number.isNaN(lng)) {
+          payload.coordinates = { lat, lng };
+        } else {
+          delete payload.coordinates;
+        }
+      } catch (e) {
+        delete payload.coordinates;
+      }
+    }
+
     return this.whoisModel.findOneAndUpdate(
       { userId },
-      { ...data, city: normalizedCity, expiresAt, visible: true },
+      { ...payload, city: normalizedCity, expiresAt, visible: true },
       { upsert: true, new: true },
     );
   }
@@ -39,7 +56,7 @@ export class WhoisService {
   }
 
 
-  async getNearby(city: string, userId: any) {
+  async getNearby(city: string, userId: any, lat?: string, lon?: string) {
     const query: any = {
       city,
       visible: true,
@@ -53,30 +70,78 @@ export class WhoisService {
     // Fetch all visible presences for the city
     const visibleUsers = await this.whoisModel.find(query).lean();
 
+    // Defensive normalization: coerce any stored coordinates (strings) to numbers so distance can be computed
+    visibleUsers.forEach((vu: any) => {
+      if (vu && vu.coordinates) {
+        try {
+          const lat = Number((vu.coordinates as any).lat)
+          const lng = Number((vu.coordinates as any).lng)
+          if (!Number.isNaN(lat) && !Number.isNaN(lng)) {
+            vu.coordinates = { lat, lng }
+          } else {
+            delete vu.coordinates
+          }
+        } catch (e) {
+          delete vu.coordinates
+        }
+      }
+    })
+
     // Collect all userIds that are present and valid
-    const userIds = visibleUsers
-      .map((u) => u.userId)
-      .filter((id) => id && typeof id === 'object' && id.toString);
+      // Normalize userIds to strings so we can query the users collection reliably.
+      const userIds = visibleUsers
+        .map((u) => {
+          if (!u.userId) return null;
+          if (typeof u.userId === 'string') return u.userId;
+          if (typeof u.userId === 'object' && u.userId.toString) return u.userId.toString();
+          return null;
+        })
+        .filter((id) => !!id);
 
     // Batch fetch all user details
     const userMap = new Map();
     if (userIds.length > 0) {
       const users = await this.userModel
-        .find({ _id: { $in: userIds } })
-        .select('_id username profileVisible')
+          .find({ _id: { $in: userIds } })
+          .select('_id username profileVisible avatar')
         .lean();
       users.forEach((u) => userMap.set(u._id.toString(), u));
     }
 
+    // helper: compute haversine if lat/lon provided
+    const toRadians = (value: number) => (value * Math.PI) / 180
+    const haversineKm = (lat1: number, lng1: number, lat2: number, lng2: number) => {
+      const earthRadiusKm = 6371
+      const dLat = toRadians(lat2 - lat1)
+      const dLng = toRadians(lng2 - lng1)
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) * Math.sin(dLng / 2) ** 2
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+      return earthRadiusKm * c
+    }
+
+    const originLat = lat ? parseFloat(lat) : null
+    const originLon = lon ? parseFloat(lon) : null
+
     // Build the response in one pass
-    return visibleUsers.map((user) => {
+    const results = visibleUsers.map((user) => {
       const base = {
         _id: user._id,
         city: user.city,
         status: user.status,
         coordinates: user.coordinates,
         lastSeen: user.expiresAt,
-      };
+      } as any;
+
+      // compute distance if possible
+      if (originLat !== null && originLon !== null && user.coordinates && typeof user.coordinates.lat === 'number' && typeof user.coordinates.lng === 'number') {
+        try {
+          base.distanceKm = haversineKm(originLat, originLon, user.coordinates.lat, user.coordinates.lng)
+        } catch (e) {
+          // ignore errors computing distance
+        }
+      } else {
+        base.distanceKm = null
+      }
 
       // If the requestor is not logged in (no userId), return anonymous data
       if (!userId || typeof userId !== 'string' || userId.trim() === '') {
@@ -116,6 +181,8 @@ export class WhoisService {
         username: foundUser.username || 'User',
       };
     });
+
+    return results;
   }
   
 

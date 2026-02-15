@@ -18,6 +18,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import mongoose, { Model } from 'mongoose';
 import { WhoisMessage } from '../schemas/whois-message.schema';
 import { WhoisMessageService } from '../services/whois-message.service'; // Import the service
+import { NotificationService } from '../services/notification.service';
 import { User } from '../schemas/user.schema'; // <--- Import User schema for getUserById
 
 const JWT_SECRET = process.env.JWT_SECRET || 'changeme';
@@ -48,6 +49,8 @@ export class WhoisGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly userModel: Model<User>, // <--- Declare userModel
     @Inject(forwardRef(() => WhoisMessageService))
     private readonly messageService: WhoisMessageService, // Inject the service
+    @Inject(forwardRef(() => NotificationService))
+    private readonly notificationService: NotificationService,
   ) {}
 
   handleConnection(client: Socket) {
@@ -156,8 +159,27 @@ export class WhoisGateway implements OnGatewayConnection, OnGatewayDisconnect {
       if (!fromUserId) {
         throw new Error('Authenticated user ID not found in WebSocket handshake.');
       }
-      if (!mongoose.Types.ObjectId.isValid(data.to)) { // Ensure mongoose is imported
-          throw new Error('Invalid recipient ID.');
+      // Validate recipient and sender before saving
+      if (String(fromUserId) === String(data.to)) {
+        client.emit('message:error', { tempId: data.tempId, error: 'cannot_send_to_self' });
+        return;
+      }
+
+      if (!mongoose.Types.ObjectId.isValid(data.to)) {
+        client.emit('message:error', { tempId: data.tempId, error: 'invalid_recipient_id' });
+        return;
+      }
+
+      const receiverUser = await this.userModel.findById(data.to).lean();
+      if (!receiverUser) {
+        client.emit('message:error', { tempId: data.tempId, error: 'recipient_not_found_or_not_registered' });
+        return;
+      }
+
+      const senderUser = await this.userModel.findById(fromUserId).lean();
+      if (!senderUser) {
+        client.emit('message:error', { tempId: data.tempId, error: 'sender_not_registered' });
+        return;
       }
 
       // 1. Save the message using your service
@@ -167,21 +189,17 @@ export class WhoisGateway implements OnGatewayConnection, OnGatewayDisconnect {
         data.message
       );
 
-      // 2. Fetch sender and receiver details to enrich the payload
-      const senderUser = await this.userModel.findById(fromUserId).select('_id username avatar').lean();
-      const receiverUser = await this.userModel.findById(data.to).select('_id username avatar').lean();
-
 
       const messagePayload = {
-        _id: savedMessage._id,
+        _id: String((savedMessage as any)._id),
         message: savedMessage.message,
         fromUserId: savedMessage.fromUserId.toString(),
         toUserId: savedMessage.toUserId.toString(),
         createdAt: savedMessage.createdAt.toISOString(),
         read: savedMessage.read,
         username: senderUser?.username || 'Unknown',
-        avatar: senderUser?.avatarUrl|| `https://i.pravatar.cc/40?u=${savedMessage.fromUserId.toString()}`,
-        reactions: savedMessage.reactions || [],
+        avatar: senderUser?.avatarUrl|| `https://i.pravatar.cc/40?u=${(savedMessage as any).fromUserId.toString()}`,
+        reactions: ((savedMessage as any).reactions || []).map((r: any) => ({ emoji: r.emoji, fromUserId: String(r.fromUserId) })),
         tempId: data.tempId, // Crucial for frontend optimistic updates
       };
 
@@ -197,6 +215,17 @@ export class WhoisGateway implements OnGatewayConnection, OnGatewayDisconnect {
         const isRecipientInRoom = socketsInRoom.has(receiverSocketId as string);
       
         if (!isRecipientInRoom) {
+          // persist notification
+          try {
+            await this.notificationService.createNotification(data.to, {
+              type: 'new_message',
+              fromUserId: new mongoose.Types.ObjectId(fromUserId),
+              fromUsername: senderUser.username,
+              messagePreview: savedMessage.message.substring(0, 50),
+              conversationId: conversationRoom,
+            })
+          } catch (err) { console.warn('Failed to persist notification', err) }
+
           this.server.to(`user-${data.to}`).emit('notification:new', {
             type: 'new_message',
             fromUserId,
@@ -275,10 +304,10 @@ export class WhoisGateway implements OnGatewayConnection, OnGatewayDisconnect {
         // Emit the reaction update to all clients in the conversation room
         const roomName = [fromUserId, data.toUserId].sort().join('-'); // Assuming toUserId is the other chat participant
         this.server.to(roomName).emit('message:reaction', {
-          messageId: updatedMessage._id,
+          messageId: String((updatedMessage as any)._id),
           reaction: {
             emoji: data.emoji,
-            fromUserId: fromUserId, // User who added the reaction
+            fromUserId: String(fromUserId), // User who added the reaction
           },
         });
         console.log(`Reaction ${data.emoji} added by ${fromUserId} to message ${data.messageId}. Emitted to room ${roomName}.`);
