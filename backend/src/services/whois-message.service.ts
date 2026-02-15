@@ -100,26 +100,40 @@ export class WhoisMessageService implements OnModuleInit {
   }
 
   async getConversation(userId: string, otherUserId: string, page = 1, limit = 20) {
-    const skip = (page - 1) * limit;
-
     const filter = {
       $or: [
         { fromUserId: userId, toUserId: otherUserId },
         { fromUserId: otherUserId, toUserId: userId },
       ],
     };
- 
-    const [messages, total] = await Promise.all([
-      this.messageModel
+
+    // If limit is <= 0 treat as "no limit" and return the full conversation
+    let messages: PopulatedMessageLean[] = []
+    let total = 0
+    if (limit <= 0) {
+      messages = await this.messageModel
         .find(filter)
         .sort({ createdAt: 1 })
-        .skip(skip)
-        .limit(limit)
         .populate('fromUserId', 'username avatarUrl')
         .populate('toUserId', 'username avatarUrl')
-        .lean<PopulatedMessageLean[]>(),
-      this.messageModel.countDocuments(filter),
-    ]);
+        .lean<PopulatedMessageLean[]>();
+      total = messages.length
+    } else {
+      const skip = (page - 1) * limit;
+      const [msgs, cnt] = await Promise.all([
+        this.messageModel
+          .find(filter)
+          .sort({ createdAt: 1 })
+          .skip(skip)
+          .limit(limit)
+          .populate('fromUserId', 'username avatarUrl')
+          .populate('toUserId', 'username avatarUrl')
+          .lean<PopulatedMessageLean[]>(),
+        this.messageModel.countDocuments(filter),
+      ])
+      messages = msgs
+      total = cnt
+    }
 
     await this.messageModel.updateMany(
       { fromUserId: otherUserId, toUserId: userId, read: false },

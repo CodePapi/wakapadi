@@ -17,6 +17,7 @@ export default function ChatConversation() {
   const [otherTyping, setOtherTyping] = useState(false)
   const [profileModalOpen, setProfileModalOpen] = useState(false)
   const [profileData, setProfileData] = useState<any>(null)
+  const [announce, setAnnounce] = useState<string>('')
   const [showInputEmojiPicker, setShowInputEmojiPicker] = useState(false)
   const emojiBtnRef = useRef<HTMLButtonElement | null>(null)
   const [pickerPos, setPickerPos] = useState<{ top: number; left: number } | null>(null)
@@ -35,7 +36,7 @@ export default function ChatConversation() {
     const load = async () => {
       setLoading(true)
       try {
-        const res: any = await api.get(`/whois/chat/${encodeURIComponent(userId)}?limit=50`, { cache: 'no-store' })
+        const res: any = await api.get(`/whois/chat/${encodeURIComponent(userId)}?limit=0`, { cache: 'no-store' })
         const msgs = (res.data?.messages || []).map((m: any) => ({ ...m, fromSelf: m.fromUserId === safeStorage.getItem('userId') }))
         setOtherUserMeta(res.data?.otherUser || null)
         msgs.forEach((m: any) => messagesRef.current.add(m._id))
@@ -315,7 +316,7 @@ export default function ChatConversation() {
       setPickerPos({ top: preferredTop, left })
     } catch (e) {}
 
-    const onDoc = (ev: MouseEvent) => {
+      const onDoc = (ev: MouseEvent) => {
       try {
         const target = ev.target as Node
         if (pickerRef.current && pickerRef.current.contains(target)) return
@@ -327,6 +328,26 @@ export default function ChatConversation() {
     return () => document.removeEventListener('mousedown', onDoc)
   }, [showInputEmojiPicker])
 
+    // keyboard accessibility: close picker on Escape and focus management
+    useEffect(() => {
+      if (!showInputEmojiPicker) return
+      const onKey = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') setShowInputEmojiPicker(false)
+        if (e.key === 'Tab') return
+      }
+      // focus first button in picker after it's mounted
+      requestAnimationFrame(() => {
+        try {
+          if (pickerRef.current) {
+            const btn = pickerRef.current.querySelector('button') as HTMLButtonElement | null
+            if (btn) btn.focus()
+          }
+        } catch (e) {}
+      })
+      document.addEventListener('keydown', onKey)
+      return () => document.removeEventListener('keydown', onKey)
+    }, [showInputEmojiPicker])
+
   if (!userId) return <div>Invalid conversation</div>
   if (loading) return <div>Loading messages…</div>
 
@@ -334,18 +355,22 @@ export default function ChatConversation() {
     <>
     <section className="container mx-auto px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-zinc-700 flex items-center justify-center text-lg font-semibold">{(otherUserMeta?.username||otherUserMeta?.name||'T').charAt(0).toUpperCase()}</div>
-            <div>
-              <div className="font-semibold text-lg">{otherUserMeta?.username || otherUserMeta?.name || 'Chat'}</div>
-              <div className="text-xs text-gray-500">{otherTyping ? 'Typing…' : otherUserMeta?.status || ''}</div>
-            </div>
-          </div>
-          <button onClick={() => navigate(-1)} className="text-sm text-blue-600">Back</button>
-        </div>
+        
 
         <div className="mt-4 chat-wrapper">
+          <div className="chat-header px-3 py-2 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-zinc-700 flex items-center justify-center text-lg font-semibold">{(otherUserMeta?.username||otherUserMeta?.name||'T').charAt(0).toUpperCase()}</div>
+              <div>
+                <div className="font-semibold text-lg">{otherUserMeta?.username || otherUserMeta?.name || 'Chat'}</div>
+                <div className="text-xs text-gray-500">{otherTyping ? 'Typing…' : otherUserMeta?.status || ''}</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button onClick={() => handleShowProfile(userId || otherUserMeta?.id || otherUserMeta?._id || otherUserMeta?.userId)} aria-label="Conversation info" title="Info" className="p-2 rounded hover:bg-gray-100 dark:hover:bg-zinc-700"><svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 9v2m0 4h.01M21 12A9 9 0 1 1 3 12a9 9 0 0 1 18 0z" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
+              <button onClick={() => navigate(-1)} aria-label="Back" title="Back" className="p-2 rounded hover:bg-gray-100 dark:hover:bg-zinc-700"><svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 18l-6-6 6-6" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
+            </div>
+          </div>
           <div ref={messagesContainerRef} className="chat-messages space-y-2">
             {messages.length === 0 ? (
               <div className="chat-empty">No messages yet — say hello 👋</div>
@@ -413,9 +438,13 @@ export default function ChatConversation() {
                               pendingReactionsRef.current.set(key, { timer, emoji, fromUserId: me })
                             } catch (e) {}
                           }
+                          try {
+                            window.dispatchEvent(new CustomEvent('wakapadi:toast', { detail: { text: `Reacted ${emoji}` } }))
+                            setAnnounce(`Reacted ${emoji}`)
+                          } catch (e) {}
                         } catch (e) {}
                       }}
-                      onCopy={() => { try { alert('Copied') } catch {} }}
+                      onCopy={() => { try { window.dispatchEvent(new CustomEvent('wakapadi:toast', { detail: { text: 'Copied to clipboard' } })); setAnnounce('Copied to clipboard') } catch {} }}
                       onDelete={() => {
                         try {
                           setMessages((prev) => prev.filter((x) => x._id !== m._id && x._id !== m.tempId))
@@ -431,9 +460,11 @@ export default function ChatConversation() {
             )}
           </div>
 
+          <div aria-live="polite" className="sr-only" role="status">{announce}</div>
+
         <div className="text-sm text-gray-500">{otherTyping ? 'Typing…' : ''}</div>
 
-        <div className="mt-4 flex gap-2 items-stretch">
+        <div className="mt-4 flex gap-2 items-stretch p-3">
           <textarea ref={inputRef} value={text} onChange={(e) => handleChange(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }} placeholder="Write a message" rows={2} className="chat-textarea flex-1 h-full px-3 py-2 border rounded resize-none" />
 
           <div className="flex flex-col gap-2">

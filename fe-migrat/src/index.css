@@ -92,6 +92,16 @@ body {
 	box-shadow: 0 6px 18px rgba(2,6,23,0.04);
 }
 
+.chat-header {
+  background: transparent;
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+  align-items: center;
+}
+
+.chat-header .font-semibold { line-height: 1 }
+
+.chat-messages { padding-top: 0.5rem; }
+
 .chat-messages {
 	flex: 1 1 auto;
 	overflow-y: auto;
@@ -229,10 +239,18 @@ header nav a:hover {
 	background: transparent;
 	border: none;
 	resize: none;
-	padding: 6px 0;
+	padding: 6px 8px;
 	min-height: 36px;
 	font-size: 14px;
+	color: inherit;
 }
+.chat-input-area::placeholder { color: rgba(15,23,42,0.45) }
+.chat-input-field { padding: 8px }
+.chat-input-field .send-button { min-width: 60px }
+
+/* Improve textbox look: subtle inner background and rounded corners */
+.chat-input-field { background: var(--input-bg); border-radius: var(--input-radius); border: 1px solid var(--input-border); }
+.chat-input-area { background: transparent; }
 .send-button {
 	background: var(--send-bg);
 	color: var(--send-color);
@@ -242,6 +260,15 @@ header nav a:hover {
 	align-items: center;
 	justify-content: center;
 }
+
+/* Focus styles for accessible widgets */
+.chat-input-field button:focus, .chat-input-area:focus, .chat-messages button:focus {
+	outline: 3px solid rgba(100,108,255,0.18);
+	outline-offset: 2px;
+}
+
+.chat-header button { background: transparent; border: none }
+.chat-header button:focus { outline: 3px solid rgba(100,108,255,0.12); border-radius: 8px }
 
 .chat-textarea::-webkit-scrollbar { height: 6px; }
 .chat-textarea::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.08); border-radius: 6px }

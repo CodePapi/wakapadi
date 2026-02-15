@@ -31,8 +31,18 @@ export default function ChatBubble({
         setShowPicker(false)
       }
     }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setOpen(false)
+        setShowPicker(false)
+      }
+    }
     document.addEventListener('mousedown', onDoc)
-    return () => document.removeEventListener('mousedown', onDoc)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDoc)
+      document.removeEventListener('keydown', onKey)
+    }
   }, [])
 
   const handleEmojiSelect = (emoji: string) => {
@@ -44,10 +54,32 @@ export default function ChatBubble({
     }
   }
 
+  // keyboard navigation for emoji picker
+  useEffect(() => {
+    if (!showPicker || !menuRef.current) return
+    const container = menuRef.current
+    const buttons = Array.from(container.querySelectorAll('button')).filter((b) => b.textContent && DEFAULT_EMOJIS.includes(b.textContent.trim())) as HTMLButtonElement[]
+    if (buttons.length === 0) return
+    let idx = 0
+    buttons[idx].focus()
+    const cols = 4
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') { idx = (idx + 1) % buttons.length; buttons[idx].focus(); e.preventDefault() }
+      if (e.key === 'ArrowLeft') { idx = (idx - 1 + buttons.length) % buttons.length; buttons[idx].focus(); e.preventDefault() }
+      if (e.key === 'ArrowDown') { idx = (idx + cols) % buttons.length; buttons[idx].focus(); e.preventDefault() }
+      if (e.key === 'ArrowUp') { idx = (idx - cols + buttons.length) % buttons.length; buttons[idx].focus(); e.preventDefault() }
+      if (e.key === 'Enter') { buttons[idx].click(); e.preventDefault() }
+      if (e.key === 'Escape') { setShowPicker(false); setOpen(false) }
+    }
+    container.addEventListener('keydown', onKey)
+    return () => container.removeEventListener('keydown', onKey)
+  }, [showPicker])
+
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(message || '')
       if (onCopy) onCopy()
+      try { window.dispatchEvent(new CustomEvent('wakapadi:toast', { detail: { text: 'Copied to clipboard' } })) } catch (e) {}
     } catch {}
     setOpen(false)
   }
@@ -113,16 +145,17 @@ export default function ChatBubble({
         </div>
       </div>
       {open && menuPos && createPortal(
-        <div ref={menuRef} style={{ position: 'absolute', top: menuPos.top, left: menuPos.left }} className={`z-[9999] bg-white dark:bg-zinc-800 border dark:border-zinc-700 rounded shadow-md py-1 w-36 sm:w-auto max-w-[90vw] sm:max-w-sm text-gray-900 dark:text-gray-100`}>
+        <div ref={menuRef} role="menu" style={{ position: 'absolute', top: menuPos.top, left: menuPos.left }} className={`z-[9999] bg-white dark:bg-zinc-800 border dark:border-zinc-700 rounded shadow-md py-1 w-36 sm:w-auto max-w-[90vw] sm:max-w-sm text-gray-900 dark:text-gray-100`}>
           <div className="flex flex-col">
-            <button className="block w-full text-left px-2 py-1 hover:bg-gray-100 dark:hover:bg-zinc-700 flex items-center justify-between" onClick={() => setShowPicker((s) => !s)} aria-haspopup="true" aria-expanded={showPicker} aria-label={showPicker ? 'Close reactions' : 'Open reactions'}>
+            <button role="menuitem" className="block w-full text-left px-2 py-1 hover:bg-gray-100 dark:hover:bg-zinc-700 flex items-center justify-between" onClick={() => setShowPicker((s) => !s)} aria-haspopup="true" aria-expanded={showPicker} aria-label={showPicker ? 'Close reactions' : 'Open reactions'}>
               <span className="flex items-center gap-2 text-lg">😄</span>
               <span className="text-sm text-gray-500 dark:text-gray-400">{showPicker ? '▴' : '▾'}</span>
             </button>
             {showPicker && (
-              <div className="p-2 grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
+              <div role="dialog" aria-label="Emoji picker" ref={menuRef as any} className="p-2 grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
                 {DEFAULT_EMOJIS.map((e) => (
                   <button
+                    role="button"
                     key={e}
                     onClick={() => handleEmojiSelect(e)}
                     aria-label={`React ${e}`}
@@ -133,7 +166,7 @@ export default function ChatBubble({
                 ))}
               </div>
             )}
-            <button className="block w-full text-left px-2 py-1 hover:bg-gray-100 dark:hover:bg-zinc-700 flex items-center gap-2" onClick={handleCopy} aria-label="Copy message">
+            <button role="menuitem" className="block w-full text-left px-2 py-1 hover:bg-gray-100 dark:hover:bg-zinc-700 flex items-center gap-2" onClick={handleCopy} aria-label="Copy message">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-600 dark:text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
             </button>
           </div>
