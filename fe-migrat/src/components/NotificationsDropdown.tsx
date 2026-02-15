@@ -86,7 +86,7 @@ export default function NotificationsDropdown({ triggerClassName, iconClassName 
     }, [open, isDesktop])
 
     const panel = (
-        <div id="notifications-pop" role="menu" aria-labelledby="notifications-button" ref={containerRef} style={panelStyle} className={`${isDesktop ? 'bg-white dark:bg-zinc-900 border sm:rounded-md sm:border shadow-lg' : 'fixed inset-x-0 bottom-0 bg-white dark:bg-zinc-900 border-t shadow-lg rounded-t-md pb-6'} p-3 max-h-[60vh] overflow-auto`}>
+      <div id="notifications-pop" role="menu" aria-labelledby="notifications-button" ref={containerRef} style={panelStyle} className={`${isDesktop ? 'bg-white dark:bg-zinc-900 border sm:rounded-md sm:border shadow-lg' : 'fixed inset-x-0 bottom-0 bg-white dark:bg-zinc-900 border-t shadow-lg rounded-t-md pb-6 z-[10001]'} p-3 max-h-[60vh] overflow-auto`}>
           <div className="flex items-center justify-between px-2 mb-2">
             <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{t('notificationsTitle')}</div>
             <div className="flex items-center gap-2">
@@ -165,7 +165,7 @@ export default function NotificationsDropdown({ triggerClassName, iconClassName 
 
         {portalRef.current && open && createPortal(panel, portalRef.current)}
         {toastOpen && lastNotification && (
-          <div className="fixed left-1/2 bottom-6 transform -translate-x-1/2 z-[10000]">
+          <div className="fixed left-1/2 bottom-20 sm:bottom-12 transform -translate-x-1/2 z-[10002]">
             <div className="max-w-lg w-full bg-blue-600 dark:bg-sky-500 text-white rounded shadow-lg px-4 py-2 flex items-center gap-3">
               <div className="flex-1 text-sm">{t('notificationsNewMessage', { name: lastNotification.fromUsername })}</div>
               <button onClick={handleToastView} className="text-sm underline">{t('notificationsViewChat')}</button>
