@@ -9,10 +9,37 @@
 	background-color: #242424;
 	/* chat height variable (responsive override below) */
 	--chat-height: 60vh;
+
+	/* Chat theme tokens */
+	--chat-bg: rgba(255,255,255,0.02);
+	--chat-border: rgba(2,6,23,0.06);
+	--chat-radius: 10px;
+	--chat-shadow: 0 6px 18px rgba(2,6,23,0.04);
+
+	--bubble-radius: 12px;
+	--bubble-max-width: 520px;
+
+	/* Facebook-like tokens */
+	--fb-self-bg: #E7F3FF; /* light blue */
+	--fb-self-text: #052D4C;
+	--fb-other-bg: #ffffff;
+	--fb-other-text: #111827;
+	--fb-muted: #6b7280;
+	--fb-accent: #1877F2;
 	font-synthesis: none;
 	text-rendering: optimizeLegibility;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
+}
+
+/* Input / toolbar tokens */
+:root {
+  --input-bg: #f1f3f5;
+  --input-border: rgba(15,23,42,0.06);
+  --input-radius: 9999px;
+  --input-height: 44px;
+  --send-bg: var(--fb-accent);
+  --send-color: #fff;
 }
 
 html, body, #root { height: 100%; }
@@ -71,6 +98,55 @@ body {
 	padding: 0.5rem;
 }
 
+/* Message bubble styles inspired by Facebook Messenger */
+.bubble {
+	display: inline-block;
+	padding: 10px 12px;
+	border-radius: var(--bubble-radius);
+	max-width: var(--bubble-max-width);
+	word-break: break-word;
+}
+.bubble--self {
+	background: var(--fb-self-bg);
+	color: var(--fb-self-text);
+	align-self: flex-end;
+	border-bottom-right-radius: 6px;
+}
+.bubble--other {
+	background: var(--fb-other-bg);
+	color: var(--fb-other-text);
+	align-self: flex-start;
+	border-bottom-left-radius: 6px;
+	border: 1px solid rgba(15,23,42,0.04);
+}
+.msg-row {
+	display: flex;
+	gap: 8px;
+	align-items: flex-end;
+}
+.avatar-sm {
+	width: 36px;
+	height: 36px;
+	border-radius: 9999px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: 600;
+	color: white;
+	background: linear-gradient(135deg,#9CA3FF,#6366F1);
+}
+.bubble-meta {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	margin-top: 4px;
+}
+.bubble-time {
+	font-size: 11px;
+	color: var(--fb-muted);
+}
+.reactions-inline { display: inline-flex; gap: 6px; margin-top:6px }
+
 /* Hide visible scroll indicator for chat messages while keeping scroll functionality */
 .chat-messages {
 	-ms-overflow-style: none; /* IE and Edge */
@@ -80,6 +156,13 @@ body {
 
 @media (prefers-color-scheme: light) {
 	.chat-wrapper { background-color: #ffffff; border: 1px solid rgba(15,23,42,0.06); box-shadow: 0 6px 18px rgba(2,6,23,0.04) }
+
+	/* Adjust FB tokens for light */
+	:root { --fb-other-bg: #ffffff; --fb-self-bg: #E7F3FF; --fb-self-text: #052D4C; --fb-muted: #6b7280 }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root { --fb-other-bg: rgba(255,255,255,0.03); --fb-self-bg: rgba(24,119,242,0.12); --fb-self-text: #e6f2ff; --fb-muted: #9ca3af }
 }
 
 /* Header / nav tweaks for clearer active/hover states and mobile touch targets */
@@ -126,5 +209,58 @@ header nav a:hover {
   -webkit-transition: height 120ms ease;
 }
 
+.chat-input-row {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+}
+.chat-input-field {
+	background: var(--input-bg);
+	border: 1px solid var(--input-border);
+	border-radius: var(--input-radius);
+	padding: 8px 12px;
+	min-height: var(--input-height);
+	display: flex;
+	gap: 8px;
+	align-items: center;
+}
+.chat-input-area {
+	flex: 1 1 auto;
+	background: transparent;
+	border: none;
+	resize: none;
+	padding: 6px 0;
+	min-height: 36px;
+	font-size: 14px;
+}
+.send-button {
+	background: var(--send-bg);
+	color: var(--send-color);
+	padding: 8px 12px;
+	border-radius: 9999px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
 .chat-textarea::-webkit-scrollbar { height: 6px; }
 .chat-textarea::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.08); border-radius: 6px }
+
+/* subtle appear animation for messages */
+@keyframes chatFadeIn {
+	from { opacity: 0; transform: translateY(6px); }
+	to { opacity: 1; transform: translateY(0); }
+}
+
+.chat-message-appear {
+	animation: chatFadeIn 220ms ease both;
+}
+
+.chat-empty {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	color: rgba(15,23,42,0.6);
+	font-size: 0.95rem;
+}

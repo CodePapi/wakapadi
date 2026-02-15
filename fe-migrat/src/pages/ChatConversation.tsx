@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
 import { safeStorage } from '../lib/storage'
@@ -16,6 +17,10 @@ export default function ChatConversation() {
   const [otherTyping, setOtherTyping] = useState(false)
   const [profileModalOpen, setProfileModalOpen] = useState(false)
   const [profileData, setProfileData] = useState<any>(null)
+  const [showInputEmojiPicker, setShowInputEmojiPicker] = useState(false)
+  const emojiBtnRef = useRef<HTMLButtonElement | null>(null)
+  const [pickerPos, setPickerPos] = useState<{ top: number; left: number } | null>(null)
+  const pickerRef = useRef<HTMLDivElement | null>(null)
   const socketRef = useRef<any>(null)
   const messagesContainerRef = useRef<HTMLDivElement | null>(null)
   const inputRef = useRef<HTMLTextAreaElement | null>(null)
@@ -292,6 +297,36 @@ export default function ChatConversation() {
     }, 1400)
   }
 
+  // position emoji picker relative to emoji button and close on outside click
+  useEffect(() => {
+    if (!showInputEmojiPicker) {
+      setPickerPos(null)
+      return
+    }
+    try {
+      const btn = emojiBtnRef.current
+      if (!btn) return
+      const r = btn.getBoundingClientRect()
+      const preferredLeft = Math.max(8, r.left + window.scrollX)
+      const preferredTop = r.bottom + window.scrollY + 6
+      // clamp within viewport
+      const maxLeft = Math.max(8, window.innerWidth - 240)
+      const left = Math.min(preferredLeft, maxLeft)
+      setPickerPos({ top: preferredTop, left })
+    } catch (e) {}
+
+    const onDoc = (ev: MouseEvent) => {
+      try {
+        const target = ev.target as Node
+        if (pickerRef.current && pickerRef.current.contains(target)) return
+        if (emojiBtnRef.current && emojiBtnRef.current.contains(target)) return
+        setShowInputEmojiPicker(false)
+      } catch (e) {}
+    }
+    document.addEventListener('mousedown', onDoc)
+    return () => document.removeEventListener('mousedown', onDoc)
+  }, [showInputEmojiPicker])
+
   if (!userId) return <div>Invalid conversation</div>
   if (loading) return <div>Loading messages…</div>
 
@@ -300,79 +335,136 @@ export default function ChatConversation() {
     <section className="container mx-auto px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-semibold">Chat</h2>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-zinc-700 flex items-center justify-center text-lg font-semibold">{(otherUserMeta?.username||otherUserMeta?.name||'T').charAt(0).toUpperCase()}</div>
+            <div>
+              <div className="font-semibold text-lg">{otherUserMeta?.username || otherUserMeta?.name || 'Chat'}</div>
+              <div className="text-xs text-gray-500">{otherTyping ? 'Typing…' : otherUserMeta?.status || ''}</div>
+            </div>
+          </div>
           <button onClick={() => navigate(-1)} className="text-sm text-blue-600">Back</button>
         </div>
 
         <div className="mt-4 chat-wrapper">
           <div ref={messagesContainerRef} className="chat-messages space-y-2">
-          {messages.map((m) => (
-            <ChatBubble
-              key={m._id || m.tempId}
-              message={m.message}
-              fromSelf={!!m.fromSelf}
-              username={m.fromUserName || otherUserMeta?.username || otherUserMeta?.name}
-              createdAt={m.createdAt}
-              status={m.status}
-              reactions={m.reactions}
-              pendingReactionEmoji={pendingReactionsRef.current.get(`${m._id || m.tempId}:${safeStorage.getItem('userId')}`)?.emoji}
-              onReact={(emoji: string) => {
-                try {
-                  const me = safeStorage.getItem('userId')
-                  if (!me) return
-                  const messageId = m._id || m.tempId
-
-                  // optimistic UI: toggle/remove existing reaction from this user
-                  setMessages((prev) =>
-                    prev.map((msg) => {
-                      if ((msg._id || msg.tempId) !== messageId) return msg
-                      const existing = Array.isArray(msg.reactions) ? [...msg.reactions] : []
-                      const myIdx = existing.findIndex((r: any) => r.fromUserId === me)
-                      const hadSame = myIdx > -1 && existing[myIdx].emoji === emoji
-                      if (myIdx > -1) existing.splice(myIdx, 1)
-                      if (!hadSame) existing.push({ emoji, fromUserId: me })
-                      return { ...msg, reactions: existing }
-                    })
-                  )
-
-                      if (socketRef.current && messageId) {
-                    // emit in the shape the backend expects: `messageId` + `emoji` + `toUserId`
-                    socketRef.current.emit('message:reaction', { messageId, emoji, toUserId: userId })
-                    try {
-                      const key = `${messageId}:${me}`
-                      const timer = window.setTimeout(() => {
-                        // timeout: consider reaction failed -> revert optimistic change and notify
-                        setMessages((prev) => prev.map((msg) => {
-                          if ((msg._id || msg.tempId) !== messageId) return msg
-                          const existing = Array.isArray(msg.reactions) ? msg.reactions.filter((r: any) => r.fromUserId !== me || r.emoji !== emoji) : []
-                          return { ...msg, reactions: existing }
-                        }))
-                        try { window.dispatchEvent(new CustomEvent('wakapadi:toast', { detail: { text: 'Failed to send reaction' } })) } catch (e) {}
-                        pendingReactionsRef.current.delete(key)
-                      }, 8000)
-                      pendingReactionsRef.current.set(key, { timer, emoji, fromUserId: me })
-                    } catch (e) {}
+            {messages.length === 0 ? (
+              <div className="chat-empty">No messages yet — say hello 👋</div>
+            ) : (
+              (() => {
+                const nodes: any[] = []
+                let lastDateKey = ''
+                for (let i = 0; i < messages.length; i++) {
+                  const m = messages[i]
+                  const d = new Date(m.createdAt)
+                  const dateKey = d.toDateString()
+                  if (dateKey !== lastDateKey) {
+                    lastDateKey = dateKey
+                    nodes.push(
+                      <div key={`sep-${dateKey}`} className="text-center text-xs text-gray-400 my-2">{d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</div>
+                    )
                   }
-                } catch (e) {}
-              }}
-              onCopy={() => { try { alert('Copied') } catch {} }}
-              onDelete={() => {
-                try {
-                  // optimistic remove
-                  setMessages((prev) => prev.filter((x) => x._id !== m._id && x._id !== m.tempId))
-                  if (socketRef.current && m._id) socketRef.current.emit('message:delete', { messageId: m._id })
-                } catch (e) {}
-              }}
-              onShowProfile={() => handleShowProfile(m.fromUserId || m.from || m.fromId || m.from_id)}
-            />
-          ))}
-        </div>
+                  const next = messages[i + 1]
+                  const showAvatar = !m.fromSelf && (!next || next.fromUserId !== m.fromUserId)
+                  const avatarLetter = (m.fromUserName || otherUserMeta?.username || otherUserMeta?.name || 'T').charAt(0).toUpperCase()
+                  nodes.push(
+                      <ChatBubble
+                        key={m._id || m.tempId}
+                        message={m.message}
+                        fromSelf={!!m.fromSelf}
+                        username={m.fromUserName || otherUserMeta?.username || otherUserMeta?.name}
+                        avatarLetter={avatarLetter}
+                        showAvatar={showAvatar}
+                        createdAt={m.createdAt}
+                        status={m.status}
+                        reactions={m.reactions}
+                        pendingReactionEmoji={pendingReactionsRef.current.get(`${m._id || m.tempId}:${safeStorage.getItem('userId')}`)?.emoji}
+                        onReact={(emoji: string) => {
+                        try {
+                          const me = safeStorage.getItem('userId')
+                          if (!me) return
+                          const messageId = m._id || m.tempId
+
+                          // optimistic UI: toggle/remove existing reaction from this user
+                          setMessages((prev) =>
+                            prev.map((msg) => {
+                              if ((msg._id || msg.tempId) !== messageId) return msg
+                              const existing = Array.isArray(msg.reactions) ? [...msg.reactions] : []
+                              const myIdx = existing.findIndex((r: any) => r.fromUserId === me)
+                              const hadSame = myIdx > -1 && existing[myIdx].emoji === emoji
+                              if (myIdx > -1) existing.splice(myIdx, 1)
+                              if (!hadSame) existing.push({ emoji, fromUserId: me })
+                              return { ...msg, reactions: existing }
+                            })
+                          )
+
+                          if (socketRef.current && messageId) {
+                            socketRef.current.emit('message:reaction', { messageId, emoji, toUserId: userId })
+                            try {
+                              const key = `${messageId}:${me}`
+                              const timer = window.setTimeout(() => {
+                                setMessages((prev) => prev.map((msg) => {
+                                  if ((msg._id || msg.tempId) !== messageId) return msg
+                                  const existing = Array.isArray(msg.reactions) ? msg.reactions.filter((r: any) => r.fromUserId !== me || r.emoji !== emoji) : []
+                                  return { ...msg, reactions: existing }
+                                }))
+                                try { window.dispatchEvent(new CustomEvent('wakapadi:toast', { detail: { text: 'Failed to send reaction' } })) } catch (e) {}
+                                pendingReactionsRef.current.delete(key)
+                              }, 8000)
+                              pendingReactionsRef.current.set(key, { timer, emoji, fromUserId: me })
+                            } catch (e) {}
+                          }
+                        } catch (e) {}
+                      }}
+                      onCopy={() => { try { alert('Copied') } catch {} }}
+                      onDelete={() => {
+                        try {
+                          setMessages((prev) => prev.filter((x) => x._id !== m._id && x._id !== m.tempId))
+                          if (socketRef.current && m._id) socketRef.current.emit('message:delete', { messageId: m._id })
+                        } catch (e) {}
+                      }}
+                      onShowProfile={() => handleShowProfile(m.fromUserId || m.from || m.fromId || m.from_id)}
+                    />
+                  )
+                }
+                return nodes
+              })()
+            )}
+          </div>
 
         <div className="text-sm text-gray-500">{otherTyping ? 'Typing…' : ''}</div>
 
         <div className="mt-4 flex gap-2 items-stretch">
           <textarea ref={inputRef} value={text} onChange={(e) => handleChange(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }} placeholder="Write a message" rows={2} className="chat-textarea flex-1 h-full px-3 py-2 border rounded resize-none" />
-          <button onClick={send} className="h-full px-4 bg-blue-50 dark:bg-blue-600 text-black dark:text-gray-100 rounded border border-blue-600 hover:bg-blue-100 dark:hover:bg-blue-700 hover:border-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 relative z-20 shadow-sm hover:shadow-md transition-colors duration-150">Send</button>
+
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2">
+              <button ref={emojiBtnRef} aria-label="Insert emoji" title="Insert emoji" onClick={() => setShowInputEmojiPicker((s) => !s)} className="h-9 w-9 flex items-center justify-center rounded bg-white dark:bg-zinc-700 border border-gray-200 hover:bg-gray-50 dark:hover:bg-zinc-600 text-lg">
+                😄
+              </button>
+            </div>
+
+            <button onClick={send} className="h-full px-4 py-2 flex items-center justify-center bg-blue-50 dark:bg-blue-600 text-black dark:text-gray-100 rounded border border-blue-600 hover:bg-blue-100 dark:hover:bg-blue-700 hover:border-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 relative z-20 shadow-sm hover:shadow-md transition-colors duration-150">Send</button>
+          </div>
+
+          {showInputEmojiPicker && pickerPos && createPortal(
+            <div ref={pickerRef} style={{ position: 'absolute', top: pickerPos.top, left: pickerPos.left }} className="z-50 p-2 bg-white dark:bg-zinc-800 border rounded shadow-md grid grid-cols-4 gap-2">
+              {['😀','👍','❤️','🙂','🎉','😮','😢','🔥'].map((e) => (
+                <button key={e} onClick={() => {
+                  try {
+                    const el = inputRef.current
+                    if (!el) return
+                    const start = el.selectionStart ?? el.value.length
+                    const end = el.selectionEnd ?? start
+                    const next = el.value.slice(0, start) + e + el.value.slice(end)
+                    setText(next)
+                    requestAnimationFrame(() => {
+                      try { const pos = start + e.length; el.selectionStart = el.selectionEnd = pos; el.focus(); } catch (er) {}
+                    })
+                  } finally { setShowInputEmojiPicker(false) }
+                }} aria-label={`Insert ${e}`} className="p-1 text-2xl">{e}</button>
+              ))}
+            </div>
+          , document.body)}
         </div>
       </div>
       </div>
