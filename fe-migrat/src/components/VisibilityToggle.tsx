@@ -38,6 +38,8 @@ export default function VisibilityToggle() {
   }
 
   return (
+    <>
+    {safeStorage.getItem('userId')  && 
     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 bg-white p-4 rounded-lg border">
       <div>
         <div className="text-sm font-semibold text-gray-900">{t('visibilityTitle') || t('toggleVisibility')}</div>
@@ -55,6 +57,8 @@ export default function VisibilityToggle() {
         {loading && <span className="ml-2 text-xs text-gray-500">{t('saving') || 'Saving...'}</span>}
         {error && <span className="ml-2 text-xs text-red-600">{error}</span>}
       </div>
-    </div>
+    </div>}
+   
+    </>
   )
 }
