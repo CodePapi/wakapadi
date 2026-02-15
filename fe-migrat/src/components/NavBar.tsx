@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { useEffect, useState, type ReactNode } from 'react';
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import NotificationsDropdown from './NotificationsDropdown';
 import LanguageSwitcher from './LanguageSwitcher';
 // LocaleStatus and VisibilityIndicator removed from header; imports cleaned up
@@ -70,7 +70,7 @@ export default function NavBar() {
   }: {
     to: string;
     label: string;
-    icon?: React.ReactNode;
+    icon?: ReactNode;
   }) => (
     <NavLink
       to={to}
@@ -327,6 +327,19 @@ export function MobileBottomNav({
   const itemSizeClass = inline ? 'w-7 h-7' : 'w-8 h-8';
 
   const navigate = useNavigate();
+  const location = useLocation();
+  const path = location?.pathname || '';
+
+  const activeMatch = (p: string) => {
+    if (p === '/') return path === '/'
+    return path === p || path.startsWith(p + '/')
+  }
+
+  const homeActive = activeMatch('/');
+  const whoisActive = activeMatch('/whois');
+  const toursActive = activeMatch('/tours');
+  const chatActive = activeMatch('/chat');
+  const profileActive = activeMatch('/profile');
 
   const handleLogin = () => {
     try {
@@ -353,24 +366,24 @@ export function MobileBottomNav({
       <Link
         to="/"
         aria-label="Home"
-        className={`${itemSizeClass} flex items-center justify-center rounded hover:bg-gray-100`}
+        className={`${itemSizeClass} flex items-center justify-center rounded hover:bg-gray-100 ${homeActive ? 'bg-blue-50' : ''}`}
       >
-        <SvgHome size={iconSize} />
+        <SvgHome size={iconSize} className={homeActive ? 'text-blue-600' : 'text-gray-700'} />
       </Link>
 
       <Link
         to="/whois"
         aria-label="Nearby"
-        className={`${itemSizeClass} flex items-center justify-center rounded hover:bg-gray-100`}
+        className={`${itemSizeClass} flex items-center justify-center rounded hover:bg-gray-100 ${whoisActive ? 'bg-blue-50' : ''}`}
       >
-        <SvgPeople size={iconSize} />
+        <SvgPeople size={iconSize} className={whoisActive ? 'text-blue-600' : 'text-gray-700'} />
       </Link>
       <Link
         to="/tours"
         aria-label="Tours"
-        className={`${itemSizeClass} flex items-center justify-center rounded hover:bg-gray-100`}
+        className={`${itemSizeClass} flex items-center justify-center rounded hover:bg-gray-100 ${toursActive ? 'bg-blue-50' : ''}`}
       >
-        <SvgMap size={iconSize} />
+        <SvgMap size={iconSize} className={toursActive ? 'text-blue-600' : 'text-gray-700'} />
       </Link>
 
       {isLoggedIn ? (
@@ -378,21 +391,21 @@ export function MobileBottomNav({
           <div
             className={`${itemSizeClass} flex items-center justify-center rounded hover:bg-gray-100`}
           >
-            <NotificationsDropdown />
+            <NotificationsDropdown triggerClassName="p-0 relative" iconClassName="text-gray-700" />
           </div>
           <Link
             to="/chat"
             aria-label="Chat"
-            className={`${itemSizeClass} flex items-center justify-center rounded hover:bg-gray-100`}
+            className={`${itemSizeClass} flex items-center justify-center rounded hover:bg-gray-100 ${chatActive ? 'bg-blue-50' : ''}`}
           >
-            <SvgChat size={iconSize} />
+            <SvgChat size={iconSize} className={chatActive ? 'text-blue-600' : 'text-gray-700'} />
           </Link>
           <Link
             to="/profile"
             aria-label="Profile"
-            className={`${itemSizeClass} flex items-center justify-center rounded hover:bg-gray-100`}
+            className={`${itemSizeClass} flex items-center justify-center rounded hover:bg-gray-100 ${profileActive ? 'bg-blue-50' : ''}`}
           >
-            <SvgAvatar size={iconSize} />
+            <SvgAvatar size={iconSize} className={profileActive ? 'text-blue-600' : 'text-gray-700'} />
           </Link>
 
           <button
@@ -444,7 +457,7 @@ export function MobileBottomNav({
   );
 }
 
-function SvgPeople({ size = 18 }: { size?: number }) {
+function SvgPeople({ size = 18, className = 'text-gray-700' }: { size?: number; className?: string }) {
   return (
     <svg
       width={size}
@@ -452,7 +465,7 @@ function SvgPeople({ size = 18 }: { size?: number }) {
       viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      className="text-gray-700"
+      className={className}
     >
       <path
         d="M16 11c1.657 0 3-1.567 3-3.5S17.657 4 16 4s-3 1.567-3 3.5S14.343 11 16 11zM8 11c1.657 0 3-1.567 3-3.5S9.657 4 8 4 5 5.567 5 7.5 6.343 11 8 11zM4 20c0-2.209 3.134-4 7-4s7 1.791 7 4v1H4v-1z"
@@ -464,7 +477,7 @@ function SvgPeople({ size = 18 }: { size?: number }) {
   );
 }
 
-function SvgMap({ size = 18 }: { size?: number }) {
+function SvgMap({ size = 18, className = 'text-gray-700' }: { size?: number; className?: string }) {
   return (
     <svg
       width={size}
@@ -472,7 +485,7 @@ function SvgMap({ size = 18 }: { size?: number }) {
       viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      className="text-gray-700"
+      className={className}
     >
       <path
         d="M20.5 3.5l-5 2-6-2-5 2v13l5-2 6 2 5-2v-13z"
@@ -484,7 +497,7 @@ function SvgMap({ size = 18 }: { size?: number }) {
   );
 }
 
-function SvgBookmark({ size = 18 }: { size?: number }) {
+function SvgBookmark({ size = 18, className = 'text-gray-700' }: { size?: number; className?: string }) {
   return (
     <svg
       width={size}
@@ -492,7 +505,7 @@ function SvgBookmark({ size = 18 }: { size?: number }) {
       viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      className="text-gray-700"
+      className={className}
     >
       <path
         d="M6 2v18l6-4 6 4V2z"
@@ -504,7 +517,7 @@ function SvgBookmark({ size = 18 }: { size?: number }) {
   );
 }
 
-function SvgContact({ size = 18 }: { size?: number }) {
+function SvgContact({ size = 18, className = 'text-gray-700' }: { size?: number; className?: string }) {
   return (
     <svg
       width={size}
@@ -512,7 +525,7 @@ function SvgContact({ size = 18 }: { size?: number }) {
       viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      className="text-gray-700"
+      className={className}
     >
       <path
         d="M21 8V7l-3 2-2-1-4 3-4-3-2 1-3-2v1c0 6 9 12 12 12s12-6 12-12z"
@@ -524,7 +537,7 @@ function SvgContact({ size = 18 }: { size?: number }) {
   );
 }
 
-function SvgChat({ size = 18 }: { size?: number }) {
+function SvgChat({ size = 18, className = 'text-gray-700' }: { size?: number; className?: string }) {
   return (
     <svg
       width={size}
@@ -532,7 +545,7 @@ function SvgChat({ size = 18 }: { size?: number }) {
       viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      className="text-gray-700"
+      className={className}
     >
       <path
         d="M21 15a2 2 0 0 1-2 2H8l-5 3V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
@@ -544,7 +557,7 @@ function SvgChat({ size = 18 }: { size?: number }) {
   );
 }
 
-function SvgHome({ size = 18 }: { size?: number }) {
+function SvgHome({ size = 18, className = 'text-gray-700' }: { size?: number; className?: string }) {
   return (
     <svg
       width={size}
@@ -552,7 +565,7 @@ function SvgHome({ size = 18 }: { size?: number }) {
       viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      className="text-gray-700"
+      className={className}
     >
       <path
         d="M3 10.5L12 4l9 6.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.5z"
@@ -564,7 +577,7 @@ function SvgHome({ size = 18 }: { size?: number }) {
   );
 }
 
-function SvgAvatar({ size = 18 }: { size?: number }) {
+function SvgAvatar({ size = 18, className = 'text-gray-700' }: { size?: number; className?: string }) {
   return (
     <svg
       width={size}
@@ -572,7 +585,7 @@ function SvgAvatar({ size = 18 }: { size?: number }) {
       viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      className="text-gray-700"
+      className={className}
     >
       <path
         d="M12 12c2.761 0 5-2.239 5-5s-2.239-5-5-5-5 2.239-5 5 2.239 5 5 5zM4 20c0-4 4-7 8-7s8 3 8 7"
