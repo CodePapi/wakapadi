@@ -1,0 +1,902 @@
+[
+	{
+		"userId": "seed-1",
+		"username": "seeduser1",
+		"name": "Seed User 1",
+		"avatar": "https://i.pravatar.cc/40?u=seed-1",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-2",
+		"username": "seeduser2",
+		"name": "Seed User 2",
+		"avatar": "https://i.pravatar.cc/40?u=seed-2",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-3",
+		"username": "seeduser3",
+		"name": "Seed User 3",
+		"avatar": "https://i.pravatar.cc/40?u=seed-3",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-4",
+		"username": "seeduser4",
+		"name": "Seed User 4",
+		"avatar": "https://i.pravatar.cc/40?u=seed-4",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-5",
+		"username": "seeduser5",
+		"name": "Seed User 5",
+		"avatar": "https://i.pravatar.cc/40?u=seed-5",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-6",
+		"username": "seeduser6",
+		"name": "Seed User 6",
+		"avatar": "https://i.pravatar.cc/40?u=seed-6",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-7",
+		"username": "seeduser7",
+		"name": "Seed User 7",
+		"avatar": "https://i.pravatar.cc/40?u=seed-7",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-8",
+		"username": "seeduser8",
+		"name": "Seed User 8",
+		"avatar": "https://i.pravatar.cc/40?u=seed-8",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-9",
+		"username": "seeduser9",
+		"name": "Seed User 9",
+		"avatar": "https://i.pravatar.cc/40?u=seed-9",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-10",
+		"username": "seeduser10",
+		"name": "Seed User 10",
+		"avatar": "https://i.pravatar.cc/40?u=seed-10",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-11",
+		"username": "seeduser11",
+		"name": "Seed User 11",
+		"avatar": "https://i.pravatar.cc/40?u=seed-11",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-12",
+		"username": "seeduser12",
+		"name": "Seed User 12",
+		"avatar": "https://i.pravatar.cc/40?u=seed-12",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-13",
+		"username": "seeduser13",
+		"name": "Seed User 13",
+		"avatar": "https://i.pravatar.cc/40?u=seed-13",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-14",
+		"username": "seeduser14",
+		"name": "Seed User 14",
+		"avatar": "https://i.pravatar.cc/40?u=seed-14",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-15",
+		"username": "seeduser15",
+		"name": "Seed User 15",
+		"avatar": "https://i.pravatar.cc/40?u=seed-15",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-16",
+		"username": "seeduser16",
+		"name": "Seed User 16",
+		"avatar": "https://i.pravatar.cc/40?u=seed-16",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-17",
+		"username": "seeduser17",
+		"name": "Seed User 17",
+		"avatar": "https://i.pravatar.cc/40?u=seed-17",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-18",
+		"username": "seeduser18",
+		"name": "Seed User 18",
+		"avatar": "https://i.pravatar.cc/40?u=seed-18",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-19",
+		"username": "seeduser19",
+		"name": "Seed User 19",
+		"avatar": "https://i.pravatar.cc/40?u=seed-19",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-20",
+		"username": "seeduser20",
+		"name": "Seed User 20",
+		"avatar": "https://i.pravatar.cc/40?u=seed-20",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-21",
+		"username": "seeduser21",
+		"name": "Seed User 21",
+		"avatar": "https://i.pravatar.cc/40?u=seed-21",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-22",
+		"username": "seeduser22",
+		"name": "Seed User 22",
+		"avatar": "https://i.pravatar.cc/40?u=seed-22",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-23",
+		"username": "seeduser23",
+		"name": "Seed User 23",
+		"avatar": "https://i.pravatar.cc/40?u=seed-23",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-24",
+		"username": "seeduser24",
+		"name": "Seed User 24",
+		"avatar": "https://i.pravatar.cc/40?u=seed-24",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-25",
+		"username": "seeduser25",
+		"name": "Seed User 25",
+		"avatar": "https://i.pravatar.cc/40?u=seed-25",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-26",
+		"username": "seeduser26",
+		"name": "Seed User 26",
+		"avatar": "https://i.pravatar.cc/40?u=seed-26",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-27",
+		"username": "seeduser27",
+		"name": "Seed User 27",
+		"avatar": "https://i.pravatar.cc/40?u=seed-27",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-28",
+		"username": "seeduser28",
+		"name": "Seed User 28",
+		"avatar": "https://i.pravatar.cc/40?u=seed-28",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-29",
+		"username": "seeduser29",
+		"name": "Seed User 29",
+		"avatar": "https://i.pravatar.cc/40?u=seed-29",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-30",
+		"username": "seeduser30",
+		"name": "Seed User 30",
+		"avatar": "https://i.pravatar.cc/40?u=seed-30",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-31",
+		"username": "seeduser31",
+		"name": "Seed User 31",
+		"avatar": "https://i.pravatar.cc/40?u=seed-31",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-32",
+		"username": "seeduser32",
+		"name": "Seed User 32",
+		"avatar": "https://i.pravatar.cc/40?u=seed-32",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-33",
+		"username": "seeduser33",
+		"name": "Seed User 33",
+		"avatar": "https://i.pravatar.cc/40?u=seed-33",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-34",
+		"username": "seeduser34",
+		"name": "Seed User 34",
+		"avatar": "https://i.pravatar.cc/40?u=seed-34",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-35",
+		"username": "seeduser35",
+		"name": "Seed User 35",
+		"avatar": "https://i.pravatar.cc/40?u=seed-35",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-36",
+		"username": "seeduser36",
+		"name": "Seed User 36",
+		"avatar": "https://i.pravatar.cc/40?u=seed-36",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-37",
+		"username": "seeduser37",
+		"name": "Seed User 37",
+		"avatar": "https://i.pravatar.cc/40?u=seed-37",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-38",
+		"username": "seeduser38",
+		"name": "Seed User 38",
+		"avatar": "https://i.pravatar.cc/40?u=seed-38",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-39",
+		"username": "seeduser39",
+		"name": "Seed User 39",
+		"avatar": "https://i.pravatar.cc/40?u=seed-39",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-40",
+		"username": "seeduser40",
+		"name": "Seed User 40",
+		"avatar": "https://i.pravatar.cc/40?u=seed-40",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-41",
+		"username": "seeduser41",
+		"name": "Seed User 41",
+		"avatar": "https://i.pravatar.cc/40?u=seed-41",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-42",
+		"username": "seeduser42",
+		"name": "Seed User 42",
+		"avatar": "https://i.pravatar.cc/40?u=seed-42",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-43",
+		"username": "seeduser43",
+		"name": "Seed User 43",
+		"avatar": "https://i.pravatar.cc/40?u=seed-43",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-44",
+		"username": "seeduser44",
+		"name": "Seed User 44",
+		"avatar": "https://i.pravatar.cc/40?u=seed-44",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-45",
+		"username": "seeduser45",
+		"name": "Seed User 45",
+		"avatar": "https://i.pravatar.cc/40?u=seed-45",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-46",
+		"username": "seeduser46",
+		"name": "Seed User 46",
+		"avatar": "https://i.pravatar.cc/40?u=seed-46",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-47",
+		"username": "seeduser47",
+		"name": "Seed User 47",
+		"avatar": "https://i.pravatar.cc/40?u=seed-47",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-48",
+		"username": "seeduser48",
+		"name": "Seed User 48",
+		"avatar": "https://i.pravatar.cc/40?u=seed-48",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-49",
+		"username": "seeduser49",
+		"name": "Seed User 49",
+		"avatar": "https://i.pravatar.cc/40?u=seed-49",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-50",
+		"username": "seeduser50",
+		"name": "Seed User 50",
+		"avatar": "https://i.pravatar.cc/40?u=seed-50",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-51",
+		"username": "seeduser51",
+		"name": "Seed User 51",
+		"avatar": "https://i.pravatar.cc/40?u=seed-51",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-52",
+		"username": "seeduser52",
+		"name": "Seed User 52",
+		"avatar": "https://i.pravatar.cc/40?u=seed-52",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-53",
+		"username": "seeduser53",
+		"name": "Seed User 53",
+		"avatar": "https://i.pravatar.cc/40?u=seed-53",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-54",
+		"username": "seeduser54",
+		"name": "Seed User 54",
+		"avatar": "https://i.pravatar.cc/40?u=seed-54",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-55",
+		"username": "seeduser55",
+		"name": "Seed User 55",
+		"avatar": "https://i.pravatar.cc/40?u=seed-55",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-56",
+		"username": "seeduser56",
+		"name": "Seed User 56",
+		"avatar": "https://i.pravatar.cc/40?u=seed-56",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-57",
+		"username": "seeduser57",
+		"name": "Seed User 57",
+		"avatar": "https://i.pravatar.cc/40?u=seed-57",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-58",
+		"username": "seeduser58",
+		"name": "Seed User 58",
+		"avatar": "https://i.pravatar.cc/40?u=seed-58",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-59",
+		"username": "seeduser59",
+		"name": "Seed User 59",
+		"avatar": "https://i.pravatar.cc/40?u=seed-59",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-60",
+		"username": "seeduser60",
+		"name": "Seed User 60",
+		"avatar": "https://i.pravatar.cc/40?u=seed-60",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-61",
+		"username": "seeduser61",
+		"name": "Seed User 61",
+		"avatar": "https://i.pravatar.cc/40?u=seed-61",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-62",
+		"username": "seeduser62",
+		"name": "Seed User 62",
+		"avatar": "https://i.pravatar.cc/40?u=seed-62",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-63",
+		"username": "seeduser63",
+		"name": "Seed User 63",
+		"avatar": "https://i.pravatar.cc/40?u=seed-63",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-64",
+		"username": "seeduser64",
+		"name": "Seed User 64",
+		"avatar": "https://i.pravatar.cc/40?u=seed-64",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-65",
+		"username": "seeduser65",
+		"name": "Seed User 65",
+		"avatar": "https://i.pravatar.cc/40?u=seed-65",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-66",
+		"username": "seeduser66",
+		"name": "Seed User 66",
+		"avatar": "https://i.pravatar.cc/40?u=seed-66",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-67",
+		"username": "seeduser67",
+		"name": "Seed User 67",
+		"avatar": "https://i.pravatar.cc/40?u=seed-67",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-68",
+		"username": "seeduser68",
+		"name": "Seed User 68",
+		"avatar": "https://i.pravatar.cc/40?u=seed-68",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-69",
+		"username": "seeduser69",
+		"name": "Seed User 69",
+		"avatar": "https://i.pravatar.cc/40?u=seed-69",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-70",
+		"username": "seeduser70",
+		"name": "Seed User 70",
+		"avatar": "https://i.pravatar.cc/40?u=seed-70",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-71",
+		"username": "seeduser71",
+		"name": "Seed User 71",
+		"avatar": "https://i.pravatar.cc/40?u=seed-71",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-72",
+		"username": "seeduser72",
+		"name": "Seed User 72",
+		"avatar": "https://i.pravatar.cc/40?u=seed-72",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-73",
+		"username": "seeduser73",
+		"name": "Seed User 73",
+		"avatar": "https://i.pravatar.cc/40?u=seed-73",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-74",
+		"username": "seeduser74",
+		"name": "Seed User 74",
+		"avatar": "https://i.pravatar.cc/40?u=seed-74",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-75",
+		"username": "seeduser75",
+		"name": "Seed User 75",
+		"avatar": "https://i.pravatar.cc/40?u=seed-75",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-76",
+		"username": "seeduser76",
+		"name": "Seed User 76",
+		"avatar": "https://i.pravatar.cc/40?u=seed-76",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-77",
+		"username": "seeduser77",
+		"name": "Seed User 77",
+		"avatar": "https://i.pravatar.cc/40?u=seed-77",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-78",
+		"username": "seeduser78",
+		"name": "Seed User 78",
+		"avatar": "https://i.pravatar.cc/40?u=seed-78",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-79",
+		"username": "seeduser79",
+		"name": "Seed User 79",
+		"avatar": "https://i.pravatar.cc/40?u=seed-79",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-80",
+		"username": "seeduser80",
+		"name": "Seed User 80",
+		"avatar": "https://i.pravatar.cc/40?u=seed-80",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-81",
+		"username": "seeduser81",
+		"name": "Seed User 81",
+		"avatar": "https://i.pravatar.cc/40?u=seed-81",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-82",
+		"username": "seeduser82",
+		"name": "Seed User 82",
+		"avatar": "https://i.pravatar.cc/40?u=seed-82",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-83",
+		"username": "seeduser83",
+		"name": "Seed User 83",
+		"avatar": "https://i.pravatar.cc/40?u=seed-83",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-84",
+		"username": "seeduser84",
+		"name": "Seed User 84",
+		"avatar": "https://i.pravatar.cc/40?u=seed-84",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-85",
+		"username": "seeduser85",
+		"name": "Seed User 85",
+		"avatar": "https://i.pravatar.cc/40?u=seed-85",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-86",
+		"username": "seeduser86",
+		"name": "Seed User 86",
+		"avatar": "https://i.pravatar.cc/40?u=seed-86",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-87",
+		"username": "seeduser87",
+		"name": "Seed User 87",
+		"avatar": "https://i.pravatar.cc/40?u=seed-87",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-88",
+		"username": "seeduser88",
+		"name": "Seed User 88",
+		"avatar": "https://i.pravatar.cc/40?u=seed-88",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-89",
+		"username": "seeduser89",
+		"name": "Seed User 89",
+		"avatar": "https://i.pravatar.cc/40?u=seed-89",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-90",
+		"username": "seeduser90",
+		"name": "Seed User 90",
+		"avatar": "https://i.pravatar.cc/40?u=seed-90",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-91",
+		"username": "seeduser91",
+		"name": "Seed User 91",
+		"avatar": "https://i.pravatar.cc/40?u=seed-91",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-92",
+		"username": "seeduser92",
+		"name": "Seed User 92",
+		"avatar": "https://i.pravatar.cc/40?u=seed-92",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-93",
+		"username": "seeduser93",
+		"name": "Seed User 93",
+		"avatar": "https://i.pravatar.cc/40?u=seed-93",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-94",
+		"username": "seeduser94",
+		"name": "Seed User 94",
+		"avatar": "https://i.pravatar.cc/40?u=seed-94",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-95",
+		"username": "seeduser95",
+		"name": "Seed User 95",
+		"avatar": "https://i.pravatar.cc/40?u=seed-95",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-96",
+		"username": "seeduser96",
+		"name": "Seed User 96",
+		"avatar": "https://i.pravatar.cc/40?u=seed-96",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-97",
+		"username": "seeduser97",
+		"name": "Seed User 97",
+		"avatar": "https://i.pravatar.cc/40?u=seed-97",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-98",
+		"username": "seeduser98",
+		"name": "Seed User 98",
+		"avatar": "https://i.pravatar.cc/40?u=seed-98",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-99",
+		"username": "seeduser99",
+		"name": "Seed User 99",
+		"avatar": "https://i.pravatar.cc/40?u=seed-99",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	},
+	{
+		"userId": "seed-100",
+		"username": "seeduser100",
+		"name": "Seed User 100",
+		"avatar": "https://i.pravatar.cc/40?u=seed-100",
+		"bio": "This is a seeded test user.",
+		"coordinates": { "lat": 51.5074, "lng": -0.1278 },
+		"profileVisible": true
+	}
+]

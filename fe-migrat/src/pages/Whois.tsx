@@ -39,6 +39,63 @@ export default function Whois() {
       else setLoading(true)
       setError(null)
       const userId = safeStorage.getItem('userId') || ''
+      const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams('')
+      const useSeed = urlParams.get('useSeed') === '1'
+      const limit = 15
+      // when using seed data, fetch local file and paginate client-side
+      if (useSeed) {
+        try {
+          const resp = await fetch('/test/whoisSeed.json', { cache: 'no-store' })
+          const all: any[] = await resp.json()
+          // apply same filters as server: hidden, exclude self, deleted flags
+          let data = Array.isArray(all) ? all.slice() : []
+          try {
+            const raw = safeStorage.getItem('whois_hidden_v1')
+            const hidden = raw ? (JSON.parse(raw) as string[]) : []
+            if (hidden.length) data = data.filter((d: any) => {
+              const id = d.userId || d._id || d.id
+              return !hidden.includes(id)
+            })
+          } catch (e) {}
+
+          try {
+            const me = currentUserId || safeStorage.getItem('userId') || ''
+            if (me) {
+              data = data.filter((d: any) => {
+                const id = (d.userId || d._id || d.id || '').toString()
+                return id !== me
+              })
+            }
+          } catch (e) {}
+
+          try {
+            data = data.filter((d: any) => {
+              if (!d) return false
+              if (d.deleted === true) return false
+              if (d.isDeleted === true) return false
+              if (d.removed === true) return false
+              if (d.accountDeleted === true) return false
+              if (typeof d.status === 'string' && d.status.toLowerCase() === 'deleted') return false
+              return true
+            })
+          } catch (e) {}
+
+          const augmented = data.map((u: any) => {
+            if (typeof u.distanceKm === 'number') return { ...u }
+            if (!currentCoords || !u.coordinates) return { ...u, distanceKm: null }
+            const d = haversineKm(currentCoords.lat, currentCoords.lng, u.coordinates.lat, u.coordinates.lng)
+            return { ...u, distanceKm: d }
+          })
+
+          const start = (pageNum - 1) * limit
+          const pageSlice = augmented.slice(start, start + limit)
+          setUsers((prev) => (pageNum === 1 ? pageSlice : [...prev, ...pageSlice]))
+          setHasMore(start + limit < augmented.length)
+          return
+        } catch (err) {
+          console.error('Failed to load seed whois:', err)
+        }
+      }
       const latQs = currentCoords ? `&lat=${encodeURIComponent(String(currentCoords.lat))}&lon=${encodeURIComponent(String(currentCoords.lng))}` : ''
       const qs = `?city=${encodeURIComponent(targetCity)}&page=${pageNum}&limit=15${userId ? `&userId=${encodeURIComponent(userId)}` : ''}${latQs}`
       const res: any = await api.get(`/whois/nearby${qs}`, { cache: 'no-store' })

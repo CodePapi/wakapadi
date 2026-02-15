@@ -112,7 +112,7 @@ export default function NearbyUserCard({ user }: { user: User }) {
       </div>
       {!hidden && (
         <div className="flex flex-col sm:flex-col items-stretch sm:items-end gap-2 w-full sm:w-auto">
-          {user.userId&&<button onClick={async () => {
+          {(user.userId||user._id)&&<button onClick={async () => {
                 try {
                   const session = await ensureAnonymousSession()
                   const id = (user as any).userId 
