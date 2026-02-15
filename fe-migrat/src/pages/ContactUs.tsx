@@ -25,15 +25,22 @@ export default function ContactUs() {
     setStatus('sending')
     setShowMsg(null)
     try {
-      await api.post('/contact', { ...form })
-      setStatus('success')
-      setShowMsg(t('contactFormStatusSuccess'))
-      setForm({ name: '', email: '', type: 'inquiry', message: '' })
-      setTimeout(() => setShowMsg(null), 4000)
-    } catch (err) {
+      const res = await api.post('/contact', { ...form })
+      // api.request normalizes to { data, status }
+      console.info('contact submit response', res)
+      if (res && (res.status === 200 || res.status === 201)) {
+        setStatus('success')
+        setShowMsg(t('contactFormStatusSuccess'))
+        setForm({ name: '', email: '', type: 'inquiry', message: '' })
+        setTimeout(() => setShowMsg(null), 4000)
+      } else {
+        setStatus('error')
+        setShowMsg(`${t('contactFormStatusError')}: ${res?.status || 'unknown'}`)
+      }
+    } catch (err: any) {
       console.error('contact submit failed', err)
       setStatus('error')
-      setShowMsg(t('contactFormStatusError'))
+      setShowMsg(err?.message || t('contactFormStatusError'))
     }
   }
 

@@ -179,6 +179,7 @@
   "contactFormStatusError": "Échec de l'envoi",
   "contactResponseTitle": "Délai de réponse",
   "contactResponseBody": "Nous répondons généralement sous 24 à 48 heures les jours ouvrés.",
+  "contactResponseShort": "Réponse sous 24–48 heures ouvrées.",
   "contactFaqTitle": "Questions fréquentes",
   "whoisFindNearby": "Trouver à proximité",
   "whoisAllowLocationTitle": "Autoriser la localisation pour 'À proximité'",
