@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { WhoisMessageService } from '../services/whois-message.service';
 import { WhoisMessageController } from '../controllers/whois-message.controller';
@@ -13,8 +13,8 @@ import { NotificationsModule } from './notifications.module';
 
 @Module({
   imports: [
-    UserModule,
-    NotificationsModule,
+    forwardRef(() => UserModule),
+    forwardRef(() => NotificationsModule),
     MongooseModule.forFeature([
       { name: WhoisMessage.name, schema: WhoisMessageSchema },
       { name: User.name, schema: UserSchema }, // ✅ ADD THIS LINE

@@ -54,6 +54,7 @@ export class WhoisMessageController {
     );
 
     const otherUser = await this.userService.getPreferences(otherId)
+    const blockStatus = await this.userService.isBlockedBetween(currentUserId, otherId)
     return {
       otherUser,
       messages: result.messages, // These messages will include 'reactions' and populated user info
@@ -61,6 +62,7 @@ export class WhoisMessageController {
         page: result.page,
         total: result.total,
         totalPages: result.totalPages,
+        blockStatus,
       }
     };
   }

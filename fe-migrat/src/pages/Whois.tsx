@@ -6,7 +6,7 @@ import { safeStorage } from '../lib/storage'
 import { io } from 'socket.io-client'
 import { useTranslation } from '../lib/i18n'
 import { ensureAnonymousSession } from '../lib/anonymousAuth'
-import { getAnonymousHandleForId, anonymousLabel } from '../lib/anonymousNames'
+import { anonymousLabel } from '../lib/anonymousNames'
 
 const toRadians = (value: number) => (value * Math.PI) / 180
 const haversineKm = (lat1: number, lng1: number, lat2: number, lng2: number) => {

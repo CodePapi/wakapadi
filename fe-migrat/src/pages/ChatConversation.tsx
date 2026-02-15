@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { anonymousLabel, getAnonymousHandleForId } from '../lib/anonymousNames'
+import { anonymousLabel } from '../lib/anonymousNames'
 import { useTranslation } from '../lib/i18n'
 import { createPortal } from 'react-dom'
 import { useParams, useNavigate } from 'react-router-dom'
@@ -8,6 +8,7 @@ import { safeStorage } from '../lib/storage'
 import { io } from 'socket.io-client'
 import ChatBubble from '../components/ChatBubble'
 import ProfileModal from '../components/ProfileModal'
+import BlockButton from '../components/BlockButton'
 
 export default function ChatConversation() {
   const { t } = useTranslation()
@@ -20,6 +21,7 @@ export default function ChatConversation() {
   const [otherTyping, setOtherTyping] = useState(false)
   const [profileModalOpen, setProfileModalOpen] = useState(false)
   const [profileData, setProfileData] = useState<any>(null)
+  const [blockState, setBlockState] = useState<{ blockedByMe: boolean; blockedByThem: boolean; anyReported: boolean } | null>(null)
   const [announce, setAnnounce] = useState<string>('')
   const [showInputEmojiPicker, setShowInputEmojiPicker] = useState(false)
   const emojiBtnRef = useRef<HTMLButtonElement | null>(null)
@@ -42,6 +44,8 @@ export default function ChatConversation() {
         const res: any = await api.get(`/whois/chat/${encodeURIComponent(userId)}?limit=0`, { cache: 'no-store' })
         const msgs = (res.data?.messages || []).map((m: any) => ({ ...m, fromSelf: m.fromUserId === safeStorage.getItem('userId') }))
         setOtherUserMeta(res.data?.otherUser || null)
+        // read block/report status from meta if present
+        try { setBlockState(res.data?.meta?.blockStatus ?? null) } catch (e) {}
         msgs.forEach((m: any) => messagesRef.current.add(m._id))
         setMessages(msgs)
       } catch (err) {
@@ -52,8 +56,20 @@ export default function ChatConversation() {
     }
     load()
 
+    const onBlockChanged = (ev: any) => {
+      try {
+        const d = ev?.detail
+        if (!d) return
+        const uid = String(d.userId)
+        if (uid !== String(userId)) return
+        setBlockState(d.status ?? null)
+      } catch (e) {}
+    }
+    window.addEventListener('wakapadi:block:changed', onBlockChanged)
+
     const SOCKET = import.meta.env.VITE_SOCKET_URL || ''
     const socket = io(SOCKET || undefined, { path: '/socket.io', transports: ['websocket'], auth: { token: safeStorage.getItem('token') } })
+    socketRef.current = socket
     socketRef.current = socket
 
     const onNew = (msg: any) => {
@@ -131,6 +147,9 @@ export default function ChatConversation() {
       } catch (e) {}
     }
 
+    // Expose BlockButton updates: if the other side is unblocked via UI, refresh block state
+    // (BlockButton will call the users/block/status endpoint and the parent can update via onChange)
+
     const onReaction = (payload: any) => {
       if (!payload) return
       const { messageId, reaction } = payload
@@ -156,6 +175,8 @@ export default function ChatConversation() {
         }
       } catch (e) {}
     }
+
+    
 
     const onReactionError = (payload: any) => {
       if (!payload) return
@@ -209,6 +230,18 @@ export default function ChatConversation() {
     })
     socket.on('message:error', onError)
     socket.on('message:reaction', onReaction)
+    // receive block status changes from server for this user
+    socket.on('user:block:changed', (payload: any) => {
+      try {
+        if (!payload) return
+        const changedBy = String(payload?.changedBy || '')
+        const status = payload?.status ?? null
+        // if the change relates to the other user in this conversation, update
+        if (changedBy === String(userId) || changedBy === String(safeStorage.getItem('userId'))) {
+          setBlockState(status)
+        }
+      } catch (e) {}
+    })
     socket.on('connect_error', (e: any) => console.warn('socket error', e))
     socket.on('message:reaction:error', onReactionError)
 
@@ -218,7 +251,7 @@ export default function ChatConversation() {
       if (me && userId) socket.emit('joinConversation', { userId1: me, userId2: userId })
     } catch (e) {}
 
-    return () => { try { socket.disconnect() } catch (e) {} }
+    return () => { try { socket.disconnect() } catch (e) {} finally { window.removeEventListener('wakapadi:block:changed', onBlockChanged) } }
   }, [userId])
 
   // scroll to bottom when messages change
@@ -251,7 +284,11 @@ export default function ChatConversation() {
   }, [messages, userId])
 
   const send = async () => {
-    if (!text.trim() || !socketRef.current) return
+    // Prevent sending if blocked or reported
+    if ((blockState && (blockState.anyReported || blockState.blockedByMe || blockState.blockedByThem)) || !text.trim() || !socketRef.current) {
+      try { window.dispatchEvent(new CustomEvent('wakapadi:toast', { detail: { text: (blockState ? (blockState.anyReported || blockState.blockedByThem ? 'Messaging disabled' : 'You have blocked this user') : 'Cannot send message') } })) } catch {}
+      return
+    }
     const tempId = `tmp-${Date.now()}`
     const optimistic = { _id: tempId, message: text, fromSelf: true, createdAt: new Date().toISOString(), status: 'sending' }
     setMessages((prev) => [...prev, optimistic])
@@ -269,10 +306,11 @@ export default function ChatConversation() {
 
   const handleShowProfile = async (uid: string) => {
     try {
-      setProfileModalOpen(true)
       // backend exposes user preferences at /users/preferences/:id
+      setProfileData(null)
       const res: any = await api.get(`/users/preferences/${encodeURIComponent(uid)}`)
       setProfileData(res.data || null)
+      setProfileModalOpen(true)
     } catch (e) {
       setProfileData(null)
     }
@@ -374,6 +412,22 @@ export default function ChatConversation() {
               <button onClick={() => navigate(-1)} aria-label="Back" title="Back" className="p-2 rounded hover:bg-gray-100 dark:hover:bg-zinc-700"><svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 18l-6-6 6-6" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
             </div>
           </div>
+
+          {blockState && (blockState.anyReported || blockState.blockedByThem || blockState.blockedByMe) && (
+            <div className="px-3 py-2">
+              {blockState.blockedByMe ? (
+                <div className="text-sm text-gray-700 dark:text-gray-300 flex items-center justify-between bg-yellow-50 dark:bg-yellow-900 p-2 rounded">
+                  <span>{t('youBlockedUser') || 'You have blocked this user'}</span>
+                  <BlockButton userId={String(userId || otherUserMeta?.id || otherUserMeta?._id || otherUserMeta?.userId)} onChange={(s) => setBlockState(s)} />
+                </div>
+              ) : (
+                <div className="text-sm text-gray-700 dark:text-gray-300 bg-red-50 dark:bg-red-900 p-2 rounded">
+                  {blockState.anyReported ? (t('messagingDisabledReported') || 'Messaging disabled due to reports') : (t('messagingDisabledBlocked') || 'Messaging disabled')}
+                </div>
+              )}
+            </div>
+          )}
+
           <div ref={messagesContainerRef} className="chat-messages space-y-2">
             {messages.length === 0 ? (
               <div className="chat-empty">No messages yet — say hello 👋</div>
@@ -503,7 +557,7 @@ export default function ChatConversation() {
       </div>
       </div>
     </section>
-    <ProfileModal open={profileModalOpen} onClose={() => { setProfileModalOpen(false); setProfileData(null) }} profile={profileData} />
+    <ProfileModal t={t} open={profileModalOpen} onClose={() => { setProfileModalOpen(false); setProfileData(null) }} profile={profileData} />
     </>
   )
 }

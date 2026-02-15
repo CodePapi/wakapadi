@@ -4,6 +4,7 @@ import { api } from '../lib/api'
 import { useTranslation } from '../lib/i18n'
 import VisibilityIndicator from '../components/VisibilityIndicator'
 import { anonymousLabel } from '../lib/anonymousNames'
+import BlockButton from '../components/BlockButton'
 import { ensureAnonymousSession } from '../lib/anonymousAuth'
 
 export default function PeerProfile() {
@@ -13,7 +14,8 @@ export default function PeerProfile() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<any>(null)
-  const [actionLoading, setActionLoading] = useState(false)
+  
+  const [blockState, setBlockState] = useState<{ blockedByMe: boolean; blockedByThem: boolean; anyReported: boolean } | null>(null)
 
   useEffect(() => {
     if (!userId) return
@@ -84,14 +86,19 @@ export default function PeerProfile() {
           </div>
         </div>
 
-        <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex gap-3">
             <button
               onClick={async () => {
                 try {
                   await ensureAnonymousSession()
                 } catch {}
-                navigate(`/chat/${userId}`)
+                    // Prevent navigation if blocked/reported
+                    if (blockState && (blockState.anyReported || blockState.blockedByMe || blockState.blockedByThem)) {
+                      try { window.dispatchEvent(new CustomEvent('wakapadi:toast', { detail: { text: t('actionFailed') || 'Action failed' } })) } catch {}
+                      return
+                    }
+                    navigate(`/chat/${userId}`)
               }}
               className="px-5 py-2 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded shadow"
             >
@@ -102,40 +109,7 @@ export default function PeerProfile() {
           </div>
 
           <div className="flex gap-2">
-            <button
-              onClick={async () => {
-                if (!confirm(t('confirmBlock') || 'Block this user?')) return
-                setActionLoading(true)
-                try {
-                  await api.post(`/users/block/${encodeURIComponent(String(userId))}`)
-                  try { window.dispatchEvent(new CustomEvent('wakapadi:toast', { detail: { text: t('userBlocked') || 'User blocked' } })) } catch {}
-                } catch (e) {
-                  try { window.dispatchEvent(new CustomEvent('wakapadi:toast', { detail: { text: t('actionFailed') || 'Action failed' } })) } catch {}
-                } finally { setActionLoading(false) }
-              }}
-              disabled={actionLoading}
-              className="px-4 py-2 border rounded text-sm bg-white hover:bg-gray-50"
-            >
-              {t('blockUser') || 'Block'}
-            </button>
-
-            <button
-              onClick={async () => {
-                const reason = prompt(t('reportReasonPrompt') || 'Reason for report (optional)') || ''
-                if (reason === null) return
-                setActionLoading(true)
-                try {
-                  await api.post(`/users/report/${encodeURIComponent(String(userId))}`, { reason })
-                  try { window.dispatchEvent(new CustomEvent('wakapadi:toast', { detail: { text: t('reportSubmitted') || 'Report submitted' } })) } catch {}
-                } catch (e) {
-                  try { window.dispatchEvent(new CustomEvent('wakapadi:toast', { detail: { text: t('actionFailed') || 'Action failed' } })) } catch {}
-                } finally { setActionLoading(false) }
-              }}
-              disabled={actionLoading}
-              className="px-4 py-2 bg-red-50 text-red-600 rounded text-sm hover:bg-red-100"
-            >
-              {t('reportUser') || 'Report'}
-            </button>
+            <BlockButton userId={String(userId)} onChange={(s) => setBlockState(s)} />
           </div>
         </div>
       </div>

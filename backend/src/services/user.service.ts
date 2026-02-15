@@ -1,9 +1,10 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Inject, forwardRef } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
 import { User } from "../schemas/user.schema";
 import { UserReport } from "../schemas/user-report.schema";
 import { UserBlock } from "../schemas/user-block.schema";
+import { WhoisGateway } from '../gateways/whois.gateway';
 
 @Injectable()
 export class UsersService {
@@ -11,6 +12,7 @@ export class UsersService {
     @InjectModel(User.name) private userModel: Model<User>,
     @InjectModel(UserReport.name) private reportModel: Model<UserReport>,
     @InjectModel(UserBlock.name) private blockModel: Model<UserBlock>,
+    @Inject(forwardRef(() => WhoisGateway)) private readonly gateway?: WhoisGateway,
   ) {}
   async getAllUsers() {
     return this.userModel.find().select('username email role _id').lean();
@@ -78,6 +80,50 @@ export class UsersService {
 
     await this.blockModel.create({ blockerId, blockedId });
     return { success: true };
+  }
+
+  async unblockUser(currentUserId: string, targetUserId: string) {
+    const blockerId = new Types.ObjectId(currentUserId);
+    const blockedId = new Types.ObjectId(targetUserId);
+
+    const res = await this.blockModel.deleteOne({ blockerId, blockedId });
+    const deletedCount = res.deletedCount || 0;
+
+    // Emit real-time update to both parties if gateway available
+    try {
+      const statusForCurrent = await this.isBlockedBetween(currentUserId, targetUserId);
+      const statusForTarget = await this.isBlockedBetween(targetUserId, currentUserId);
+      if (this.gateway) {
+        console.log(`Emitting block change to ${currentUserId} and ${targetUserId}`, { statusForCurrent, statusForTarget });
+        // Notify the user who performed the unblock
+        this.gateway.emitToUser(currentUserId, 'user:block:changed', { changedBy: currentUserId, status: statusForCurrent });
+        // Notify the other user that their relationship changed
+        this.gateway.emitToUser(targetUserId, 'user:block:changed', { changedBy: currentUserId, status: statusForTarget });
+        console.log('Emit attempts complete');
+      } else {
+        console.log('WhoisGateway not available to emit block change');
+      }
+    } catch (err) {
+      console.warn('Failed to emit unblock socket event', err);
+    }
+
+    return { success: true, deletedCount };
+  }
+
+  async isBlockedBetween(userA: string, userB: string) {
+    const a = new Types.ObjectId(userA);
+    const b = new Types.ObjectId(userB);
+
+    const blockedByA = await this.blockModel.findOne({ blockerId: a, blockedId: b }).lean();
+    const blockedByB = await this.blockModel.findOne({ blockerId: b, blockedId: a }).lean();
+    const reported = await this.reportModel.findOne({ $or: [ { reporterId: a, reportedId: b }, { reporterId: b, reportedId: a } ] }).lean();
+
+    return {
+      blockedByMe: !!blockedByA,
+      blockedByThem: !!blockedByB,
+      anyBlocked: !!(blockedByA || blockedByB),
+      anyReported: !!reported,
+    };
   }
 
   async reportUser(reporterId: string, reportedId: string, reason: string) {

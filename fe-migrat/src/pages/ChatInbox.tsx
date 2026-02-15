@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from '../lib/api'
 import { safeStorage } from '../lib/storage'
-import { anonymousLabel, getAnonymousHandleForId } from '../lib/anonymousNames'
+import { getAnonymousHandleForId } from '../lib/anonymousNames'
 import { useTranslation } from '../lib/i18n'
 import ProfileModal from '../components/ProfileModal'
 
@@ -10,7 +10,7 @@ export default function ChatInbox() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [me, setMe] = useState<string | null>(null)
-  
+  const { t } = useTranslation()
 
   const fetchInbox = async () => {
     setLoading(true)
@@ -42,7 +42,6 @@ export default function ChatInbox() {
 
   const openProfile = async (id: string) => {
     if (!id) return
-    setProfileModalOpen(true)
     setProfileData(null)
     try {
       const res: any = await api.get(`/users/preferences/${encodeURIComponent(id)}`)
@@ -51,6 +50,7 @@ export default function ChatInbox() {
       console.error('Failed to load profile', e)
       setProfileData(null)
     }
+    setProfileModalOpen(true)
   }
 
   if (loading) return <div>Loading inbox…</div>
@@ -65,7 +65,6 @@ export default function ChatInbox() {
             {convos.length === 0 && <div className="text-gray-600">No conversations yet — start by messaging someone from #Whois Nearby.</div>}
             {convos.map((c) => {
               const otherId = resolveOtherId(c)
-              const { t } = useTranslation()
               const anonPrefix = (t('anonymousTraveler') || 'Anonymous')
               const username = (c.otherUser?.profileVisible === false ) ? `${anonPrefix} ${getAnonymousHandleForId(otherId)}` : (c.otherUser?.username || c.otherUser?.name || c.otherName || 'Traveler')
               const last = c.lastMessage || c.last || null
@@ -110,7 +109,7 @@ export default function ChatInbox() {
         </div>
       </section>
 
-      <ProfileModal open={profileModalOpen} onClose={() => { setProfileModalOpen(false); setProfileData(null) }} profile={profileData} />
+      <ProfileModal t={t} open={profileModalOpen} onClose={() => { setProfileModalOpen(false); setProfileData(null) }} profile={profileData} />
     </>
   )
 }

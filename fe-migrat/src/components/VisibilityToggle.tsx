@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { safeStorage } from '../lib/storage'
 import { useTranslation } from '../lib/i18n'
 import { api } from '../lib/api'

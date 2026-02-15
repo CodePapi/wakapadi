@@ -50,6 +50,16 @@ export class UsersController {
     return this.usersService.blockUser(req.user.id, targetId);
   }
 
+  @Delete('block/:userId')
+  async unblockUser(@Req() req, @Param('userId') targetId: string) {
+    return this.usersService.unblockUser(req.user.id, targetId);
+  }
+
+  @Get('block/status/:userId')
+  async blockStatus(@Req() req, @Param('userId') targetId: string) {
+    return this.usersService.isBlockedBetween(req.user.id, targetId);
+  }
+
   @Post('report/:userId')
   async reportUser(
     @Req() req,

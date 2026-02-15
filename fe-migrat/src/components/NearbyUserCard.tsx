@@ -21,7 +21,7 @@ type User = {
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ensureAnonymousSession } from '../lib/anonymousAuth'
-import { anonymousLabel, getAnonymousHandleForId } from '../lib/anonymousNames'
+import { getAnonymousHandleForId } from '../lib/anonymousNames'
 import { useTranslation } from '../lib/i18n'
 import { safeStorage } from '../lib/storage'
 export default function NearbyUserCard({ user }: { user: User }) {

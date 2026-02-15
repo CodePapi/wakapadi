@@ -1,10 +1,12 @@
 // src/services/whois-message.service.ts
-import { Injectable, OnModuleInit, NotFoundException, Inject, forwardRef } from '@nestjs/common'; // Add Inject, forwardRef
+import { Injectable, OnModuleInit, NotFoundException, Inject, forwardRef, ForbiddenException } from '@nestjs/common'; // Add Inject, forwardRef
 import { InjectModel } from '@nestjs/mongoose';
 import mongoose, { Model, Types } from 'mongoose';
 import { WhoisMessage } from '../schemas/whois-message.schema';
 import { WhoisGateway } from '../gateways/whois.gateway';
 import { User } from '../schemas/user.schema'; // Correct import for User schema
+import { UserBlock } from '../schemas/user-block.schema';
+import { UserReport } from '../schemas/user-report.schema';
 
 // --- REVISED INTERFACE ---
 interface PopulatedMessageLean {
@@ -27,12 +29,32 @@ export class WhoisMessageService implements OnModuleInit {
     private readonly messageModel: Model<WhoisMessage>,
     @Inject(forwardRef(() => WhoisGateway)) // <--- Apply forwardRef here
     private readonly gateway: WhoisGateway,
-    @InjectModel(User.name) private readonly userModel: Model<User> 
+    @InjectModel(User.name) private readonly userModel: Model<User>,
+    @InjectModel(UserBlock.name) private readonly blockModel: Model<UserBlock>,
+    @InjectModel(UserReport.name) private readonly reportModel: Model<UserReport>,
   ) {}
 
   onModuleInit() {}
 
   async sendMessage(fromUserId: string, toUserId: string, message: string) {
+    // Disallow messaging if either user has blocked or reported the other
+    const blocked = await this.blockModel.findOne({
+      $or: [
+        { blockerId: new Types.ObjectId(fromUserId), blockedId: new Types.ObjectId(toUserId) },
+        { blockerId: new Types.ObjectId(toUserId), blockedId: new Types.ObjectId(fromUserId) },
+      ],
+    });
+    const reported = await this.reportModel.findOne({
+      $or: [
+        { reporterId: new Types.ObjectId(fromUserId), reportedId: new Types.ObjectId(toUserId) },
+        { reporterId: new Types.ObjectId(toUserId), reportedId: new Types.ObjectId(fromUserId) },
+      ],
+    });
+
+      if (blocked || reported) {
+        throw new ForbiddenException('Messaging disabled between these users');
+    }
+
     const newMessage = await this.messageModel.create({ fromUserId, toUserId, message });
   
     const populatedMessage = (await this.messageModel.findById(newMessage._id)
@@ -100,6 +122,22 @@ export class WhoisMessageService implements OnModuleInit {
   }
 
   async getConversation(userId: string, otherUserId: string, page = 1, limit = 20) {
+    // Block access to conversations if there's a block/report between users
+    const blocked = await this.blockModel.findOne({
+      $or: [
+        { blockerId: new Types.ObjectId(userId), blockedId: new Types.ObjectId(otherUserId) },
+        { blockerId: new Types.ObjectId(otherUserId), blockedId: new Types.ObjectId(userId) },
+      ],
+    });
+    const reported = await this.reportModel.findOne({
+      $or: [
+        { reporterId: new Types.ObjectId(userId), reportedId: new Types.ObjectId(otherUserId) },
+        { reporterId: new Types.ObjectId(otherUserId), reportedId: new Types.ObjectId(userId) },
+      ],
+    });
+    // NOTE: don't block read access here — controller will surface block/report status
+    // so the frontend can decide whether to allow sending new messages.
+    
     const filter = {
       $or: [
         { fromUserId: userId, toUserId: otherUserId },
@@ -346,6 +384,23 @@ export class WhoisMessageService implements OnModuleInit {
   
   // --- Existing Method: Get Messages Between Two Users ---
   async getMessagesBetweenUsers(userId1: string, userId2: string) {
+    // Prevent access if blocked or reported
+    const blocked = await this.blockModel.findOne({
+      $or: [
+        { blockerId: new Types.ObjectId(userId1), blockedId: new Types.ObjectId(userId2) },
+        { blockerId: new Types.ObjectId(userId2), blockedId: new Types.ObjectId(userId1) },
+      ],
+    });
+    const reported = await this.reportModel.findOne({
+      $or: [
+        { reporterId: new Types.ObjectId(userId1), reportedId: new Types.ObjectId(userId2) },
+        { reporterId: new Types.ObjectId(userId2), reportedId: new Types.ObjectId(userId1) },
+      ],
+    });
+    // Allow reading past messages even if blocked/reported; sending is blocked elsewhere.
+    // if (blocked || reported) {
+    //   throw new ForbiddenException('Access to messages between these users is blocked');
+    // }
     const messages = await this.messageModel
       .find({
         $or: [
