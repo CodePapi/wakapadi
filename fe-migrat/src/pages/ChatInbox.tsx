@@ -58,7 +58,7 @@ export default function ChatInbox() {
 
   return (
     <>
-      <section className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="chat-loose container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="max-w-2xl mx-auto">
           <h2 className="text-2xl font-semibold">Messages</h2>
           <div className="mt-4 grid gap-3">

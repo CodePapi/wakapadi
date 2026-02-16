@@ -330,7 +330,7 @@ export function MobileBottomNav({
   // if `inline` true, render centered inside header; otherwise fixed at viewport bottom
   const baseClass = inline
     ? 'sm:hidden absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/95 border rounded-full shadow-lg px-2 py-1 flex gap-2'
-    : 'sm:hidden fixed bottom-4 left-1/2 -translate-x-1/2 bg-white/95 border rounded-full shadow-lg px-3 py-2 flex gap-4';
+    : 'sm:hidden fixed left-0 right-0 bottom-0 z-50';
 
   const iconSize = inline ? 14 : 18;
   const itemSizeClass = inline ? 'w-7 h-7' : 'w-8 h-8';
@@ -365,103 +365,47 @@ export function MobileBottomNav({
 
   return (
     <nav
-      style={
-        inline
-          ? { zIndex: 20 }
-          : { bottom: 'env(safe-area-inset-bottom, 0.5rem)', zIndex: 10 }
-      }
+      style={ inline ? { zIndex: 20 } : { bottom: 'env(safe-area-inset-bottom, 0.5rem)', zIndex: 9999 }}
       className={baseClass}
     >
-      <Link
-        to="/"
-        aria-label="Home"
-        className={`${itemSizeClass} flex items-center justify-center rounded hover:bg-gray-100 ${homeActive ? 'bg-blue-50' : ''}`}
+      {/* full-width mobile bar with centered icons (Airbnb-like) */}
+      <div
+        className="w-full"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
-        <SvgHome size={iconSize} className={homeActive ? 'text-blue-600' : 'text-gray-700'} />
-      </Link>
-
-      <Link
-        to="/whois"
-        aria-label="Nearby"
-        className={`${itemSizeClass} flex items-center justify-center rounded hover:bg-gray-100 ${whoisActive ? 'bg-blue-50' : ''}`}
-      >
-        <SvgPeople size={iconSize} className={whoisActive ? 'text-blue-600' : 'text-gray-700'} />
-      </Link>
-      <Link
-        to="/tours"
-        aria-label="Tours"
-        className={`${itemSizeClass} flex items-center justify-center rounded hover:bg-gray-100 ${toursActive ? 'bg-blue-50' : ''}`}
-      >
-        <SvgMap size={iconSize} className={toursActive ? 'text-blue-600' : 'text-gray-700'} />
-      </Link>
-
-      {isLoggedIn ? (
-        <>
-          <div
-            className={`${itemSizeClass} flex items-center justify-center rounded hover:bg-gray-100`}
-          >
-            <NotificationsDropdown triggerClassName="p-0 relative" iconClassName="text-gray-700" />
-          </div>
-          <Link
-            to="/chat"
-            aria-label="Chat"
-            className={`${itemSizeClass} flex items-center justify-center rounded hover:bg-gray-100 ${chatActive ? 'bg-blue-50' : ''}`}
-          >
-            <SvgChat size={iconSize} className={chatActive ? 'text-blue-600' : 'text-gray-700'} />
+        <div className="w-full bg-white border-t shadow-sm flex justify-around items-center h-14">
+          <Link to="/" aria-label="Home" className={`${itemSizeClass} flex flex-col items-center justify-center text-center ${homeActive ? 'text-blue-600' : 'text-gray-700'}`}>
+            <SvgHome size={iconSize} className={homeActive ? 'text-blue-600' : 'text-gray-700'} />
           </Link>
-          <Link
-            to="/profile"
-            aria-label="Profile"
-            className={`${itemSizeClass} flex items-center justify-center rounded hover:bg-gray-100 ${profileActive ? 'bg-blue-50' : ''}`}
-          >
-            <SvgAvatar size={iconSize} className={profileActive ? 'text-blue-600' : 'text-gray-700'} />
+          <Link to="/whois" aria-label="Nearby" className={`${itemSizeClass} flex flex-col items-center justify-center text-center ${whoisActive ? 'text-blue-600' : 'text-gray-700'}`}>
+            <SvgPeople size={iconSize} className={whoisActive ? 'text-blue-600' : 'text-gray-700'} />
           </Link>
-
-          <button
-            onClick={() => onLogout && onLogout()}
-            aria-label="Logout"
-            style={{
-              background: 'none',
-            }}
-            className={`flex items-center justify-center rounded bg-red-50 hover:bg-red-100 text-red-600`}
-          >
-            <svg
-              width={iconSize}
-              height={iconSize}
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              className="text-red-600"
-            >
-              <path
-                d="M16 17l5-5-5-5M21 12H9"
-                stroke="currentColor"
-                strokeWidth="1.4"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M13 19H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h7"
-                stroke="currentColor"
-                strokeWidth="1.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-        </>
-      ) : (
-        <button
-          onClick={handleLogin}
-          aria-label="Login"
-          className={` flex items-center justify-center rounded hover:bg-gray-100`}
-          style={{
-            background: 'none',
-          }}
-        >
-          <SvgAvatar size={iconSize} />
-        </button>
-      )}
+          <Link to="/tours" aria-label="Tours" className={`${itemSizeClass} flex flex-col items-center justify-center text-center ${toursActive ? 'text-blue-600' : 'text-gray-700'}`}>
+            <SvgMap size={iconSize} className={toursActive ? 'text-blue-600' : 'text-gray-700'} />
+          </Link>
+          {isLoggedIn ? (
+            <>
+                <NotificationsDropdown triggerClassName="p-0 relative" iconClassName="text-gray-700" />
+                <Link to="/chat" aria-label="Chat" className={`${itemSizeClass} flex flex-col items-center justify-center text-center ${chatActive ? 'text-blue-600' : 'text-gray-700'}`}>
+                <SvgChat size={iconSize} className={chatActive ? 'text-blue-600' : 'text-gray-700'} />
+              </Link>
+                <Link to="/profile" aria-label="Profile" className={`${itemSizeClass} flex flex-col items-center justify-center text-center ${profileActive ? 'text-blue-600' : 'text-gray-700'}`}>
+                  <SvgAvatar size={iconSize} className={profileActive ? 'text-blue-600' : 'text-gray-700'} />
+                </Link>
+                <button onClick={() => onLogout && onLogout()} aria-label="Logout" className="flex items-center justify-center p-1 text-red-600">
+                  <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-red-600">
+                    <path d="M16 17l5-5-5-5M21 12H9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M13 19H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+            </>
+          ) : (
+            <button onClick={handleLogin} aria-label="Login" className={` flex items-center justify-center rounded hover:bg-gray-100`} style={{ background: 'none' }}>
+              <SvgAvatar size={iconSize} />
+            </button>
+          )}
+        </div>
+      </div>
     </nav>
   );
 }

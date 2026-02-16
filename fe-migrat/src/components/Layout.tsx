@@ -25,10 +25,12 @@ export default function Layout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-surface text-on-surface">
       <NavBar />
-      <div className="max-w-5xl mx-auto px-4 py-12">
-        {children}
-      </div>
-              <MobileBottomNav isLoggedIn={isLoggedIn} onLogout={performLogout} />
+      <main style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 6rem)' }}>
+        <div className="max-w-5xl mx-auto px-2 sm:px-6 lg:px-8 py-4">
+          {children}
+        </div>
+      </main>
+      <MobileBottomNav isLoggedIn={isLoggedIn} onLogout={performLogout} />
 
     </div>
   )

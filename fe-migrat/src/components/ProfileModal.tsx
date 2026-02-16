@@ -37,8 +37,8 @@ export default function ProfileModal({ open, onClose, profile, t: propT }: any) 
   // }, [open, userid])
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40" onClick={handleBackdrop} role="dialog" aria-modal="true">
-      <div ref={dialogRef} className="bg-white dark:bg-zinc-900 rounded-t-xl md:rounded-lg shadow-xl w-full md:max-w-md p-6">
+    <div style={{ zIndex: 100000 }} className="fixed inset-0 flex items-end md:items-center justify-center bg-black/40" onClick={handleBackdrop} role="dialog" aria-modal="true">
+      <div ref={dialogRef} style={{ marginBottom: 'calc(env(safe-area-inset-bottom, 0px) + 4.5rem)' }} className="bg-white dark:bg-zinc-900 rounded-t-xl md:rounded-lg shadow-xl w-full md:max-w-md p-6">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
             <img src={profile?.avatar || `https://i.pravatar.cc/80?u=${userid||profile?.username||'anon'}`} alt={`${profile?.profileVisible === false ? anonymousLabel(undefined, userid) : (profile?.username || 'Traveler')} avatar`} className="w-16 h-16 rounded-full object-cover" />
