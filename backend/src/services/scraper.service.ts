@@ -527,7 +527,15 @@ export class ScraperService {
     if (exists) {
       return { added: false, message: `${normalizedCity} already exists in the database.` };
     }
-    await this.cityService.addSingleCity(normalizedCity);
+
+    // Attempt to add the city. `addSingleCity` returns true only if it actually inserted.
+    const added = await this.cityService.addSingleCity(normalizedCity);
+    if (!added) {
+      // Another process likely added the city concurrently — skip scraping to avoid duplicate work.
+      return { added: false, message: `${normalizedCity} was added concurrently; skipping scrape.` };
+    }
+
+    // Only scrape if we successfully inserted the city ourselves.
     await this.scrapeCity(normalizedCity, false);
     return { added: true, message: `Scraping complete for new city: ${normalizedCity}` };
   }
