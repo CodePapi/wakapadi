@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
 import { useTranslation } from '../lib/i18n'
 import VisibilityIndicator from '../components/VisibilityIndicator'
-import { anonymousLabel, getAnonymousHandleForId } from '../lib/anonymousNames'
+import { getAnonymousHandleForId } from '../lib/anonymousNames'
 import BlockButton from '../components/BlockButton'
 import { ensureAnonymousSession } from '../lib/anonymousAuth'
 
