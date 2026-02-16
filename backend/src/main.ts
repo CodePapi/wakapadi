@@ -15,6 +15,16 @@ async function bootstrap() {
   }
 
   const app = await NestFactory.create(AppModule);
+  // Disable Express ETag generation to avoid origin sending ETag headers
+  // which can lead to 304 responses being served by intermediate caches.
+  try {
+    const expressApp = app.getHttpAdapter().getInstance()
+    if (expressApp && typeof expressApp.set === 'function') {
+      expressApp.set('etag', false)
+    }
+  } catch (e) {
+    // ignore if adapter unavailable
+  }
   app.enableCors({
     origin: [
       process.env.FRONTEND_URL!,
@@ -27,11 +37,13 @@ async function bootstrap() {
     credentials: true,
   });
   // Prevent proxies/CDNs or browsers from serving cached 304 responses
-  // for authenticated/dynamic API endpoints. This ensures clients with
-  // Authorization headers always get fresh JSON bodies instead of a
-  // 304 Not Modified that may be returned by an intermediate cache.
+  // for authenticated/dynamic API endpoints. Only apply headers for
+  // requests that look like API calls needing freshness (whois routes
+  // or requests carrying an Authorization header).
   app.use((req, res, next) => {
     try {
+      const shouldApply = (typeof req.path === 'string' && req.path.startsWith('/whois')) || !!req.headers['authorization']
+      if (!shouldApply) return next()
       res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
       res.setHeader('Pragma', 'no-cache');
       res.setHeader('Surrogate-Control', 'no-store');
