@@ -332,9 +332,9 @@ export function MobileBottomNav({
     ? 'sm:hidden absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/95 border rounded-full shadow-lg px-2 py-1 flex gap-2'
     : 'sm:hidden fixed left-0 right-0 bottom-0 z-50';
 
-  const iconSize = inline ? 14 : 18;
+  const iconSize = inline ? 16 : 20;
   // increase tappable area on real devices
-  const itemSizeClass = inline ? 'w-7 h-7' : 'w-10 h-10';
+  const itemSizeClass = inline ? 'w-8 h-8' : 'w-11 h-11';
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -366,15 +366,12 @@ export function MobileBottomNav({
 
   return (
     <nav
-      style={ inline ? { zIndex: 20 } : { bottom: 'env(safe-area-inset-bottom, 0.5rem)', zIndex: 9999 }}
+      style={ inline ? { zIndex: 20 } : { zIndex: 9999, bottom: 0 }}
       className={baseClass}
     >
       {/* full-width mobile bar with centered icons (Airbnb-like) */}
-      <div
-        className="w-full"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
-      >
-        <div className="w-full bg-white/95 dark:bg-zinc-900/95 border-t border-gray-200 dark:border-zinc-700 shadow-sm flex justify-around items-center h-16" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+      <div className="w-full">
+        <div className="w-full bg-white/95 dark:bg-zinc-900/95 border-t border-gray-200 dark:border-zinc-700 shadow-sm flex justify-around items-center" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)', height: 'calc(5rem + env(safe-area-inset-bottom, 0px))' }}>
           <Link to="/" aria-label="Home" className={`${itemSizeClass} flex flex-col items-center justify-center text-center ${homeActive ? 'text-blue-600' : 'text-gray-700 dark:text-gray-200'}`}>
             <SvgHome size={iconSize} className={homeActive ? 'text-blue-600' : 'text-gray-700'} />
           </Link>
