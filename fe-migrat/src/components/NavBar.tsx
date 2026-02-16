@@ -230,7 +230,7 @@ export default function NavBar() {
             aria-label={open ? 'Close menu' : 'Open menu'}
             aria-expanded={open}
             aria-controls="mobile-menu"
-            className="md:hidden p-2 rounded border"
+            className="md:hidden p-2 rounded border border-gray-200 dark:border-zinc-700 bg-white/80 dark:bg-transparent"
           >
             <svg
               width="20"
@@ -238,7 +238,7 @@ export default function NavBar() {
               viewBox="0 0 20 20"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
-              className="text-gray-700"
+              className="text-gray-700 dark:text-gray-200"
             >
               <path
                 d="M3 5h14M3 10h14M3 15h14"
@@ -252,34 +252,34 @@ export default function NavBar() {
       </div>
 
       {open && (
-        <div id="mobile-menu" className="md:hidden bg-white/95 border-t">
+        <div id="mobile-menu" className="md:hidden bg-white/95 dark:bg-zinc-900 border-t border-gray-200 dark:border-zinc-700">
           <div className="px-4 py-3 max-w-6xl mx-auto flex flex-col gap-3">
             <nav aria-label="Mobile navigation" className="flex flex-col gap-2">
               <Link
                 to="/whois"
                 onClick={() => setOpen(false)}
-                className="px-3 py-2 text-gray-700 hover:bg-gray-50 rounded"
+                className="px-3 py-2 text-gray-700 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded"
               >
                 {t('whoisNearby')}
               </Link>
               <Link
                 to="/tours"
                 onClick={() => setOpen(false)}
-                className="px-3 py-2 text-gray-700 hover:bg-gray-50 rounded"
+                className="px-3 py-2 text-gray-700 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded"
               >
                 {t('toursBrowseTitle')}
               </Link>
               <Link
                 to="/saved"
                 onClick={() => setOpen(false)}
-                className="px-3 py-2 text-gray-700 hover:bg-gray-50 rounded"
+                className="px-3 py-2 text-gray-700 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded"
               >
                 {t('savedLabel') || 'Saved'}
               </Link>
               <Link
                 to="/contact-us"
                 onClick={() => setOpen(false)}
-                className="px-3 py-2 text-gray-700 hover:bg-gray-50 rounded"
+                className="px-3 py-2 text-gray-700 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded"
               >
                 {t('contactUs')}
               </Link>
@@ -291,7 +291,7 @@ export default function NavBar() {
                   <Link
                     to="/profile"
                     onClick={() => setOpen(false)}
-                    className="px-3 py-2 text-gray-700"
+                    className="px-3 py-2 text-gray-700 dark:text-gray-100"
                   >
                     {t('profile')}
                   </Link>
@@ -333,7 +333,8 @@ export function MobileBottomNav({
     : 'sm:hidden fixed left-0 right-0 bottom-0 z-50';
 
   const iconSize = inline ? 14 : 18;
-  const itemSizeClass = inline ? 'w-7 h-7' : 'w-8 h-8';
+  // increase tappable area on real devices
+  const itemSizeClass = inline ? 'w-7 h-7' : 'w-10 h-10';
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -373,23 +374,23 @@ export function MobileBottomNav({
         className="w-full"
         style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
-        <div className="w-full bg-white border-t shadow-sm flex justify-around items-center h-14">
-          <Link to="/" aria-label="Home" className={`${itemSizeClass} flex flex-col items-center justify-center text-center ${homeActive ? 'text-blue-600' : 'text-gray-700'}`}>
+        <div className="w-full bg-white/95 dark:bg-zinc-900/95 border-t border-gray-200 dark:border-zinc-700 shadow-sm flex justify-around items-center h-16" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+          <Link to="/" aria-label="Home" className={`${itemSizeClass} flex flex-col items-center justify-center text-center ${homeActive ? 'text-blue-600' : 'text-gray-700 dark:text-gray-200'}`}>
             <SvgHome size={iconSize} className={homeActive ? 'text-blue-600' : 'text-gray-700'} />
           </Link>
-          <Link to="/whois" aria-label="Nearby" className={`${itemSizeClass} flex flex-col items-center justify-center text-center ${whoisActive ? 'text-blue-600' : 'text-gray-700'}`}>
+          <Link to="/whois" aria-label="Nearby" className={`${itemSizeClass} flex flex-col items-center justify-center text-center ${whoisActive ? 'text-blue-600' : 'text-gray-700 dark:text-gray-200'}`}>
             <SvgPeople size={iconSize} className={whoisActive ? 'text-blue-600' : 'text-gray-700'} />
           </Link>
-          <Link to="/tours" aria-label="Tours" className={`${itemSizeClass} flex flex-col items-center justify-center text-center ${toursActive ? 'text-blue-600' : 'text-gray-700'}`}>
+          <Link to="/tours" aria-label="Tours" className={`${itemSizeClass} flex flex-col items-center justify-center text-center ${toursActive ? 'text-blue-600' : 'text-gray-700 dark:text-gray-200'}`}>
             <SvgMap size={iconSize} className={toursActive ? 'text-blue-600' : 'text-gray-700'} />
           </Link>
           {isLoggedIn ? (
             <>
                 <NotificationsDropdown triggerClassName="p-0 relative" iconClassName="text-gray-700" />
-                <Link to="/chat" aria-label="Chat" className={`${itemSizeClass} flex flex-col items-center justify-center text-center ${chatActive ? 'text-blue-600' : 'text-gray-700'}`}>
+                <Link to="/chat" aria-label="Chat" className={`${itemSizeClass} flex flex-col items-center justify-center text-center ${chatActive ? 'text-blue-600' : 'text-gray-700 dark:text-gray-200'}`}>
                 <SvgChat size={iconSize} className={chatActive ? 'text-blue-600' : 'text-gray-700'} />
               </Link>
-                <Link to="/profile" aria-label="Profile" className={`${itemSizeClass} flex flex-col items-center justify-center text-center ${profileActive ? 'text-blue-600' : 'text-gray-700'}`}>
+                <Link to="/profile" aria-label="Profile" className={`${itemSizeClass} flex flex-col items-center justify-center text-center ${profileActive ? 'text-blue-600' : 'text-gray-700 dark:text-gray-200'}`}>
                   <SvgAvatar size={iconSize} className={profileActive ? 'text-blue-600' : 'text-gray-700'} />
                 </Link>
                 <button onClick={() => onLogout && onLogout()} aria-label="Logout" className="flex items-center justify-center p-1 text-red-600">

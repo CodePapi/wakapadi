@@ -113,10 +113,10 @@ export default function Home() {
         <p className="mt-4 text-gray-600 dark:text-gray-300">{t('homePageDescription') || t('homeSubtitle')}</p>
 
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
-           <Link to="/whois" className="inline-flex items-center justify-center px-6 py-3 rounded-md bg-white dark:bg-gray-800 border text-gray-800 dark:text-gray-100 dark:border-gray-700 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
+           <Link to="/whois" className="inline-flex items-center justify-center px-6 py-3 rounded-md bg-gradient-to-r from-blue-600 to-blue-500 dark:from-sky-500 dark:to-sky-400 text-white shadow-sm hover:from-blue-700 hover:to-blue-600 dark:hover:from-sky-600 dark:hover:to-sky-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 dark:focus-visible:ring-sky-300">
             {t('homeIntroPrimaryCta') || t('heroCtaMeet')}
           </Link>
-          <Link to="/tours" className="inline-flex items-center justify-center px-6 py-3 rounded-md bg-white dark:bg-gray-800 border text-gray-800 dark:text-gray-100 dark:border-gray-700 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
+          <Link to="/tours" className="inline-flex items-center justify-center px-6 py-3 rounded-md border bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 dark:border-gray-700 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
             {t('homeIntroSecondaryCta') || t('heroCtaExplore')}
           </Link>
         </div>
@@ -140,8 +140,8 @@ export default function Home() {
             <h2 className="text-2xl font-semibold">{t('homeCtaTitle')}</h2>
             <p className="text-sm text-gray-600 mt-2">{t('homeCtaBody')}</p>
           </div>
-          <div className="flex gap-3">
-            <Link to="/whois" className="inline-flex items-center px-5 py-3 rounded-md border bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 dark:border-gray-700 dark:hover:bg-gray-700">{t('homeCtaPrimary')}</Link>
+            <div className="flex gap-3">
+            <Link to="/whois" className="inline-flex items-center px-5 py-3 rounded-md bg-gradient-to-r from-blue-600 to-blue-500 dark:from-sky-500 dark:to-sky-400 text-white shadow-sm hover:from-blue-700 hover:to-blue-600 dark:hover:from-sky-600 dark:hover:to-sky-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 dark:focus-visible:ring-sky-300">{t('homeCtaPrimary')}</Link>
             <Link to="/tours" className="inline-flex items-center px-5 py-3 rounded-md border bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 dark:border-gray-700 dark:hover:bg-gray-700">{t('homeCtaSecondary')}</Link>
           </div>
         </div>
@@ -181,7 +181,7 @@ export default function Home() {
             <h2 className="text-xl font-semibold">{t('homeSafetyTitle')}</h2>
             <p className="text-sm mt-2 text-gray-600">{t('homeSafetyBody')}</p>
             <div className="mt-4 flex gap-3">
-              <Link to="/whois" className="inline-flex items-center px-5 py-3 rounded-md border bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 dark:border-gray-700 dark:hover:bg-gray-700">{t('homeIntroPrimaryCta')}</Link>
+              <Link to="/whois" className="inline-flex items-center px-5 py-3 rounded-md bg-gradient-to-r from-blue-600 to-blue-500 dark:from-sky-500 dark:to-sky-400 text-white shadow-sm hover:from-blue-700 hover:to-blue-600 dark:hover:from-sky-600 dark:hover:to-sky-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 dark:focus-visible:ring-sky-300">{t('homeIntroPrimaryCta')}</Link>
               <Link to="/tours" className="inline-flex items-center px-5 py-3 rounded-md border bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 dark:border-gray-700 dark:hover:bg-gray-700">{t('homeIntroSecondaryCta')}</Link>
             </div>
           </div>

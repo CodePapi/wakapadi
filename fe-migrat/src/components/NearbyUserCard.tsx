@@ -103,7 +103,7 @@ export default function NearbyUserCard({ user }: { user: User }) {
   }
 
   return (
-    <article className={`flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm transition-transform duration-200 ${highlight ? 'scale-101 ring-2 ring-green-300/60' : ''}`}>
+    <article className={`flex flex-col sm:flex-row items-center sm:items-center sm:items-start gap-3 p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm transition-transform duration-200 ${highlight ? 'scale-101 ring-2 ring-green-300/60' : ''}`}>
       <div className="relative flex-shrink-0">
         <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
           {avatar ? (
@@ -124,10 +124,10 @@ export default function NearbyUserCard({ user }: { user: User }) {
 
       <div className="flex-1 min-w-0">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-            <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{displayName}</div>
+          <div className="flex flex-col items-center sm:flex-row sm:items-center gap-2">
+            <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate text-center sm:text-left">{displayName}</div>
             {user.anonymous && <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-100 px-2 py-0.5 rounded">{t('anonymousBadge') || 'Anonymous'}</span>}
-            <div className="text-xs text-gray-500 dark:text-gray-300 mt-1 sm:mt-0 sm:hidden">
+            <div className="text-xs text-gray-500 dark:text-gray-300 mt-1 sm:mt-0 sm:hidden text-center">
               {city ? `${t('locationLabel') || 'Location'}: ${formatCity(String(city))}` : ''}
               {city && distanceStr !== '—' ? ' · ' : ''}
               {distanceStr !== '—' ? `${t('distanceLabel') || 'Distance'}: ${distanceStr} ${t('away') || 'away'}` : ''}
@@ -149,10 +149,10 @@ export default function NearbyUserCard({ user }: { user: User }) {
             )}
           </div>
         </div>
-        {user.profileVisible === true && user.bio && <div className="mt-1 text-xs text-gray-600 dark:text-gray-300 truncate">{user.bio}</div>}
+        {user.profileVisible === true && user.bio && <div className="mt-1 text-xs text-gray-600 dark:text-gray-300 truncate text-center sm:text-left">{user.bio}</div>}
       </div>
       {!hidden && (
-        <div className="flex flex-col sm:flex-col items-stretch sm:items-end gap-2 w-full sm:w-auto">
+        <div className="flex flex-col items-center sm:flex-col sm:items-end gap-2 w-full sm:w-auto">
           {(user.userId||user._id)&&<button onClick={async () => {
                 try {
                   const session = await ensureAnonymousSession()

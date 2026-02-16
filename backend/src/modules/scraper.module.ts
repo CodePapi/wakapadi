@@ -1,14 +1,13 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { ScraperService } from '../services/scraper.service';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TourModule } from './tour.module';
 import { ScraperController } from '../controllers/scraper.controller';
 import { CityModule } from './city.module';
-import { CityService } from '../services/city.services';
 
 @Module({
-  imports: [CityModule,TourModule, ScheduleModule.forRoot()],
-  providers: [ScraperService, CityService],
+  imports: [forwardRef(() => CityModule), TourModule, ScheduleModule.forRoot()],
+  providers: [ScraperService],
   controllers: [ScraperController],
   exports: [ScraperService],
 })
