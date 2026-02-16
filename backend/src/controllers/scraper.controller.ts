@@ -20,13 +20,20 @@ export class ScraperController {
 
   @Post('run')
   async runManualScrape(@Body('city') city?: string) {
-    if (city) {
-      await this.scraperService.scrapeCity(city, true);
-      return { message: `Scraped city: ${city}` };
-    }
+    try {
+      if (city) {
+        await this.scraperService.scrapeCity(city, true);
+        return { message: `Scraped city: ${city}` };
+      }
 
-    await this.scraperService.runScheduledScraping();
-    return { message: 'Scraped all cities' };
+      await this.scraperService.runScheduledScraping();
+      return { message: 'Scraped all cities' };
+    } catch (err) {
+      // Log full error server-side for debugging
+      console.error('Error in /scraper/run:', err?.stack || err);
+      // Return a concise error for the client while exposing the message for local debugging
+      return { statusCode: 500, message: 'Scrape failed', detail: err?.message || String(err) };
+    }
   }
 
   @Post('new/city')

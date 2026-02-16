@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom'
 import { createPortal } from 'react-dom'
 import { useNotifications } from '../hooks/useNotifications'
 import { safeStorage } from '../lib/storage'
+import { api } from '../lib/api'
+import { getAnonymousHandleForId } from '../lib/anonymousNames'
 
 export default function NotificationsDropdown({ triggerClassName, iconClassName }: { triggerClassName?: string; iconClassName?: string } = {}) {
   const [open, setOpen] = useState(false);
@@ -17,6 +19,7 @@ export default function NotificationsDropdown({ triggerClassName, iconClassName 
   const navigate = useNavigate()
   const [toastOpen, setToastOpen] = useState(false)
   const { t } = useTranslation()
+  const [prefs, setPrefs] = useState<Record<string, any>>({})
 
   // close on outside click or ESC
   useEffect(() => {
@@ -107,10 +110,10 @@ export default function NotificationsDropdown({ triggerClassName, iconClassName 
               }}
               className="w-full text-left px-2 py-3 text-sm text-gray-800 dark:text-gray-200 border-b last:border-b-0 flex items-start gap-3"
             >
-              <img src={`https://i.pravatar.cc/40?u=${n.fromUserId}`} alt="avatar" className="w-8 h-8 rounded-full flex-shrink-0" />
+              <img src={`https://i.pravatar.cc/40?u=${n.fromUserId}`} alt="avatar" className="w-10 h-10 md:w-8 md:h-8 rounded-full flex-shrink-0" />
               <div className="flex-1">
                 <div className="flex items-center justify-between gap-3">
-                  <div className="font-medium text-sm truncate">{n.fromUsername}</div>
+                  <div className="font-medium text-sm truncate">{(prefs[n.fromUserId] && prefs[n.fromUserId].profileVisible === false) ? `${t('anonymousTraveler') || 'Anonymous'} ${getAnonymousHandleForId(n.fromUserId)}` : (n.fromUsername || (prefs[n.fromUserId] && prefs[n.fromUserId].username) || 'Traveler')}</div>
                   <div className="text-xs text-gray-500 dark:text-gray-400">{timeAgo(n.createdAt)}</div>
                 </div>
                 <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{n.messagePreview}</div>
@@ -121,6 +124,26 @@ export default function NotificationsDropdown({ triggerClassName, iconClassName 
         )}
       </div>
     )
+
+  // fetch minimal preferences for senders to respect profileVisible
+  useEffect(() => {
+    const ids = Array.from(new Set(notifications.map((n) => n.fromUserId).filter(Boolean)))
+    const missing = ids.filter((id) => !prefs[id])
+    if (missing.length === 0) return
+    let cancelled = false
+    ;(async () => {
+      for (const id of missing) {
+        try {
+          const res: any = await api.get(`/public/users/preferences/${encodeURIComponent(id)}`, { cache: 'no-store' })
+          const payload = res?.data ?? res
+          if (!cancelled) setPrefs((p) => ({ ...p, [id]: payload }))
+        } catch (err) {
+          // ignore - leave as unknown
+        }
+      }
+    })()
+    return () => { cancelled = true }
+  }, [notifications])
 
   useEffect(() => { if (lastNotification) setToastOpen(true) }, [lastNotification])
 
@@ -167,7 +190,7 @@ export default function NotificationsDropdown({ triggerClassName, iconClassName 
         {toastOpen && lastNotification && (
           <div className="fixed left-1/2 bottom-20 sm:bottom-12 transform -translate-x-1/2 z-[10002]">
             <div className="max-w-lg w-full bg-blue-600 dark:bg-sky-500 text-white rounded shadow-lg px-4 py-2 flex items-center gap-3">
-              <div className="flex-1 text-sm">{t('notificationsNewMessage', { name: lastNotification.fromUsername })}</div>
+              <div className="flex-1 text-sm">{t('notificationsNewMessage', { name: (prefs[lastNotification.fromUserId] && prefs[lastNotification.fromUserId].profileVisible === false) ? `${t('anonymousTraveler') || 'Anonymous'} ${getAnonymousHandleForId(lastNotification.fromUserId)}` : (lastNotification.fromUsername || (prefs[lastNotification.fromUserId] && prefs[lastNotification.fromUserId].username) || 'Traveler') })}</div>
               <button onClick={handleToastView} className="text-sm underline">{t('notificationsViewChat')}</button>
               <button onClick={handleToastClose} className="ml-2 text-white/80">✕</button>
             </div>

@@ -43,12 +43,41 @@ export class ScraperService {
       }
     }
 
-    await this.scrapeFreetourCity(city);
-    await this.scrapeSeededTours(city);
-    await this.scrapeSeededExternalPages(city);
-    await this.scrapeNewEuropeToursCity(city);
-    await this.scrapeMunichWalkToursCity(city);
-    await this.scrapeExternalCatalogSources(city);
+    try {
+      await this.scrapeFreetourCity(city);
+    } catch (err) {
+      this.logger.warn(`⚠️ scrapeFreetourCity failed for ${city}: ${err?.message || err}`);
+    }
+
+    try {
+      await this.scrapeSeededTours(city);
+    } catch (err) {
+      this.logger.warn(`⚠️ scrapeSeededTours failed for ${city}: ${err?.message || err}`);
+    }
+
+    try {
+      await this.scrapeSeededExternalPages(city);
+    } catch (err) {
+      this.logger.warn(`⚠️ scrapeSeededExternalPages failed for ${city}: ${err?.message || err}`);
+    }
+
+    try {
+      await this.scrapeNewEuropeToursCity(city);
+    } catch (err) {
+      this.logger.warn(`⚠️ scrapeNewEuropeToursCity failed for ${city}: ${err?.message || err}`);
+    }
+
+    try {
+      await this.scrapeMunichWalkToursCity(city);
+    } catch (err) {
+      this.logger.warn(`⚠️ scrapeMunichWalkToursCity failed for ${city}: ${err?.message || err}`);
+    }
+
+    try {
+      await this.scrapeExternalCatalogSources(city);
+    } catch (err) {
+      this.logger.warn(`⚠️ scrapeExternalCatalogSources failed for ${city}: ${err?.message || err}`);
+    }
   }
 
   private getExtraSourceTypes(): string[] {

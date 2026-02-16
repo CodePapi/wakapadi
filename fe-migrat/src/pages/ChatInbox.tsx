@@ -72,12 +72,12 @@ export default function ChatInbox() {
               const avatar = c.otherUser?.avatarUrl || c.avatarUrl || (otherId ? `https://i.pravatar.cc/48?u=${otherId}` : '')
 
               return (
-                <div key={otherId || c._id || c.id} className="p-3 border rounded hover:bg-gray-50 flex items-center justify-between">
+                <div key={otherId || c._id || c.id} className="p-3 border border-gray-200 dark:border-zinc-700 rounded hover:bg-gray-50 dark:hover:bg-zinc-800 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <img src={avatar} alt={username} className="w-10 h-10 rounded-full object-cover" />
                     <div>
-                      <div className="font-medium">{username}</div>
-                      <div className="text-sm text-gray-600 truncate max-w-md">{last?.messagePreview || last?.message || ''}</div>
+                      <div className="font-medium text-gray-900 dark:text-gray-100">{username}</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-300 truncate max-w-md">{last?.messagePreview || last?.message || ''}</div>
                     </div>
                   </div>
 
@@ -86,13 +86,13 @@ export default function ChatInbox() {
                     {unread && <div className="w-2 h-2 bg-blue-500 rounded-full" aria-hidden />}
                     <div className="flex gap-2">
                       <div className="flex items-center gap-2">
-                        <a aria-label={`Open chat with ${username}`} title="Open chat" href={`/chat/${otherId}`} className="p-2 rounded hover:bg-gray-100 flex items-center">
+                        <a aria-label={`Open chat with ${username}`} title="Open chat" href={`/chat/${otherId}`} className="p-2 rounded hover:bg-gray-100 dark:hover:bg-zinc-700 flex items-center">
                           <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 3.866-3.582 7-8 7-1.218 0-2.367-.18-3.417-.513L3 20l1.513-5.583A9.959 9.959 0 0 1 3 12c0-5.523 4.477-10 10-10s10 4.477 10 10z"/></svg>
                           <span className="sr-only">Open</span>
                         </a>
 
-                        <button aria-label={`View profile ${username}`} title="Profile" onClick={() => openProfile(otherId)} className="p-2 rounded hover:bg-gray-100 flex items-center">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-700" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5.121 17.804A8.966 8.966 0 0 1 12 15c2.21 0 4.21.895 5.657 2.343M15 11a3 3 0 1 0-6 0 3 3 0 0 0 6 0z"/></svg>
+                        <button aria-label={`View profile ${username}`} title="Profile" onClick={() => openProfile(otherId)} className="p-2 rounded hover:bg-gray-100 dark:hover:bg-zinc-700 flex items-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-700 dark:text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5.121 17.804A8.966 8.966 0 0 1 12 15c2.21 0 4.21.895 5.657 2.343M15 11a3 3 0 1 0-6 0 3 3 0 0 0 6 0z"/></svg>
                           <span className="sr-only">Profile</span>
                         </button>
 

@@ -395,11 +395,10 @@ export default function ChatConversation() {
   return (
     <>
     <section className="chat-loose container mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="max-w-2xl mx-auto">
-        
+      <div className="max-w-2xl mx-auto flex flex-col h-[calc(100vh-6rem)] sm:h-auto">
 
-        <div className="mt-4 chat-wrapper">
-          <div className="chat-header px-3 py-2 flex items-center justify-between">
+        <div className="mt-4 chat-wrapper flex-1 flex flex-col">
+          <div className="chat-header px-3 py-2 flex items-center justify-between bg-white dark:bg-zinc-900">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-zinc-700 flex items-center justify-center text-lg font-semibold">{((otherUserMeta?.profileVisible === false ? anonymousLabel(undefined, userId || otherUserMeta?.id || otherUserMeta?._id || otherUserMeta?.userId) : (otherUserMeta?.username||otherUserMeta?.name||'T'))).charAt(0).toUpperCase()}</div>
                   <div>
@@ -428,7 +427,7 @@ export default function ChatConversation() {
             </div>
           )}
 
-          <div ref={messagesContainerRef} className="chat-messages space-y-2">
+          <div ref={messagesContainerRef} className="chat-messages space-y-2 overflow-y-auto flex-1 px-3 py-2">
             {messages.length === 0 ? (
               <div className="chat-empty">No messages yet — say hello 👋</div>
             ) : (
@@ -521,16 +520,16 @@ export default function ChatConversation() {
 
         <div className="text-sm text-gray-500">{otherTyping ? 'Typing…' : ''}</div>
 
-        <div className="mt-4 chat-input-row flex items-center p-3">
-          <button ref={emojiBtnRef} aria-label="Insert emoji" title="Insert emoji" onClick={() => setShowInputEmojiPicker((s) => !s)} className="emoji-btn flex items-center justify-center mr-3">
+        <div className="mt-4 chat-input-row sticky bottom-0 z-20 flex items-center p-3 bg-white dark:bg-zinc-900 border-t dark:border-zinc-700 pb-[env(safe-area-inset-bottom)]">
+          <button ref={emojiBtnRef} aria-label="Insert emoji" title="Insert emoji" onClick={() => setShowInputEmojiPicker((s) => !s)} className="emoji-btn flex items-center justify-center mr-3 p-2 rounded bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-lg">
             😄
           </button>
 
           <div className="chat-input-field flex-1">
-            <textarea ref={inputRef} value={text} onChange={(e) => handleChange(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }} placeholder="Write a message" rows={2} className="chat-textarea chat-input-area w-full" />
+            <textarea ref={inputRef} value={text} onChange={(e) => handleChange(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }} placeholder="Write a message" rows={2} className="chat-textarea chat-input-area w-full bg-gray-100 dark:bg-zinc-800 text-gray-900 dark:text-gray-100 rounded-md p-2 resize-none outline-none" />
           </div>
 
-          <button onClick={send} className="send-button ml-3 flex items-center justify-center" aria-label="Send message">
+          <button onClick={send} className="send-button ml-3 flex items-center justify-center bg-sky-500 hover:bg-sky-600 dark:bg-sky-500 dark:hover:bg-sky-600 text-white rounded-full p-2 h-10 w-10" aria-label="Send message">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 2L11 13" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M22 2l-7 20  -3-9-9-3 20-8z" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </button>
 

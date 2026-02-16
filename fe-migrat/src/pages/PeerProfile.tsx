@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
 import { useTranslation } from '../lib/i18n'
 import VisibilityIndicator from '../components/VisibilityIndicator'
-import { anonymousLabel } from '../lib/anonymousNames'
+import { getAnonymousHandleForId } from '../lib/anonymousNames'
 import BlockButton from '../components/BlockButton'
 import { ensureAnonymousSession } from '../lib/anonymousAuth'
 
@@ -50,12 +50,9 @@ export default function PeerProfile() {
       <div className="max-w-4xl mx-auto bg-white dark:bg-gray-900 border border-gray-100 dark:border-zinc-800 rounded-lg shadow-sm p-6">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
-            <img src={data?.avatarUrl || data?.avatar || `https://i.pravatar.cc/160?u=${userId}`} alt={(data?.profileVisible === false ? anonymousLabel(undefined, userId) : data?.username) || 'Traveler'} className="w-28 h-28 sm:w-32 sm:h-32 rounded-full object-cover ring-2 ring-gray-100 dark:ring-zinc-800" />
+            <img src={data?.avatarUrl || data?.avatar || `https://i.pravatar.cc/160?u=${userId}`} alt={(data?.profileVisible === false ? (t('anonymousTraveler') || 'Anonymous') + ' ' + (getAnonymousHandleForId(String(userId))) : data?.username) || 'Traveler'} className="w-28 h-28 sm:w-32 sm:h-32 rounded-full object-cover ring-2 ring-gray-100 dark:ring-zinc-800" />
             <div>
-              <h1 className="text-2xl font-semibold leading-tight">{data?.profileVisible === false ? anonymousLabel(undefined, userId) : (data?.username || t('peerTitle') || 'Traveler')}</h1>
-              {typeof data?.profileVisible !== 'undefined' && (
-                <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">{data.profileVisible ? t('profileVisibilityOn') : t('profileVisibilityOff')}</div>
-              )}
+              <h1 className="text-2xl font-semibold leading-tight">{data?.profileVisible === false ? `${t('anonymousTraveler') || 'Anonymous'} ${getAnonymousHandleForId(String(userId))}` : (data?.username || t('peerTitle') || 'Traveler')}</h1>
               <div className="mt-3 text-gray-800 dark:text-gray-200 max-w-prose whitespace-pre-wrap">{data?.bio || <span className="text-sm text-gray-500">{t('profileNoBio') || 'No bio provided.'}</span>}</div>
             </div>
           </div>

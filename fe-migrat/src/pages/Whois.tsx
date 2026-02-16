@@ -640,9 +640,9 @@ export default function Whois() {
                     <div key={id} className="flex items-center justify-between p-2 border rounded">
                       <div className="flex items-center gap-2">
                         {hiddenProfiles[id]?.avatar ? (
-                          <img src={hiddenProfiles[id].avatar} alt={(hiddenProfiles[id]?.profileVisible === false ? anonymousLabel(undefined, id) : hiddenProfiles[id]?.username) || id} className="w-8 h-8 rounded-full" />
+                          <img src={hiddenProfiles[id].avatar} alt={(hiddenProfiles[id]?.profileVisible === false ? anonymousLabel(undefined, id) : hiddenProfiles[id]?.username) || id} className="w-10 h-10 md:w-8 md:h-8 rounded-full" />
                         ) : (
-                          <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-xs">{((hiddenProfiles[id]?.profileVisible === false ? anonymousLabel(undefined, id) : hiddenProfiles[id]?.username) || id).charAt(0)}</div>
+                          <div className="w-10 h-10 md:w-8 md:h-8 bg-gray-200 rounded-full flex items-center justify-center text-xs">{((hiddenProfiles[id]?.profileVisible === false ? anonymousLabel(undefined, id) : hiddenProfiles[id]?.username) || id).charAt(0)}</div>
                         )}
                         <div className="text-sm truncate">{hiddenProfiles[id]?.profileVisible === false ? anonymousLabel(undefined, id) : (hiddenProfiles[id]?.username || id)}</div>
                       </div>
