@@ -550,7 +550,7 @@ export default function Whois() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 id="whois-heading" className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{t('whoisNearby')}</h2>
-          <p className="mt-2 text-gray-600 dark:text-gray-300">{t('whoisDescription')}</p>
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{t('whoisDescription')}</p>
           {currentUserId && (
             <div className="mt-2 text-sm text-gray-600 dark:text-gray-300">{t('whoisYouNotListed') || "You won't appear in this list"}</div>
           )}
@@ -558,7 +558,7 @@ export default function Whois() {
         <div className="mt-2 sm:mt-0">
           <div role="status" className="flex items-start gap-3 text-sm bg-yellow-50 dark:bg-yellow-900 border-l-4 border-yellow-300 dark:border-yellow-700 text-yellow-800 dark:text-yellow-200 px-3 py-2 rounded">
             <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.72-1.36 3.485 0l5.516 9.8c.75 1.333-.213 2.98-1.742 2.98H4.483c-1.529 0-2.492-1.647-1.742-2.98l5.516-9.8zM11 13a1 1 0 10-2 0 1 1 0 002 0zm-1-8a1 1 0 00-.993.883L8.9 7.5a1 1 0 001.993 0l-.107-1.617A1 1 0 0010 5z" clipRule="evenodd"/></svg>
-            <div>{t('whoisSafetyWarning')}</div>
+            <div className="text-sm">{t('whoisSafetyWarning')}</div>
           </div>
         </div>
       </div>
@@ -581,7 +581,7 @@ export default function Whois() {
         {showLocationPrompt && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-40">
             <div className="bg-white dark:bg-gray-800 p-6 rounded-lg max-w-md w-full">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t('whoisAllowLocationTitle')}</h3>
+              <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">{t('whoisAllowLocationTitle')}</h3>
               <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{t('whoisAllowLocationBody')}</p>
 
               <div className="mt-4 flex gap-2">
@@ -630,7 +630,7 @@ export default function Whois() {
         {showHiddenPanel && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-40">
             <div className="bg-white dark:bg-gray-800 p-6 rounded-lg max-w-md w-full">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Hidden users</h3>
+              <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Hidden users</h3>
               <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">Users you've hidden locally. Unhide to show them again.</p>
               <div className="mt-4 space-y-2 max-h-64 overflow-auto">
                 {hiddenList.length === 0 ? (
@@ -665,7 +665,7 @@ export default function Whois() {
           <div className="mt-2 text-sm text-gray-600">{t('whoisRequestingLocation')}</div>
         )}
 
-        {error && <div className="text-red-700">{error}</div>}
+        {error && <div className="text-red-700 text-sm">{error}</div>}
 
         {/* Toast for new nearby user */}
         {toast && (
@@ -682,7 +682,7 @@ export default function Whois() {
           ) : (
             city && !loading ? (
               <div className="text-center text-gray-600 space-y-3">
-                <div className="text-lg font-medium">{t('whoisNoTravelersTitle')}</div>
+                <div className="text-base font-medium">{t('whoisNoTravelersTitle')}</div>
                 <div className="text-sm">{t('whoisNoTravelersSubtitle')}</div>
                 <ul className="list-disc list-inside text-sm text-gray-600">
                   <li>{t('whoisNoTravelersOptionOne')}</li>
