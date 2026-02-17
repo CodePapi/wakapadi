@@ -1,15 +1,16 @@
 /// src/scraper/scraper.service.ts
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { CronExpression, SchedulerRegistry } from '@nestjs/schedule';
 import { TourService } from '../services/tour.service';
 import { CityService } from '../services/city.services';
+import { LogsService } from './logs.service';
 import * as puppeteer from 'puppeteer';
 import * as fs from 'fs';
 import * as path from 'path';
 import { CronJob } from 'cron';
 
 @Injectable()
-export class ScraperService {
+export class ScraperService implements OnModuleInit {
   private readonly logger = new Logger(ScraperService.name);
   private readonly extraSourcesPath = path.resolve(
     __dirname,
@@ -24,20 +25,55 @@ export class ScraperService {
     private readonly tourService: TourService,
     private readonly cityService: CityService,
     private readonly schedulerRegistry: SchedulerRegistry,
+    private readonly logsService: LogsService,
   ) {
     this.configPath = path.resolve(__dirname, '../../..', 'scraper-config.json')
+  }
+
+  onModuleInit() {
+    // Do NOT auto-start the scheduler by default. Only start if the persisted config
+    // explicitly enabled it AND the environment allows automatic starts. This gives
+    // admins full control via the dashboard. To enable automatic startup set
+    // `ALLOW_AUTO_SCRAPE=true` in the environment (not recommended for multi-instance).
+    try {
+      const cfg = this.readConfig()
+      const allow = String(process.env.ALLOW_AUTO_SCRAPE || '').toLowerCase() === 'true'
+      if (cfg.enabled && allow) {
+        this.pushLog(`Auto-starting scheduled scraper (cron: ${cfg.cron}) due to config and ALLOW_AUTO_SCRAPE=true`)
+        this.startScheduler(cfg.cron)
+      } else {
+        this.pushLog(`Scheduler auto-start suppressed (config.enabled=${cfg.enabled}, ALLOW_AUTO_SCRAPE=${allow})`)
+      }
+    } catch (e) {
+      this.pushWarn('Failed to evaluate scheduler auto-start: ' + (e?.message || e))
+    }
+  }
+
+  private pushLog(msg: string) {
+    try { this.logger.log(msg) } catch (e) {}
+    try { this.logsService.add(msg) } catch (e) {}
+  }
+
+  private pushWarn(msg: string) {
+    try { this.logger.warn(msg) } catch (e) {}
+    try { this.logsService.add(msg) } catch (e) {}
+  }
+
+  private pushError(msg: string) {
+    try { this.logger.error(msg) } catch (e) {}
+    try { this.logsService.add(msg) } catch (e) {}
   }
 
   // Auto-scheduled scraping was removed from automatic startup.
   // Use `runScheduledScraping()` to perform a full run on-demand or use
   // `startScheduler` / `stopScheduler` via admin endpoints to control auto-scraping.
   async runScheduledScraping() {
-    this.logger.log('⏰ Scheduled scrape started...');
+    this.pushLog('⏰ Scheduled scrape started...');
     const cities = await this.cityService.getAllCities();
     for (const city of cities) {
       await this.scrapeCity(city, true);
     }
-    this.logger.log('✅ Scheduled scrape complete');
+    this.pushLog('✅ Scheduled scrape complete');
   }
 
   // --- Scheduler control and configuration persistence ---
@@ -48,7 +84,7 @@ export class ScraperService {
       const parsed = JSON.parse(raw || '{}')
       return { enabled: Boolean(parsed.enabled), cron: parsed.cron || CronExpression.EVERY_DAY_AT_2AM }
     } catch (e) {
-      this.logger.warn('Failed to read scraper config, using defaults')
+      this.pushWarn('Failed to read scraper config, using defaults')
       return { enabled: false, cron: CronExpression.EVERY_DAY_AT_2AM }
     }
   }
@@ -57,7 +93,7 @@ export class ScraperService {
     try {
       fs.writeFileSync(this.configPath, JSON.stringify(cfg, null, 2), 'utf-8')
     } catch (e) {
-      this.logger.warn('Failed to write scraper config: ' + (e?.message || e))
+      this.pushWarn('Failed to write scraper config: ' + (e?.message || e))
     }
   }
 
@@ -77,14 +113,14 @@ export class ScraperService {
       try {
         await this.runScheduledScraping()
       } catch (err) {
-        this.logger.error('Scheduled scraping failed: ' + (err?.message || err))
+        this.pushError('Scheduled scraping failed: ' + (err?.message || err))
       }
     })
 
     this.schedulerRegistry.addCronJob(this.scheduledJobName, job)
     job.start()
     this.writeConfig({ enabled: true, cron: cronToUse })
-    this.logger.log(`Scheduled scraper started with cron: ${cronToUse}`)
+    this.pushLog(`Scheduled scraper started with cron: ${cronToUse}`)
   }
 
   stopScheduler() {
@@ -95,10 +131,10 @@ export class ScraperService {
         this.schedulerRegistry.deleteCronJob(this.scheduledJobName)
       }
     } catch (e) {
-      this.logger.warn('Failed to stop scheduler: ' + (e?.message || e))
+      this.pushWarn('Failed to stop scheduler: ' + (e?.message || e))
     }
     this.writeConfig({ enabled: false, cron: this.readConfig().cron })
-    this.logger.log('Scheduled scraper stopped')
+    this.pushLog('Scheduled scraper stopped')
   }
 
   getSchedulerStatus() {
@@ -131,37 +167,37 @@ export class ScraperService {
     try {
       await this.scrapeFreetourCity(city);
     } catch (err) {
-      this.logger.warn(`⚠️ scrapeFreetourCity failed for ${city}: ${err?.message || err}`);
+      this.pushWarn(`⚠️ scrapeFreetourCity failed for ${city}: ${err?.message || err}`);
     }
 
     try {
       await this.scrapeSeededTours(city);
     } catch (err) {
-      this.logger.warn(`⚠️ scrapeSeededTours failed for ${city}: ${err?.message || err}`);
+      this.pushWarn(`⚠️ scrapeSeededTours failed for ${city}: ${err?.message || err}`);
     }
 
     try {
       await this.scrapeSeededExternalPages(city);
     } catch (err) {
-      this.logger.warn(`⚠️ scrapeSeededExternalPages failed for ${city}: ${err?.message || err}`);
+      this.pushWarn(`⚠️ scrapeSeededExternalPages failed for ${city}: ${err?.message || err}`);
     }
 
     try {
       await this.scrapeNewEuropeToursCity(city);
     } catch (err) {
-      this.logger.warn(`⚠️ scrapeNewEuropeToursCity failed for ${city}: ${err?.message || err}`);
+      this.pushWarn(`⚠️ scrapeNewEuropeToursCity failed for ${city}: ${err?.message || err}`);
     }
 
     try {
       await this.scrapeMunichWalkToursCity(city);
     } catch (err) {
-      this.logger.warn(`⚠️ scrapeMunichWalkToursCity failed for ${city}: ${err?.message || err}`);
+      this.pushWarn(`⚠️ scrapeMunichWalkToursCity failed for ${city}: ${err?.message || err}`);
     }
 
     try {
       await this.scrapeExternalCatalogSources(city);
     } catch (err) {
-      this.logger.warn(`⚠️ scrapeExternalCatalogSources failed for ${city}: ${err?.message || err}`);
+      this.pushWarn(`⚠️ scrapeExternalCatalogSources failed for ${city}: ${err?.message || err}`);
     }
   }
 
@@ -175,7 +211,7 @@ export class ScraperService {
         .filter((type): type is string => Boolean(type));
       return Array.from(new Set(types));
     } catch (err) {
-      this.logger.warn(`⚠️ Failed to read extra sources config: ${err.message}`);
+      this.pushWarn(`⚠️ Failed to read extra sources config: ${err.message}`);
       return [];
     }
   }
@@ -208,7 +244,7 @@ export class ScraperService {
       const raw = fs.readFileSync(this.extraSourcesPath, 'utf-8');
       config = JSON.parse(raw);
     } catch (err) {
-      this.logger.warn(`⚠️ Failed to parse extra sources config: ${err.message}`);
+      this.pushWarn(`⚠️ Failed to parse extra sources config: ${err.message}`);
       return;
     }
 
@@ -257,7 +293,7 @@ export class ScraperService {
 
         const uniqueLinks = Array.from(new Set(links)).slice(0, source.maxLinks || 20);
         if (!uniqueLinks.length) {
-          this.logger.log(`ℹ️ No ${source.name} tours found for ${normalizedCity}`);
+          this.pushLog(`ℹ️ No ${source.name} tours found for ${normalizedCity}`);
           continue;
         }
 
@@ -287,13 +323,13 @@ export class ScraperService {
               sourceType: source.sourceType,
             });
           } catch (err) {
-            this.logger.warn(
+            this.pushWarn(
               `⚠️ Failed ${source.name} tour page ${url}: ${err.message}`,
             );
           }
         }
       } catch (err) {
-        this.logger.warn(
+        this.pushWarn(
           `⚠️ ${source.name} scraping skipped for ${normalizedCity}: ${err.message}`,
         );
       } finally {
@@ -360,9 +396,9 @@ export class ScraperService {
         }
       }
 
-      this.logger.log(`✔ ${tours.length} tours scraped for ${city}`);
+      this.pushLog(`✔ ${tours.length} tours scraped for ${city}`);
     } catch (err) {
-      this.logger.error(`❌ Failed to scrape ${city}: ${err.message}`);
+      this.pushError(`❌ Failed to scrape ${city}: ${err.message}`);
     } finally {
       await browser.close();
     }
@@ -405,12 +441,12 @@ export class ScraperService {
       }
 
       if (filtered.length) {
-        this.logger.log(
+        this.pushLog(
           `✔ ${filtered.length} seeded tours added for ${normalizedCity}`,
         );
       }
     } catch (err) {
-      this.logger.error(`❌ Failed to load seeded tours: ${err.message}`);
+      this.pushError(`❌ Failed to load seeded tours: ${err.message}`);
     }
   }
 
@@ -485,15 +521,15 @@ export class ScraperService {
             sourceType: 'seed-live',
           });
         } catch (err) {
-          this.logger.warn(
+          this.pushWarn(
             `⚠️ Failed to scrape seeded tour page ${tour.externalPageUrl}: ${err.message}`,
           );
         }
       }
 
-      this.logger.log(`✔ Seeded live tours refreshed for ${normalizedCity}`);
+      this.pushLog(`✔ Seeded live tours refreshed for ${normalizedCity}`);
     } catch (err) {
-      this.logger.error(`❌ Failed seeded live scraping: ${err.message}`);
+      this.pushError(`❌ Failed seeded live scraping: ${err.message}`);
     } finally {
       if (browser) {
         await browser.close();
@@ -563,15 +599,15 @@ export class ScraperService {
             sourceType: 'neweurope',
           });
         } catch (err) {
-          this.logger.warn(`⚠️ Failed NewEurope tour page ${url}: ${err.message}`);
+          this.pushWarn(`⚠️ Failed NewEurope tour page ${url}: ${err.message}`);
         }
       }
 
       if (!uniqueLinks.length) {
-        this.logger.log(`ℹ️ No NewEurope tours found for ${normalizedCity}`);
+        this.pushLog(`ℹ️ No NewEurope tours found for ${normalizedCity}`);
       }
     } catch (err) {
-      this.logger.warn(`⚠️ NewEurope scraping skipped for ${city}: ${err.message}`);
+      this.pushWarn(`⚠️ NewEurope scraping skipped for ${city}: ${err.message}`);
     } finally {
       if (browser) {
         await browser.close();
@@ -624,7 +660,7 @@ export class ScraperService {
         sourceType: 'munichwalk',
       });
     } catch (err) {
-      this.logger.warn(`⚠️ Munich Walk Tours scraping skipped: ${err.message}`);
+      this.pushWarn(`⚠️ Munich Walk Tours scraping skipped: ${err.message}`);
     } finally {
       if (browser) {
         await browser.close();
@@ -698,7 +734,7 @@ export class ScraperService {
         }
       } catch (err) {
         if (retries > 0) {
-          this.logger.warn(`Retrying (${retries} left) for ${url}`);
+          this.pushWarn(`Retrying (${retries} left) for ${url}`);
           return this.scrapeSingleTour(city, tourSlug, retries - 1);
         }
         throw err;
@@ -707,7 +743,7 @@ export class ScraperService {
       // Rest of your scraping logic...
       
     } catch (error) {
-      this.logger.error(`Error scraping tour ${tourSlug} in ${city}: ${error.message}`);
+      this.pushError(`Error scraping tour ${tourSlug} in ${city}: ${error.message}`);
       throw error;
     } finally {
       if (browser) {
