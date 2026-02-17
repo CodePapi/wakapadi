@@ -211,6 +211,7 @@
   "profileDisplayNameRequired": "Le nom affiché est requis",
   "profileBioLabel": "Bio",
   "profileBioTooLong": "La bio doit contenir au maximum 300 caractères",
+  "profileBioPlaceholder": "Faites connaître vos intentions aux personnes près de vous — p.ex. « Qui veut se retrouver au café ce week‑end ? Envoyez‑moi un message ! »",
   "profileVisibilityLabel": "Visibilité du profil",
   "profileSocialsInvalid": "Un ou plusieurs liens sociaux ne sont pas des URL valides",
   "profileSaving": "Enregistrement..."

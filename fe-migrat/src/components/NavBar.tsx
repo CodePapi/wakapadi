@@ -78,7 +78,7 @@ export default function NavBar() {
       className={({ isActive }) =>
         isActive
           ? 'flex items-center gap-2 px-3 py-2 text-blue-600 font-semibold border-b-2 border-blue-600'
-          : 'flex items-center gap-2 px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300'
+          : 'flex items-center gap-2 px-3 py-2 text-gray-700 hover:text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300'
       }
     >
       {icon}
@@ -186,14 +186,14 @@ export default function NavBar() {
                     }
                     navigate('/chat');
                   }}
-                  className="p-2 rounded hover:bg-gray-100"
+                  className="p-2 rounded hover:bg-transparent hover:text-gray-900 dark:hover:text-gray-100"
                 >
                   <SvgChat />
                 </button>
                 <div className="flex items-center gap-2">
                   <Link
                     to="/profile"
-                    className="p-2 rounded hover:bg-gray-100"
+                    className="p-2 rounded hover:bg-transparent hover:text-gray-900 dark:hover:text-gray-100"
                     aria-label={t('profile')}
                   >
                     <SvgAvatar />
@@ -258,28 +258,28 @@ export default function NavBar() {
               <Link
                 to="/whois"
                 onClick={() => setOpen(false)}
-                className="px-3 py-2 text-gray-700 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded"
+                className="px-3 py-2 text-gray-700 dark:text-gray-100 hover:underline rounded"
               >
                 {t('whoisNearby')}
               </Link>
               <Link
                 to="/tours"
                 onClick={() => setOpen(false)}
-                className="px-3 py-2 text-gray-700 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded"
+                className="px-3 py-2 text-gray-700 dark:text-gray-100 hover:underline rounded"
               >
                 {t('toursBrowseTitle')}
               </Link>
               <Link
                 to="/saved"
                 onClick={() => setOpen(false)}
-                className="px-3 py-2 text-gray-700 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded"
+                className="px-3 py-2 text-gray-700 dark:text-gray-100 hover:underline rounded"
               >
                 {t('savedLabel') || 'Saved'}
               </Link>
               <Link
                 to="/contact-us"
                 onClick={() => setOpen(false)}
-                className="px-3 py-2 text-gray-700 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded"
+                className="px-3 py-2 text-gray-700 dark:text-gray-100 hover:underline rounded"
               >
                 {t('contactUs')}
               </Link>
@@ -398,7 +398,7 @@ export function MobileBottomNav({
                 </button>
             </>
           ) : (
-            <button onClick={handleLogin} aria-label="Login" className={` flex items-center justify-center rounded hover:bg-gray-100`} style={{ background: 'none' }}>
+            <button onClick={handleLogin} aria-label="Login" className={` flex items-center justify-center rounded hover:bg-transparent hover:text-gray-900 dark:hover:text-gray-100`} style={{ background: 'none' }}>
               <SvgAvatar size={iconSize} />
             </button>
           )}

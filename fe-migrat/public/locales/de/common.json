@@ -165,6 +165,7 @@
   "profileDisplayNameRequired": "Anzeigename ist erforderlich",
   "profileBioLabel": "Bio",
   "profileBioTooLong": "Die Bio darf maximal 300 Zeichen haben",
+  "profileBioPlaceholder": "Teile deine Pläne mit Leuten in deiner Nähe — z. B. \"Wer möchte dieses Wochenende im Café treffen? Schreib mir!\"",
   "profileVisibilityLabel": "Profil-Sichtbarkeit",
   "profileSocialsInvalid": "Einer oder mehrere Social-Links sind ungültige URLs",
   "profileSaving": "Speichern..."

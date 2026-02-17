@@ -91,6 +91,16 @@ export default function Whois() {
             return { ...u, distanceKm: d }
           })
 
+          // sort by proximity (unknown distances last)
+          augmented.sort((a: any, b: any) => {
+            const ad = typeof a.distanceKm === 'number' ? a.distanceKm : null
+            const bd = typeof b.distanceKm === 'number' ? b.distanceKm : null
+            if (ad === null && bd === null) return 0
+            if (ad === null) return 1
+            if (bd === null) return -1
+            return ad - bd
+          })
+
           const start = (pageNum - 1) * limit
           const pageSlice = augmented.slice(start, start + limit)
           setUsers((prev) => (pageNum === 1 ? pageSlice : [...prev, ...pageSlice]))
@@ -159,11 +169,31 @@ export default function Whois() {
         return { ...u, distanceKm: d }
       })
 
+      // sort by proximity (unknown distances last)
+      augmented.sort((a: any, b: any) => {
+        const ad = typeof a.distanceKm === 'number' ? a.distanceKm : null
+        const bd = typeof b.distanceKm === 'number' ? b.distanceKm : null
+        if (ad === null && bd === null) return 0
+        if (ad === null) return 1
+        if (bd === null) return -1
+        return ad - bd
+      })
+
       setUsers((prev) => {
         if (pageNum === 1) return augmented
         const existingIds = new Set(prev.map((p) => (p.userId || p._id || p.id)))
         const filtered = augmented.filter((a: any) => !existingIds.has(a.userId || a._id || a.id))
-        return [...prev, ...filtered]
+        // append new unique items and keep list sorted by distance
+        const combined = [...prev, ...filtered]
+        combined.sort((a: any, b: any) => {
+          const ad = typeof a.distanceKm === 'number' ? a.distanceKm : null
+          const bd = typeof b.distanceKm === 'number' ? b.distanceKm : null
+          if (ad === null && bd === null) return 0
+          if (ad === null) return 1
+          if (bd === null) return -1
+          return ad - bd
+        })
+        return combined
       })
 
       setHasMore(data.length === 15)
@@ -333,7 +363,52 @@ export default function Whois() {
           setGeoInProgress(false)
         }
       },
-      () => {
+      async () => {
+        // location permission denied — attempt IP-based lookup as a graceful fallback
+        try {
+          const r = await api.get('/geolocation/ip', { cache: 'no-store' })
+          const info = r?.data || {}
+          const cityFromIp = info.city || info.region || info.region_code || info.country_name
+          const lat = info.latitude || info.lat
+          const lon = info.longitude || info.lon || info.long
+
+          if (lat && lon) {
+            try { safeStorage.setItem('last_device_coords', JSON.stringify({ lat, lng: lon })) } catch (e) {}
+            setCurrentCoords({ lat: Number(lat), lng: Number(lon) })
+          }
+
+          if (cityFromIp) {
+            const normalized = String(cityFromIp).trim().toLowerCase()
+            setCity(normalized)
+            try { const session = await ensureAnonymousSession(); if (session?.userId) setCurrentUserId(session.userId) } catch (e) {}
+            await pingPresence(normalized)
+            await fetchNearby(normalized, 1)
+            setGeoInProgress(false)
+            setLoading(false)
+            return
+          }
+
+          if (lat && lon) {
+            try {
+              const geo: any = await api.get(`/geolocation/reverse?lat=${lat}&lon=${lon}`, { cache: 'no-store' })
+              const detectedCity = (geo?.data?.address?.city || geo?.data?.address?.town || geo?.data?.address?.village || '').trim().toLowerCase()
+              if (detectedCity) {
+                setCity(detectedCity)
+                try { const session = await ensureAnonymousSession(); if (session?.userId) setCurrentUserId(session.userId) } catch (e) {}
+                await pingPresence(detectedCity)
+                await fetchNearby(detectedCity, 1)
+                setGeoInProgress(false)
+                setLoading(false)
+                return
+              }
+            } catch (e) {
+              // fallthrough to set error below
+            }
+          }
+        } catch (e) {
+          // ignore IP lookup errors
+        }
+
         setError('Location permission denied')
         setLoading(false)
         setGeoInProgress(false)
@@ -561,9 +636,9 @@ export default function Whois() {
         <div>
           <h2 id="whois-heading" className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{t('whoisNearby')}</h2>
           <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{t('whoisDescription')}</p>
-          {currentUserId && (
+          {/* {currentUserId && (
             <div className="mt-2 text-sm text-gray-600 dark:text-gray-300">{t('whoisYouNotListed') || "You won't appear in this list"}</div>
-          )}
+          )} */}
         </div>
         <div className="mt-2 sm:mt-0">
           <div role="status" className="flex items-start gap-3 text-sm bg-yellow-50 dark:bg-yellow-900 border-l-4 border-yellow-300 dark:border-yellow-700 text-yellow-800 dark:text-yellow-200 px-3 py-2 rounded">
@@ -579,11 +654,11 @@ export default function Whois() {
        <>{safeStorage.getItem('userId') &&<div className="mt-3">
           <button
             onClick={() => setShowLocationPrompt(true)}
-            className="px-4 py-2 bg-blue-600 text-gray-700 dark:text-gray-100 rounded-md hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:bg-blue-500 dark:hover:bg-blue-600"
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:bg-blue-500 dark:hover:bg-blue-600"
           >{t('whoisFindNearby')}</button>
           <button
             onClick={() => setShowHiddenPanel(true)}
-            className="ml-3 px-3 py-2 border rounded-md text-sm"
+            className="ml-3 px-3 py-2 border border-gray-200 bg-white text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md text-sm hover:bg-gray-50 dark:hover:bg-gray-600"
           >Manage hidden users</button>
         </div>
 }</>
@@ -601,11 +676,11 @@ export default function Whois() {
                     setShowLocationPrompt(false)
                     try { await handleFindNearby() } finally { setGeoInProgress(false) }
                   }}
-                  className="px-4 py-2 bg-green-600 text-gray-700 dark:text-gray-100 rounded-md hover:bg-green-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
+                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
                 >
                   {t('whoisAllow')}
                 </button>
-                <button onClick={() => setShowLocationPrompt(false)} className="px-4 py-2 border rounded-md">{t('cancel')}</button>
+                <button onClick={() => setShowLocationPrompt(false)} className="px-4 py-2 border border-gray-300 bg-white text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md">{t('cancel')}</button>
               </div>
 
               <div className="mt-4">
