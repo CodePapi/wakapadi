@@ -31,6 +31,7 @@ export default function AdminDashboard() {
   const [addCitiesInput, setAddCitiesInput] = useState<string>('')
   const [addCitiesStatus, setAddCitiesStatus] = useState<string | null>(null)
   const [reports, setReports] = useState<any[] | null>(null)
+  const [notesMap, setNotesMap] = useState<Record<string, string>>({})
   const [dailyVisits, setDailyVisits] = useState<Array<{ day: string; uniqueVisitors: number }>>([])
   const [apiToken, setApiToken] = useState<string>(() => safeStorage.getItem('token') || '')
 
@@ -152,6 +153,23 @@ export default function AdminDashboard() {
     } catch (e: any) {
       setContactMessages([{ error: e?.message || String(e) }])
     }
+  }
+
+  const markAttend = async (id: string, noteParam?: string) => {
+    try {
+      const note = noteParam ?? notesMap[id]
+      await api.post(`/contact/${encodeURIComponent(id)}/attend`, { attendedBy: safeStorage.getItem('token') || undefined, note })
+      // clear note in UI after marking attended
+      setNotesMap((s) => ({ ...s, [id]: '' }))
+      fetchContactMessages()
+    } catch (e) {}
+  }
+
+  const markUnattend = async (id: string) => {
+    try {
+      await api.post(`/contact/${encodeURIComponent(id)}/unattend`)
+      fetchContactMessages()
+    } catch (e) {}
   }
 
   const fetchReports = async () => {
@@ -280,11 +298,24 @@ export default function AdminDashboard() {
             </div>
             <div className="space-y-3 max-h-64 overflow-auto">
               {contactMessages?.map((m, i) => (
-                <div key={i} className="p-3 border rounded">
+                <div key={m._id || i} className="p-3 border rounded">
                   {m.error ? <div className="text-sm text-red-600">{m.error}</div> : (
                     <>
-                      <div className="font-semibold">{m.name || m.email || 'Message'}</div>
-                      <div className="text-sm text-gray-600">{m.message || JSON.stringify(m)}</div>
+                      <div className="flex justify-between">
+                        <div className="font-semibold">{m.name || m.email || 'Message'}</div>
+                        <div className="text-xs text-gray-500">{m.createdAt ? new Date(m.createdAt).toISOString().slice(0,10) : ''}</div>
+                      </div>
+                      <div className="text-sm text-gray-600 mb-2">{m.message || JSON.stringify(m)}</div>
+                      <div className="flex items-center gap-2">
+                        <div className="text-xs text-gray-500">Attended:</div>
+                        <div className="font-medium">{m.attended ? 'Yes' : 'No'}</div>
+                        {m.attended && m.attendedAt ? <div className="text-xs text-gray-500">({new Date(m.attendedAt).toISOString().slice(0,10)})</div> : null}
+                      </div>
+                      <div className="mt-2 flex gap-2">
+                        <input placeholder="Short note" className="flex-1 px-2 py-1 border rounded bg-white dark:bg-gray-700 text-sm" value={notesMap[m._id] || ''} onChange={(e) => setNotesMap((s) => ({ ...s, [m._id]: e.target.value }))} />
+                        <button onClick={() => markAttend(m._id)} className="px-2 py-1 bg-green-600 text-white rounded text-sm">Mark attended</button>
+                        <button onClick={() => markUnattend(m._id)} className="px-2 py-1 bg-gray-300 text-sm rounded">Mark unattended</button>
+                      </div>
                     </>
                   )}
                 </div>
