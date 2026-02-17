@@ -68,19 +68,26 @@ export class WhoisService {
   }
 
 
-  async getNearby(city: string, userId: any, lat?: string, lon?: string) {
+  async getNearby(city: string, userId: any, lat?: string, lon?: string, page = 1, limit = 15) {
+    // enforce sane limits
+    const maxLimit = Math.min(Math.max(parseInt(String(limit) || '15', 10), 1), 100)
+    const pageNum = Math.max(parseInt(String(page) || '1', 10), 1)
+
     const query: any = {
-      city,
       visible: true,
     };
+    // when city provided (non-empty), filter by city; otherwise allow global
+    if (city && String(city).trim() !== '') query.city = city
 
     // Only include userId exclusion if it's a valid non-empty string
     if (userId && typeof userId === 'string' && userId.trim() !== '') {
       query.userId = { $ne: userId };
     }
 
-    // Fetch all visible presences for the city
-    const visibleUsers = await this.whoisModel.find(query).lean();
+    // Fetch presences (limit fetched candidates to a reasonable upper bound)
+    // We fetch up to 1000 candidates to keep server work bounded, then sort/paginate in-memory.
+    const FETCH_CANDIDATES = 1000
+    const visibleUsers = await this.whoisModel.find(query).limit(FETCH_CANDIDATES).lean();
 
     // Defensive normalization: coerce any stored coordinates (strings) to numbers so distance can be computed
     visibleUsers.forEach((vu: any) => {
@@ -140,7 +147,7 @@ export class WhoisService {
         _id: user._id,
         city: user.city,
         status: user.status,
-        coordinates: user.coordinates,
+        // Do not expose raw coordinates in API responses; we'll include distanceKm instead.
         lastSeen: user.expiresAt,
       } as any;
 
@@ -195,7 +202,32 @@ export class WhoisService {
       };
     });
 
-    return results;
+    // Sort by distance when available (unknown distances last). If no origin provided, fall back to sorting by lastSeen (most recent first)
+    let sorted = results
+    if (originLat !== null && originLon !== null) {
+      sorted = results.sort((a: any, b: any) => {
+        const ad = typeof a.distanceKm === 'number' ? a.distanceKm : null
+        const bd = typeof b.distanceKm === 'number' ? b.distanceKm : null
+        if (ad === null && bd === null) return 0
+        if (ad === null) return 1
+        if (bd === null) return -1
+        return ad - bd
+      })
+    } else {
+      sorted = results.sort((a: any, b: any) => {
+        const at = a.lastSeen ? new Date(a.lastSeen).getTime() : 0
+        const bt = b.lastSeen ? new Date(b.lastSeen).getTime() : 0
+        return bt - at
+      })
+    }
+
+    // paginate
+    const start = (pageNum - 1) * maxLimit
+    const pageSlice = sorted.slice(start, start + maxLimit)
+
+    // Enforce response shape: attach user info where allowed, but do not include coordinates
+    const final = pageSlice.map((user) => ({ ...user }))
+    return final
   }
   
 

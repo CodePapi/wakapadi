@@ -35,6 +35,8 @@ export default function Whois() {
   const [hiddenProfiles, setHiddenProfiles] = useState<Record<string, any>>({})
   const [showLocationPrompt, setShowLocationPrompt] = useState(false)
   const [manualCity, setManualCity] = useState('')
+  const [availableCities, setAvailableCities] = useState<Array<{ city: string; count: number }>>([])
+  const [fetchingCities, setFetchingCities] = useState(false)
   const [geoInProgress, setGeoInProgress] = useState(false)
 
   const fetchNearby = useCallback(async (targetCity: string, pageNum = 1) => {
@@ -271,6 +273,41 @@ export default function Whois() {
     return () => { mounted = false }
   }, [hiddenList])
 
+  const fetchAvailableCities = async () => {
+    setFetchingCities(true)
+    try {
+      // Fetch a bounded set of worldwide/online whois users and derive cities from them.
+      // Use an empty city query so backend returns global/online users.
+      const wRes: any = await api.get('/whois/nearby?city=&page=1&limit=100', { cache: 'no-store' })
+      const users: any[] = Array.isArray(wRes?.data) ? wRes.data : []
+
+      const counts: Record<string, number> = {}
+      for (const u of users) {
+        if (!u) continue
+        // Attempt to detect a user city from common fields
+        let c = ''
+        if (typeof u.city === 'string' && u.city.trim()) c = u.city.trim().toLowerCase()
+        else if (u.location && typeof u.location.city === 'string' && u.location.city.trim()) c = u.location.city.trim().toLowerCase()
+        else if (u.address && typeof u.address.city === 'string' && u.address.city.trim()) c = u.address.city.trim().toLowerCase()
+        else if (typeof u.region === 'string' && u.region.trim()) c = u.region.trim().toLowerCase()
+        if (!c) continue
+        counts[c] = (counts[c] || 0) + 1
+      }
+
+      const active = Object.keys(counts).map((cityName) => ({ city: cityName, count: counts[cityName] })).sort((a, b) => b.count - a.count)
+      setAvailableCities(active)
+    } catch (e) {
+      setAvailableCities([])
+    } finally {
+      setFetchingCities(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!showLocationPrompt) return
+    fetchAvailableCities()
+  }, [showLocationPrompt])
+
   const unhideUser = (id: string) => {
     try {
       const raw = safeStorage.getItem('whois_hidden_v1')
@@ -426,6 +463,7 @@ export default function Whois() {
 
   useEffect(() => {
     // On initial mount: try to use a previously stored device location, or request device location
+    // Also fetch global online users so the page shows people immediately.
     let mounted = true
 
     const tryStoredOrPrompt = async () => {
@@ -493,7 +531,10 @@ export default function Whois() {
       }
     }
 
-    tryStoredOrPrompt()
+    ;(async () => {
+      await tryStoredOrPrompt()
+      try { await fetchNearby('', 1) } catch (e) {}
+    })()
 
     return () => { mounted = false }
   }, [])
@@ -623,11 +664,8 @@ export default function Whois() {
   const visibleUsers = useMemo(() => users.filter((u) => {
     if (!u) return false
     const hasId = !!(u.userId || u._id || u.id)
-    const hasLocation = (
-      (u.coordinates && typeof u.coordinates.lat !== 'undefined' && typeof u.coordinates.lng !== 'undefined') ||
-      (typeof u.distanceKm === 'number')
-    )
-    return hasId && hasLocation
+    // Show users even if location data is not available so visitors see online people immediately.
+    return hasId
   }), [users])
 
   return (
@@ -712,7 +750,18 @@ export default function Whois() {
               <div className="mt-4">
                 <label className="block text-xs text-gray-500">{t('whoisEnterCityManualLabel')}</label>
                 <div className="flex gap-2 mt-2">
-                  <input value={manualCity} onChange={(e) => setManualCity(e.target.value)} placeholder={t('exampleCity')} className="flex-1 px-3 py-2 border rounded-md" />
+                  {fetchingCities ? (
+                    <div className="flex-1 px-3 py-2 border rounded-md text-sm text-gray-600">{t('loadingNearby') || 'Loading...'}</div>
+                  ) : availableCities && availableCities.length > 0 ? (
+                    <select value={manualCity} onChange={(e) => setManualCity(e.target.value)} className="flex-1 px-3 py-2 border rounded-md">
+                      <option value="">{t('whoisSelectCityPlaceholder') || 'Select a city'}</option>
+                      {availableCities.map((c) => (
+                        <option key={c.city} value={c.city}>{`${c.city}`}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input value={manualCity} onChange={(e) => setManualCity(e.target.value)} placeholder={t('exampleCity')} className="flex-1 px-3 py-2 border rounded-md" />
+                  )}
                   <button onClick={async () => {
                     if (!manualCity.trim()) return
                     const normalized = manualCity.trim().toLowerCase()
