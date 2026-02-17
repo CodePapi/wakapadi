@@ -28,7 +28,7 @@ export default function VisibilityToggle() {
       safeStorage.setItem(STORAGE_KEY, next ? '1' : '0')
       await api.patch('/whois', { visible: next })
       // notify other components (header indicator) that visibility changed
-      try { window.dispatchEvent(new CustomEvent('wakapadi:visibility-changed')) } catch {}
+      try { window.dispatchEvent(new CustomEvent('wakapadi:visibility-changed', { detail: { visible: next } })) } catch {}
     } catch (e: any) {
       setVisible(prev)
       setError(t('visibilityUpdateFailed') || 'Failed to update visibility')

@@ -8,6 +8,7 @@ import { User, UserSchema } from '../schemas/user.schema';
 import { UserReport, UserReportSchema } from '../schemas/user-report.schema';
 import { UserBlock, UserBlockSchema } from '../schemas/user-block.schema';
 import { WhoisMessageModule } from './whois-message.module';
+import { WhoisModule } from './whois.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { WhoisMessageModule } from './whois-message.module';
     ]),
     // allow emitting socket events on block/unblock (use forwardRef to avoid circular import)
     forwardRef(() => WhoisMessageModule),
+    forwardRef(() => WhoisModule),
     
   ],
   controllers: [UsersController, PublicUsersController],

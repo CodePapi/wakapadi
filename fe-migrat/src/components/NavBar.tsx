@@ -47,6 +47,7 @@ export default function NavBar() {
         console.warn('failed to update presence during logout', e);
       }
     } finally {
+      try { window.dispatchEvent(new CustomEvent('wakapadi:logout')) } catch {}
       try {
         localStorage.removeItem('token');
       } catch {}

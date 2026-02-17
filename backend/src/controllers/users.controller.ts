@@ -40,6 +40,14 @@ export class UsersController {
     return this.usersService.getPreferences(userId);
   }
 
+  @Get('preferences/batch')
+  async getPreferencesBatch(@Req() req) {
+    const idsRaw = req.query.ids as string | undefined;
+    if (!idsRaw) return [];
+    const ids = String(idsRaw).split(',').map((s) => s.trim()).filter(Boolean);
+    return this.usersService.getPreferencesBatch(ids);
+  }
+
   @Patch('preferences')
   async updatePreferences(@Req() req, @Body() body) {
     return this.usersService.updatePreferences(req.user.id, body);

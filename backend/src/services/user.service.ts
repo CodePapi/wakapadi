@@ -5,6 +5,7 @@ import { User } from "../schemas/user.schema";
 import { UserReport } from "../schemas/user-report.schema";
 import { UserBlock } from "../schemas/user-block.schema";
 import { WhoisGateway } from '../gateways/whois.gateway';
+import { WhoisService } from './whois.service';
 
 @Injectable()
 export class UsersService {
@@ -13,6 +14,7 @@ export class UsersService {
     @InjectModel(UserReport.name) private reportModel: Model<UserReport>,
     @InjectModel(UserBlock.name) private blockModel: Model<UserBlock>,
     @Inject(forwardRef(() => WhoisGateway)) private readonly gateway?: WhoisGateway,
+    @Inject(forwardRef(() => WhoisService)) private readonly whoisService?: WhoisService,
   ) {}
   async getAllUsers() {
     return this.userModel.find().select('username email role _id').lean();
@@ -20,6 +22,14 @@ export class UsersService {
   async deleteUser(userId: string) {
     // Remove the user by ID
     await this.userModel.findByIdAndDelete(userId);
+    // Remove any whois presences for this user so they no longer appear in nearby lists
+    try {
+      if (this.whoisService && typeof this.whoisService.removePresence === 'function') {
+        await this.whoisService.removePresence(userId);
+      }
+    } catch (e) {
+      console.warn('Failed to remove whois presence for deleted user', e);
+    }
     // Optionally: remove related blocks, reports, etc.
     await this.blockModel.deleteMany({ $or: [{ blockerId: userId }, { blockedId: userId }] });
     await this.reportModel.deleteMany({ $or: [{ reporterId: userId }, { reportedId: userId }] });
@@ -31,6 +41,19 @@ export class UsersService {
       .findById(userId)
       .select('travelPrefs languages socials bio avatarUrl username profileVisible gender')
       .lean();
+  }
+
+  async getPreferencesBatch(userIds: string[]) {
+    if (!Array.isArray(userIds) || userIds.length === 0) return [];
+    const objectIds = userIds.filter(Boolean).map((id) => {
+      try { return new Types.ObjectId(id) } catch { return null }
+    }).filter(Boolean) as any[];
+    if (objectIds.length === 0) return [];
+    const users = await this.userModel
+      .find({ _id: { $in: objectIds } })
+      .select('travelPrefs languages socials bio avatarUrl username profileVisible gender')
+      .lean();
+    return users;
   }
 
   async updatePreferences(userId: string, data: Partial<User>) {

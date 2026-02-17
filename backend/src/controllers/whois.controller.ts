@@ -17,6 +17,7 @@ import {
 import { WhoisService } from '../services/whois.service';
 import { AuthGuard } from '../gateways/auth.guard';
 import { Request } from 'express';
+import { ForbiddenException } from '@nestjs/common';
 import mongoose from 'mongoose';
 
 interface AuthRequest extends Request {
@@ -62,6 +63,16 @@ export class WhoisController {
   @Get('chat/:userId')
   async getChat(@Param('userId') userId: string, @Req() req: AuthRequest) {
     return this.whoisService.getChatHistory(req.user!.id, userId);
+  }
+
+  // Admin: remove a user's stored presence
+  @UseGuards(AuthGuard)
+  @Delete(':userId')
+  async removePresence(@Param('userId') userId: string, @Req() req: AuthRequest) {
+    if (!req.user || req.user.role !== 'admin') {
+      throw new ForbiddenException('Admin privileges required')
+    }
+    return this.whoisService.removePresence(userId)
   }
 
   @UseGuards(AuthGuard)
