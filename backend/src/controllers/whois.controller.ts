@@ -49,11 +49,13 @@ export class WhoisController {
     const city = (req.query.city as string) || '';
     const lat = req.query.lat as string | undefined;
     const lon = req.query.lon as string | undefined;
+    const page = parseInt((req.query.page as string) || '1', 10) || 1;
+    const limit = parseInt((req.query.limit as string) || '15', 10) || 15;
     // Prefer authenticated user id from request (AuthGuard) when available
     const authUserId = req.user?.id as string | undefined;
     const queryUserId = req.query.userId as string | undefined;
     const effectiveUserId = authUserId && authUserId.trim() !== '' ? authUserId : queryUserId;
-    return this.whoisService.getNearby(city, effectiveUserId, lat, lon);
+    return this.whoisService.getNearby(city, effectiveUserId, lat, lon, page, limit);
   }
 
   @UseGuards(AuthGuard)
