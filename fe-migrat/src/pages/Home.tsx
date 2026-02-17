@@ -10,6 +10,7 @@ export default function Home() {
   const [query, setQuery] = useState('')
   const debounceRef = useRef<number | null>(null)
 
+  
 
   // Debounced search -> navigate to /tours?q=...
   const handleSearchChange = useCallback((value: string) => {
