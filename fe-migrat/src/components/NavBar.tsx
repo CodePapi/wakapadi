@@ -136,7 +136,7 @@ export default function NavBar() {
         <nav
           aria-label="Primary"
           ref={navRef}
-          className={`hidden md:flex flex-1 justify-center items-center ${compactNav ? 'text-sm' : ''}`}
+          className={`hidden md:flex flex-1 justify-center items-center md:text-sm ${compactNav ? 'text-sm' : ''}`}
         >
           <div className="flex items-center gap-2 bg-transparent">
             <NavItem

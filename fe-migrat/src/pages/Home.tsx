@@ -99,6 +99,12 @@ export default function Home() {
     { title: t('homeHighlightBotTitle'), body: t('homeHighlightBotBody') },
   ]
 
+  const features = [
+    { title: t('homeFeatureAuthTitle'), body: t('homeFeatureAuthBody') },
+    { title: t('homeFeatureWhoisTitle'), body: t('homeFeatureWhoisBody') },
+    { title: t('homeFeatureToursTitle'), body: t('homeFeatureToursBody') },
+  ]
+
   const steps = [
     { title: t('homeStepSearchTitle'), body: t('homeStepSearchBody') },
     { title: t('homeStepConnectTitle'), body: t('homeStepConnectBody') },
@@ -153,6 +159,23 @@ export default function Home() {
               <div key={h.title} className="p-6 rounded-lg shadow-sm bg-gray-50 dark:bg-gray-800">
                 <h3 className="text-lg font-semibold mb-2">{h.title}</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-300">{h.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="py-12">
+        <div className="mx-auto max-w-6xl px-4">
+          <h2 className="text-2xl font-semibold mb-6">{t('homeFeaturesTitle')}</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            {features.map((f) => (
+              <div key={f.title} className="p-5 border border-gray-100 rounded-lg bg-gray-50 dark:bg-gray-800 shadow-sm hover:shadow-md transition-shadow duration-150 flex gap-4 items-start">
+                <div className="w-1.5 h-10 rounded-full bg-blue-600/80 mt-1" aria-hidden />
+                <div>
+                  <h3 className="font-semibold mb-2 text-gray-900 dark:text-gray-100">{f.title}</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">{f.body}</p>
+                </div>
               </div>
             ))}
           </div>
