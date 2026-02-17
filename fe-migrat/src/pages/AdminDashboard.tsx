@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useAdminAuth from '../hooks/useAdminAuth'
 import { useTranslation } from '../lib/i18n'
@@ -35,6 +35,10 @@ export default function AdminDashboard() {
   const [notesMap, setNotesMap] = useState<Record<string, string>>({})
   const [dailyVisits, setDailyVisits] = useState<Array<{ day: string; uniqueVisitors: number }>>([])
   const [apiToken, setApiToken] = useState<string>(() => safeStorage.getItem('token') || '')
+  const [logs, setLogs] = useState<Array<{ ts: string; msg: string }>>([])
+  const [pollingLogs, setPollingLogs] = useState(false)
+  const pollRef = useRef<number | null>(null)
+  const logsBoxRef = useRef<HTMLDivElement | null>(null)
 
   const saveToken = () => {
     try {
@@ -51,21 +55,65 @@ export default function AdminDashboard() {
   const triggerScrapeCity = async () => {
     setScrapeStatus('Running...')
     try {
+      // start polling logs while the scrape runs
+      startPollingLogs()
       const res: any = await api.post('/scraper/run', { city: cityInput || undefined })
       setScrapeStatus(res?.data?.message || 'Scrape triggered')
     } catch (e: any) {
-      setScrapeStatus('Error: ' + (e?.message || String(e)))
+      console.error('triggerScrapeCity error', e)
+      let msg = e?.message || String(e)
+      // try to extract JSON payload when api throws like: "API 500 {..json..}"
+      try {
+        const trimmed = msg.replace(/^API \d+ /, '')
+        const parsed = JSON.parse(trimmed)
+        msg = parsed?.detail || parsed?.message || msg
+      } catch (_) {}
+      setScrapeStatus('Error: ' + msg)
     }
+    finally { stopPollingLogs() }
   }
 
   const triggerScrapeAll = async () => {
     setScrapeStatus('Running full scrape...')
     try {
+      startPollingLogs()
       const res: any = await api.post('/scraper/run')
       setScrapeStatus(res?.data?.message || 'Scrape triggered')
     } catch (e: any) {
-      setScrapeStatus('Error: ' + (e?.message || String(e)))
+      console.error('triggerScrapeAll error', e)
+      let msg = e?.message || String(e)
+      try {
+        const trimmed = msg.replace(/^API \d+ /, '')
+        const parsed = JSON.parse(trimmed)
+        msg = parsed?.detail || parsed?.message || msg
+      } catch (_) {}
+      setScrapeStatus('Error: ' + msg)
     }
+    finally { stopPollingLogs() }
+  }
+
+  const fetchLogs = async () => {
+    try {
+      const res: any = await api.get('/scraper/logs', { cache: 'no-store' })
+      const arr = Array.isArray(res?.data) ? res.data : []
+      setLogs(arr)
+      // auto-scroll
+      try { if (logsBoxRef.current) { logsBoxRef.current.scrollTop = logsBoxRef.current.scrollHeight } } catch (e) {}
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  const startPollingLogs = () => {
+    if (pollRef.current) return
+    setPollingLogs(true)
+    fetchLogs()
+    pollRef.current = window.setInterval(fetchLogs, 1000) as unknown as number
+  }
+
+  const stopPollingLogs = () => {
+    setPollingLogs(false)
+    try { if (pollRef.current) { window.clearInterval(pollRef.current); pollRef.current = null } } catch (e) {}
   }
 
   const fetchSchedulerStatus = async () => {
@@ -344,6 +392,26 @@ export default function AdminDashboard() {
               <button onClick={() => fetchDailyVisitsRange(7)} className="px-3 py-2 bg-blue-600 text-white rounded">Refresh 7 days</button>
             </div>
           </aside>
+        </section>
+
+        <section className="bg-white dark:bg-gray-800 p-6 rounded shadow mt-6">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold">Scrape logs</h3>
+            <div className="flex items-center gap-2">
+              <button onClick={() => { fetchLogs() }} className="px-2 py-1 text-sm text-blue-600">Refresh</button>
+              <button onClick={async () => { await api.del('/scraper/logs'); setLogs([]) }} className="px-2 py-1 text-sm text-gray-600">Clear</button>
+              <div className="text-xs text-gray-500">{pollingLogs ? 'Polling...' : 'Idle'}</div>
+            </div>
+          </div>
+          <div ref={(el) => { logsBoxRef.current = el }} className="max-h-64 overflow-auto border rounded p-3 bg-gray-50 dark:bg-gray-900 text-sm">
+            {logs.length === 0 ? <div className="text-gray-500">No logs yet.</div> : null}
+            {logs.map((l, i) => (
+              <div key={`${l.ts}-${i}`} className="py-1">
+                <span className="text-xs text-gray-400 mr-2">{l.ts.replace('T', ' ').replace('Z', '')}</span>
+                <span>{l.msg}</span>
+              </div>
+            ))}
+          </div>
         </section>
 
         <section className="bg-white dark:bg-gray-800 p-6 rounded shadow">

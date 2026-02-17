@@ -11,16 +11,19 @@
 
 
 // src/scraper/scraper.controller.ts
-import { Controller, Post, Body, Get } from '@nestjs/common';
+import { Controller, Post, Body, Get, Delete } from '@nestjs/common';
 import { ScraperService } from '../services/scraper.service';
+import { LogsService } from '../services/logs.service';
 
 @Controller('scraper')
 export class ScraperController {
-  constructor(private readonly scraperService: ScraperService) {}
+  constructor(private readonly scraperService: ScraperService, private readonly logsService: LogsService) {}
 
   @Post('run')
   async runManualScrape(@Body('city') city?: string) {
     try {
+      // clear previous run logs
+      try { this.logsService.clear() } catch (e) {}
       if (city) {
         await this.scraperService.scrapeCity(city, true);
         return { message: `Scraped city: ${city}` };
@@ -34,6 +37,17 @@ export class ScraperController {
       // Return a concise error for the client while exposing the message for local debugging
       return { statusCode: 500, message: 'Scrape failed', detail: err?.message || String(err) };
     }
+  }
+
+  @Get('logs')
+  async getLogs() {
+    return this.logsService.getAll()
+  }
+
+  @Delete('logs')
+  async clearLogs() {
+    this.logsService.clear()
+    return { message: 'cleared' }
   }
 
   // Admin endpoints to control scheduled scraping (no auth by design per request)
