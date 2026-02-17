@@ -20,6 +20,16 @@ const haversineKm = (lat1: number, lng1: number, lat2: number, lng2: number) => 
 
 export default function Whois() {
   const { t } = useTranslation()
+  // Prevent layout shift when modals open by ensuring a stable scrollbar
+  useEffect(() => {
+    try {
+      const prev = document.body.style.overflowY
+      document.body.style.overflowY = 'scroll'
+      return () => { document.body.style.overflowY = prev }
+    } catch (e) {
+      return () => {}
+    }
+  }, [])
   const [city, setCity] = useState('')
   const [users, setUsers] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
@@ -184,6 +194,40 @@ export default function Whois() {
         if (bd === null) return -1
         return ad - bd
       })
+
+      // Fetch preferences in batch to avoid N individual requests and merge
+      try {
+        const ids = augmented.map((u: any) => (u.userId || u._id || u.id)).filter(Boolean)
+        if (ids.length) {
+          const idsParam = encodeURIComponent(ids.join(','))
+          const prefsRes: any = await api.get(`/public/users/preferences/batch?ids=${idsParam}`, { cache: 'no-store' })
+          const prefsArr: any[] = Array.isArray(prefsRes?.data) ? prefsRes.data : []
+          const prefsMap: Record<string, any> = {}
+          for (const p of prefsArr) {
+            try { if (p && p._id) prefsMap[String(p._id)] = p } catch (e) {}
+          }
+          for (let i = 0; i < augmented.length; i++) {
+            const id = (augmented[i].userId || augmented[i]._id || augmented[i].id) as string
+            const pref = prefsMap[String(id)]
+            if (pref) {
+              augmented[i] = {
+                ...augmented[i],
+                // merge common public preference fields
+                username: pref.username || augmented[i].username,
+                avatarUrl: pref.avatarUrl || augmented[i].avatarUrl,
+                profileVisible: typeof pref.profileVisible === 'boolean' ? pref.profileVisible : augmented[i].profileVisible,
+                travelPrefs: pref.travelPrefs || augmented[i].travelPrefs,
+                languages: pref.languages || augmented[i].languages,
+                socials: pref.socials || augmented[i].socials,
+                bio: pref.bio || augmented[i].bio,
+              }
+            }
+          }
+        }
+      } catch (e) {
+        // ignore batch merge errors — fallback to original augmented items
+        console.warn('Batch preferences merge failed', e)
+      }
 
       setUsers((prev) => {
         if (pageNum === 1) return augmented
@@ -829,7 +873,7 @@ export default function Whois() {
                     setShowLocationPrompt(false)
                     try { await handleFindNearby() } finally { setGeoInProgress(false) }
                   }}
-                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300"
                 >
                   {t('whoisAllow')}
                 </button>
