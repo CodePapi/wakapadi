@@ -1,11 +1,12 @@
 /// src/scraper/scraper.service.ts
 import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { CronExpression, SchedulerRegistry } from '@nestjs/schedule';
 import { TourService } from '../services/tour.service';
 import { CityService } from '../services/city.services';
 import * as puppeteer from 'puppeteer';
 import * as fs from 'fs';
 import * as path from 'path';
+import { CronJob } from 'cron';
 
 @Injectable()
 export class ScraperService {
@@ -16,12 +17,20 @@ export class ScraperService {
     'tourSources.json',
   );
 
+  private readonly configPath: string
+  private readonly scheduledJobName = 'scraper:scheduled'
+
   constructor(
     private readonly tourService: TourService,
     private readonly cityService: CityService,
-  ) {}
+    private readonly schedulerRegistry: SchedulerRegistry,
+  ) {
+    this.configPath = path.resolve(__dirname, '../../..', 'scraper-config.json')
+  }
 
-   @Cron(CronExpression.EVERY_DAY_AT_2AM)
+  // Auto-scheduled scraping was removed from automatic startup.
+  // Use `runScheduledScraping()` to perform a full run on-demand or use
+  // `startScheduler` / `stopScheduler` via admin endpoints to control auto-scraping.
   async runScheduledScraping() {
     this.logger.log('⏰ Scheduled scrape started...');
     const cities = await this.cityService.getAllCities();
@@ -29,6 +38,82 @@ export class ScraperService {
       await this.scrapeCity(city, true);
     }
     this.logger.log('✅ Scheduled scrape complete');
+  }
+
+  // --- Scheduler control and configuration persistence ---
+  private readConfig(): { enabled: boolean; cron: string } {
+    try {
+      if (!fs.existsSync(this.configPath)) return { enabled: false, cron: CronExpression.EVERY_DAY_AT_2AM }
+      const raw = fs.readFileSync(this.configPath, 'utf-8')
+      const parsed = JSON.parse(raw || '{}')
+      return { enabled: Boolean(parsed.enabled), cron: parsed.cron || CronExpression.EVERY_DAY_AT_2AM }
+    } catch (e) {
+      this.logger.warn('Failed to read scraper config, using defaults')
+      return { enabled: false, cron: CronExpression.EVERY_DAY_AT_2AM }
+    }
+  }
+
+  private writeConfig(cfg: { enabled: boolean; cron: string }) {
+    try {
+      fs.writeFileSync(this.configPath, JSON.stringify(cfg, null, 2), 'utf-8')
+    } catch (e) {
+      this.logger.warn('Failed to write scraper config: ' + (e?.message || e))
+    }
+  }
+
+  startScheduler(cronExpr?: string) {
+    const cfg = this.readConfig()
+    const cronToUse = cronExpr || cfg.cron || CronExpression.EVERY_DAY_AT_2AM
+    // If job exists, stop & remove first
+    try {
+      if (this.schedulerRegistry.doesExist('cron', this.scheduledJobName)) {
+        const existing: CronJob = this.schedulerRegistry.getCronJob(this.scheduledJobName)
+        existing.stop()
+        this.schedulerRegistry.deleteCronJob(this.scheduledJobName)
+      }
+    } catch (e) {}
+
+    const job = new CronJob(cronToUse, async () => {
+      try {
+        await this.runScheduledScraping()
+      } catch (err) {
+        this.logger.error('Scheduled scraping failed: ' + (err?.message || err))
+      }
+    })
+
+    this.schedulerRegistry.addCronJob(this.scheduledJobName, job)
+    job.start()
+    this.writeConfig({ enabled: true, cron: cronToUse })
+    this.logger.log(`Scheduled scraper started with cron: ${cronToUse}`)
+  }
+
+  stopScheduler() {
+    try {
+      if (this.schedulerRegistry.doesExist('cron', this.scheduledJobName)) {
+        const job: CronJob = this.schedulerRegistry.getCronJob(this.scheduledJobName)
+        job.stop()
+        this.schedulerRegistry.deleteCronJob(this.scheduledJobName)
+      }
+    } catch (e) {
+      this.logger.warn('Failed to stop scheduler: ' + (e?.message || e))
+    }
+    this.writeConfig({ enabled: false, cron: this.readConfig().cron })
+    this.logger.log('Scheduled scraper stopped')
+  }
+
+  getSchedulerStatus() {
+    const cfg = this.readConfig()
+    const running = this.schedulerRegistry.doesExist('cron', this.scheduledJobName)
+    return { running, enabled: cfg.enabled, cron: cfg.cron }
+  }
+
+  setSchedulerCron(cronExpr: string) {
+    const cfg = this.readConfig()
+    this.writeConfig({ enabled: cfg.enabled, cron: cronExpr })
+    // if running, restart with new cron
+    if (this.schedulerRegistry.doesExist('cron', this.scheduledJobName)) {
+      this.startScheduler(cronExpr)
+    }
   }
 
   async scrapeCity(city: string, shouldDelete: boolean): Promise<void> {
@@ -549,24 +634,24 @@ export class ScraperService {
 
 
   async scrapeNewCityOnce(city: string): Promise<{ added: boolean; message: string }> {
-    // Normalize city name for edge cases like "Halle (Saale)"
-    const normalizedCity = city.toLowerCase().replace(/\s*\(.*?\)\s*/g, '').trim();
-  
-    const exists = await this.cityService.cityExists(normalizedCity);
+    // Use city service formatter to normalize for storage and matching (handles "Halle (Saale)")
+    const formatted = this.cityService.formatForStorage(city);
+
+    const exists = await this.cityService.cityExists(formatted);
     if (exists) {
-      return { added: false, message: `${normalizedCity} already exists in the database.` };
+      return { added: false, message: `${formatted} already exists in the database.` };
     }
 
     // Attempt to add the city. `addSingleCity` returns true only if it actually inserted.
-    const added = await this.cityService.addSingleCity(normalizedCity);
+    const added = await this.cityService.addSingleCity(formatted);
     if (!added) {
       // Another process likely added the city concurrently — skip scraping to avoid duplicate work.
-      return { added: false, message: `${normalizedCity} was added concurrently; skipping scrape.` };
+      return { added: false, message: `${formatted} was added concurrently; skipping scrape.` };
     }
 
     // Only scrape if we successfully inserted the city ourselves.
-    await this.scrapeCity(normalizedCity, false);
-    return { added: true, message: `Scraping complete for new city: ${normalizedCity}` };
+    await this.scrapeCity(formatted, false);
+    return { added: true, message: `Scraping complete for new city: ${formatted}` };
   }
   
   async scrapeSingleTour(city: string, tourSlug: string, retries = 3): Promise<any> {

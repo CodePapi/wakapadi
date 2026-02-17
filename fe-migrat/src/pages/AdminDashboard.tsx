@@ -1,0 +1,350 @@
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import useAdminAuth from '../hooks/useAdminAuth'
+import { useTranslation } from '../lib/i18n'
+import { api } from '../lib/api'
+import { safeStorage } from '../lib/storage'
+
+function getUtcDayString(offsetDays = 0) {
+  const d = new Date()
+  d.setUTCDate(d.getUTCDate() - offsetDays)
+  return d.toISOString().slice(0, 10)
+}
+
+export default function AdminDashboard() {
+  const { isAdmin, logout } = useAdminAuth()
+  const navigate = useNavigate()
+  const { t } = useTranslation()
+
+  useEffect(() => {
+    if (!isAdmin) navigate('/admin/login')
+  }, [isAdmin, navigate])
+
+  if (!isAdmin) return null
+  const [cityInput, setCityInput] = useState('')
+  const [scrapeStatus, setScrapeStatus] = useState<string | null>(null)
+  const [schedulerStatus, setSchedulerStatus] = useState<{ running: boolean; enabled: boolean; cron?: string } | null>(null)
+  const [cronInput, setCronInput] = useState<string>('')
+  const [toursCount, setToursCount] = useState<number | null>(null)
+  const [whoisSummary, setWhoisSummary] = useState<{ city: string; count: number }[] | null>(null)
+  const [contactMessages, setContactMessages] = useState<any[] | null>(null)
+  const [addCitiesInput, setAddCitiesInput] = useState<string>('')
+  const [addCitiesStatus, setAddCitiesStatus] = useState<string | null>(null)
+  const [reports, setReports] = useState<any[] | null>(null)
+  const [dailyVisits, setDailyVisits] = useState<Array<{ day: string; uniqueVisitors: number }>>([])
+  const [apiToken, setApiToken] = useState<string>(() => safeStorage.getItem('token') || '')
+
+  const saveToken = () => {
+    try {
+      if (apiToken) safeStorage.setItem('token', apiToken)
+      else safeStorage.removeItem('token')
+      window.location.reload()
+    } catch (e) {}
+  }
+
+  const clearToken = () => {
+    try { safeStorage.removeItem('token'); setApiToken('') } catch (e) {}
+  }
+
+  const triggerScrapeCity = async () => {
+    setScrapeStatus('Running...')
+    try {
+      const res: any = await api.post('/scraper/run', { city: cityInput || undefined })
+      setScrapeStatus(res?.data?.message || 'Scrape triggered')
+    } catch (e: any) {
+      setScrapeStatus('Error: ' + (e?.message || String(e)))
+    }
+  }
+
+  const triggerScrapeAll = async () => {
+    setScrapeStatus('Running full scrape...')
+    try {
+      const res: any = await api.post('/scraper/run')
+      setScrapeStatus(res?.data?.message || 'Scrape triggered')
+    } catch (e: any) {
+      setScrapeStatus('Error: ' + (e?.message || String(e)))
+    }
+  }
+
+  const fetchSchedulerStatus = async () => {
+    try {
+      const res: any = await api.get('/scraper/status', { cache: 'no-store' })
+      const body = res?.data || res
+      setSchedulerStatus(body)
+      setCronInput(body?.cron || '')
+    } catch (e) {
+      setSchedulerStatus(null)
+    }
+  }
+
+  const pauseScheduler = async () => {
+    try {
+      await api.post('/scraper/pause')
+      fetchSchedulerStatus()
+    } catch (e) {}
+  }
+
+  const resumeScheduler = async () => {
+    try {
+      await api.post('/scraper/resume', { cron: cronInput || undefined })
+      fetchSchedulerStatus()
+    } catch (e) {}
+  }
+
+  const updateSchedule = async () => {
+    try {
+      if (!cronInput) return
+      await api.post('/scraper/schedule', { cron: cronInput })
+      fetchSchedulerStatus()
+    } catch (e) {}
+  }
+
+  const addCities = async () => {
+    try {
+      const list = (addCitiesInput || '').split(',').map(s => s.trim()).filter(Boolean)
+      if (list.length === 0) {
+        setAddCitiesStatus('No cities to add')
+        return
+      }
+      const res: any = await api.post('/cities/add', { cities: list })
+      const added = res?.data?.added || res?.added || []
+      setAddCitiesStatus(added.length ? `Added: ${added.join(', ')}` : 'No new cities added')
+      setAddCitiesInput('')
+      // refresh counts
+      fetchCitiesWhois()
+    } catch (e: any) {
+      setAddCitiesStatus('Error: ' + (e?.message || String(e)))
+    }
+  }
+
+  const fetchToursCount = async () => {
+    try {
+      const res: any = await api.get('/tours', { cache: 'no-store' })
+      const list = Array.isArray(res?.data) ? res.data : []
+      setToursCount(list.length)
+    } catch (e) { setToursCount(null) }
+  }
+
+  const fetchCitiesWhois = async () => {
+    try {
+      const cRes: any = await api.get('/cities/all', { cache: 'no-store' })
+      const cities: string[] = Array.isArray(cRes?.data) ? cRes.data : []
+      const summary: { city: string; count: number }[] = []
+      for (const c of cities) {
+        try {
+          const w: any = await api.get(`/whois/nearby?city=${encodeURIComponent(c)}`, { cache: 'no-store' })
+          const arr = Array.isArray(w?.data) ? w.data : []
+          summary.push({ city: c, count: arr.length })
+        } catch (e) {
+          summary.push({ city: c, count: 0 })
+        }
+      }
+      setWhoisSummary(summary)
+    } catch (e) {
+      setWhoisSummary(null)
+    }
+  }
+
+  const fetchContactMessages = async () => {
+    try {
+      const res: any = await api.get('/contact?page=1&limit=200', { cache: 'no-store' })
+      setContactMessages(Array.isArray(res?.data?.items) ? res.data.items : (Array.isArray(res?.data) ? res.data : []))
+    } catch (e: any) {
+      setContactMessages([{ error: e?.message || String(e) }])
+    }
+  }
+
+  const fetchReports = async () => {
+    try {
+      const res: any = await api.get('/users/reports', { cache: 'no-store' })
+      setReports(Array.isArray(res?.data) ? res.data : [])
+    } catch (e: any) {
+      setReports([{ error: e?.message || String(e) }])
+    }
+  }
+
+  const blockUser = async (userId: string) => {
+    try {
+      await api.post(`/users/block/${encodeURIComponent(userId)}`)
+      fetchReports()
+    } catch (e) { /* ignore */ }
+  }
+
+  const deleteUser = async (userId: string) => {
+    try {
+      await api.del(`/users/${encodeURIComponent(userId)}`)
+      fetchReports()
+    } catch (e) { /* ignore */ }
+  }
+
+  const fetchDailyVisitsRange = async (days = 7) => {
+    const arr: Array<{ day: string; uniqueVisitors: number }> = []
+    for (let i = 0; i < days; i++) {
+      const day = getUtcDayString(i)
+      try {
+        const res: any = await api.get(`/auth/visits/daily?day=${day}`, { cache: 'no-store' })
+        arr.push(res?.data || res)
+      } catch (e) {
+        arr.push({ day, uniqueVisitors: 0 })
+      }
+    }
+    setDailyVisits(arr)
+  }
+
+  useEffect(() => {
+    // initial stats fetch
+    fetchToursCount()
+    fetchCitiesWhois()
+    fetchDailyVisitsRange(7)
+    fetchSchedulerStatus()
+  }, [])
+
+  return (
+    <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-6xl mx-auto space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-semibold">{'Admin Dashboard'}</h1>
+          <div className="flex items-center gap-3">
+            <input placeholder="API token (optional)" value={apiToken} onChange={(e) => setApiToken(e.target.value)} className="px-3 py-2 border border-gray-300 rounded bg-white dark:bg-gray-700 text-sm" />
+            <button onClick={saveToken} className="px-3 py-2 rounded bg-blue-600 text-white">Save token</button>
+            <button onClick={clearToken} className="px-3 py-2 rounded bg-gray-300 text-sm">Clear token</button>
+            <button onClick={() => { logout(); navigate('/') }} className="px-3 py-2 rounded bg-gray-200 dark:bg-gray-700">{t('logout') || 'Sign out'}</button>
+          </div>
+        </div>
+
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded shadow">
+            <h3 className="font-semibold mb-2">Scraper</h3>
+            <p className="text-sm text-gray-600 mb-3">Trigger scraping jobs. Server-scheduled scraping runs daily at 02:00 (server timezone).</p>
+            <div className="flex gap-2 mb-3">
+              <input value={cityInput} onChange={(e) => setCityInput(e.target.value)} placeholder="City name (e.g. Lisbon)" className="flex-1 px-3 py-2 border border-gray-300 rounded bg-white dark:bg-gray-700" />
+              <button onClick={triggerScrapeCity} className="px-3 py-2 bg-blue-600 text-white rounded">Scrape city</button>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={triggerScrapeAll} className="px-3 py-2 bg-indigo-600 text-white rounded">Scrape all cities now</button>
+                <div className="text-sm text-gray-600 self-center">{scrapeStatus}</div>
+              </div>
+
+              <div className="mt-4 border-t pt-3">
+                <div className="text-sm text-gray-600 mb-2">Auto-scraper status</div>
+                <div className="flex gap-2 items-center mb-2">
+                  <div className="text-xs text-gray-500">Running:</div>
+                  <div className="font-medium">{schedulerStatus ? String(schedulerStatus.running) : '—'}</div>
+                  <div className="text-xs text-gray-500">Enabled:</div>
+                  <div className="font-medium">{schedulerStatus ? String(schedulerStatus.enabled) : '—'}</div>
+                </div>
+                <div className="flex gap-2 items-center mb-2">
+                  <input placeholder="Cron expression" value={cronInput} onChange={(e) => setCronInput(e.target.value)} className="flex-1 px-3 py-2 border border-gray-300 rounded bg-white dark:bg-gray-700 text-sm" />
+                  <button onClick={updateSchedule} className="px-3 py-2 bg-yellow-600 text-white rounded text-sm">Update</button>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={fetchSchedulerStatus} className="px-3 py-2 bg-gray-200 dark:bg-gray-700 rounded text-sm">Refresh status</button>
+                  <button onClick={pauseScheduler} className="px-3 py-2 bg-red-600 text-white rounded text-sm">Pause</button>
+                  <button onClick={resumeScheduler} className="px-3 py-2 bg-green-600 text-white rounded text-sm">Resume</button>
+                </div>
+                <div className="mt-4 border-t pt-3">
+                  <div className="text-sm text-gray-600 mb-2">Add cities (comma separated)</div>
+                  <div className="flex gap-2 items-center mb-2">
+                    <input placeholder="e.g. Halle (Saale), Lisbon, Porto" value={addCitiesInput} onChange={(e) => setAddCitiesInput(e.target.value)} className="flex-1 px-3 py-2 border border-gray-300 rounded bg-white dark:bg-gray-700 text-sm" />
+                    <button onClick={addCities} className="px-3 py-2 bg-blue-600 text-white rounded text-sm">Add</button>
+                  </div>
+                  {addCitiesStatus ? <div className="text-sm text-gray-600">{addCitiesStatus}</div> : null}
+                </div>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 p-6 rounded shadow">
+            <h3 className="font-semibold mb-2">Stats</h3>
+            <p className="text-sm text-gray-600 mb-3">Quick metrics from the API.</p>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded">
+                <div className="text-xs text-gray-500">Total tours</div>
+                <div className="text-lg font-bold">{toursCount ?? '—'}</div>
+                <button onClick={fetchToursCount} className="mt-2 text-sm text-blue-600">Refresh</button>
+              </div>
+              <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded">
+                <div className="text-xs text-gray-500">Whois users (all cities)</div>
+                <div className="text-lg font-bold">{whoisSummary ? whoisSummary.reduce((s, x) => s + x.count, 0) : '—'}</div>
+                <button onClick={fetchCitiesWhois} className="mt-2 text-sm text-blue-600">Refresh</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded shadow">
+            <h3 className="font-semibold mb-2">Contact messages</h3>
+            <p className="text-sm text-gray-600 mb-3">List of messages submitted via the contact form. Requires an API token if the endpoint is protected.</p>
+            <div className="mb-3">
+              <button onClick={fetchContactMessages} className="px-3 py-2 bg-blue-600 text-white rounded">Fetch messages</button>
+            </div>
+            <div className="space-y-3 max-h-64 overflow-auto">
+              {contactMessages?.map((m, i) => (
+                <div key={i} className="p-3 border rounded">
+                  {m.error ? <div className="text-sm text-red-600">{m.error}</div> : (
+                    <>
+                      <div className="font-semibold">{m.name || m.email || 'Message'}</div>
+                      <div className="text-sm text-gray-600">{m.message || JSON.stringify(m)}</div>
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <aside className="bg-white dark:bg-gray-800 p-6 rounded shadow">
+            <h3 className="font-semibold mb-2">Daily visits</h3>
+            <div className="space-y-2">
+              {dailyVisits.map((d) => (
+                <div key={d.day} className="flex justify-between text-sm">
+                  <div>{d.day}</div>
+                  <div className="font-medium">{d.uniqueVisitors}</div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4">
+              <button onClick={() => fetchDailyVisitsRange(7)} className="px-3 py-2 bg-blue-600 text-white rounded">Refresh 7 days</button>
+            </div>
+          </aside>
+        </section>
+
+        <section className="bg-white dark:bg-gray-800 p-6 rounded shadow">
+          <h3 className="font-semibold mb-2">Reported users</h3>
+          <p className="text-sm text-gray-600 mb-3">View and act on reported users. Requires an API token with admin privileges.</p>
+          <div className="mb-3">
+            <button onClick={fetchReports} className="px-3 py-2 bg-red-600 text-white rounded">Fetch reports</button>
+          </div>
+          <div className="space-y-3">
+            {reports?.map((r: any, i: number) => (
+              <div key={i} className="p-3 border rounded">
+                {r.error ? <div className="text-sm text-red-600">{r.error}</div> : (
+                  <>
+                    <div className="text-sm">Reported user: <strong>{r.reportedId?.username || r.reportedId || r.reportedId?._id}</strong></div>
+                    <div className="text-xs text-gray-500">Reason: {r.reason}</div>
+                    <div className="mt-2 flex gap-2">
+                      <button onClick={() => blockUser(r.reportedId?._id || r.reportedId)} className="px-2 py-1 bg-yellow-600 text-white rounded text-sm">Block</button>
+                      <button onClick={() => deleteUser(r.reportedId?._id || r.reportedId)} className="px-2 py-1 bg-red-600 text-white rounded text-sm">Delete user</button>
+                    </div>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="bg-white dark:bg-gray-800 p-6 rounded shadow">
+          <h3 className="font-semibold mb-2">Whois per-city breakdown</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 max-h-80 overflow-auto">
+            {whoisSummary?.map((c) => (
+              <div key={c.city} className="p-3 border rounded">
+                <div className="text-sm text-gray-500">{c.city}</div>
+                <div className="text-lg font-bold">{c.count}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+      </div>
+    </main>
+  )
+}

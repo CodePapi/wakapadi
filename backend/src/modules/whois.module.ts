@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { WhoisPresence, WhoisPresenceSchema } from '../schemas/whois.schema';
 import { WhoisService } from '../services/whois.service';
+import { CityModule } from './city.module';
 import { WhoisController } from '../controllers/whois.controller';
 import { WhoisMessage, WhoisMessageSchema } from '../schemas/whois-message.schema';
 import { UserSchema, User } from '../schemas/user.schema';
@@ -15,6 +16,7 @@ import { UserSchema, User } from '../schemas/user.schema';
       { name: User.name, schema: UserSchema }, // ✅ ADD THIS LINE
 
     ]),
+    CityModule,
   ],
   controllers: [WhoisController],
   providers: [WhoisService],
