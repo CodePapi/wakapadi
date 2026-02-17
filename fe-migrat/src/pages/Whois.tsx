@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import VisibilityToggle from '../components/VisibilityToggle'
 import NearbyUserCard from '../components/NearbyUserCard'
 import { api } from '../lib/api'
@@ -545,6 +545,8 @@ export default function Whois() {
     return () => window.removeEventListener('wakapadi:toast', onToast as EventListener)
   }, [])
 
+  const visibleUsers = useMemo(() => users.filter((u) => (u && (u.userId || u._id || u.id))), [users])
+
   return (
     <section aria-labelledby="whois-heading" className="container mx-auto px-4 sm:px-6 lg:px-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -675,10 +677,10 @@ export default function Whois() {
         )}
 
         <div className="grid gap-3 mt-4">
-          {loading && users.length === 0 ? (
+          {loading && visibleUsers.length === 0 ? (
             Array.from({ length: 3 }).map((_, i) => <div key={i} className="p-3 bg-gray-100 dark:bg-gray-800 rounded animate-pulse h-20" />)
-          ) : users.length > 0 ? (
-            users.map((u) => <NearbyUserCard key={u.userId || u._id || u.id} user={u} />)
+          ) : visibleUsers.length > 0 ? (
+            visibleUsers.map((u) => <NearbyUserCard key={u.userId || u._id || u.id} user={u} />)
           ) : (
             city && !loading ? (
               <div className="text-center text-gray-600 space-y-3">
