@@ -72,7 +72,10 @@ export default function ChatInbox() {
               const avatar = c.otherUser?.avatarUrl || c.avatarUrl || (otherId ? `https://i.pravatar.cc/48?u=${otherId}` : '')
 
               return (
-                <div key={otherId || c._id || c.id} className="p-3 border border-gray-200 dark:border-zinc-700 rounded hover:bg-gray-50 dark:hover:bg-zinc-800 flex items-center justify-between">
+                <div
+                  key={otherId || c._id || c.id}
+                  className="p-3 border border-gray-200 dark:border-zinc-700 rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow duration-150 hover:bg-gray-50 dark:bg-zinc-900 dark:hover:bg-zinc-800 flex items-center justify-between"
+                >
                   <div className="flex items-center gap-3">
                     <img src={avatar} alt={username} className="w-10 h-10 rounded-full object-cover" />
                     <div>

@@ -4,7 +4,6 @@ import NotificationsDropdown from './NotificationsDropdown';
 import LanguageSwitcher from './LanguageSwitcher';
 // LocaleStatus and VisibilityIndicator removed from header; imports cleaned up
 import PendingSyncNotice from './PendingSyncNotice';
-import SafetyNotice from './SafetyNotice';
 import VisibilityIndicator from './VisibilityIndicator';
 import { ensureAnonymousSession, setLogoutBlock } from '../lib/anonymousAuth';
 import { useTranslation } from '../lib/i18n';
@@ -120,7 +119,7 @@ export default function NavBar() {
   return (
     <header
       style={{ zIndex: 99999 }}
-      className="sticky top-0 z-50 bg-white/85 backdrop-blur-sm dark:bg-gray-900/85 border-b"
+      className="sticky top-0 z-50 bg-white/70 backdrop-blur-sm dark:bg-gray-900/85 border-b border-gray-100 dark:border-zinc-800"
     >
       <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-4 relative">
         <Link
@@ -222,7 +221,6 @@ export default function NavBar() {
 
           <div className="hidden lg:flex items-center ml-4 space-x-4">
             <PendingSyncNotice />
-            <SafetyNotice />
           </div>
 
           <button
@@ -230,7 +228,7 @@ export default function NavBar() {
             aria-label={open ? 'Close menu' : 'Open menu'}
             aria-expanded={open}
             aria-controls="mobile-menu"
-            className="md:hidden p-2 rounded border border-gray-200 dark:border-zinc-700 bg-white/80 dark:bg-transparent"
+            className="md:hidden p-2 rounded border border-gray-200 dark:border-zinc-700 bg-white/60 dark:bg-transparent"
           >
             <svg
               width="20"
@@ -251,35 +249,35 @@ export default function NavBar() {
         </div>
       </div>
 
-      {open && (
-        <div id="mobile-menu" className="md:hidden bg-white/95 dark:bg-zinc-900 border-t border-gray-200 dark:border-zinc-700">
+        {open && (
+        <div id="mobile-menu" className="md:hidden bg-gray-50 dark:bg-zinc-900 border-t border-gray-200 dark:border-zinc-700">
           <div className="px-4 py-3 max-w-6xl mx-auto flex flex-col gap-3">
             <nav aria-label="Mobile navigation" className="flex flex-col gap-2">
               <Link
                 to="/whois"
                 onClick={() => setOpen(false)}
-                className="px-3 py-2 text-gray-700 dark:text-gray-100 hover:underline rounded"
+                className="px-3 py-2 text-slate-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-md"
               >
                 {t('whoisNearby')}
               </Link>
               <Link
                 to="/tours"
                 onClick={() => setOpen(false)}
-                className="px-3 py-2 text-gray-700 dark:text-gray-100 hover:underline rounded"
+                className="px-3 py-2 text-slate-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-md"
               >
                 {t('toursBrowseTitle')}
               </Link>
               <Link
                 to="/saved"
                 onClick={() => setOpen(false)}
-                className="px-3 py-2 text-gray-700 dark:text-gray-100 hover:underline rounded"
+                className="px-3 py-2 text-slate-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-md"
               >
                 {t('savedLabel') || 'Saved'}
               </Link>
               <Link
                 to="/contact-us"
                 onClick={() => setOpen(false)}
-                className="px-3 py-2 text-gray-700 dark:text-gray-100 hover:underline rounded"
+                className="px-3 py-2 text-slate-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-md"
               >
                 {t('contactUs')}
               </Link>
@@ -291,13 +289,13 @@ export default function NavBar() {
                   <Link
                     to="/profile"
                     onClick={() => setOpen(false)}
-                    className="px-3 py-2 text-gray-700 dark:text-gray-100"
+                    className="px-3 py-2 text-slate-800 dark:text-gray-100 rounded-md hover:bg-gray-100 dark:hover:bg-zinc-800"
                   >
                     {t('profile')}
                   </Link>
                   <button
                     onClick={() => performLogout()}
-                    className="px-3 py-2 text-red-600"
+                    className="px-3 py-2 text-red-600 rounded-md hover:bg-red-50"
                   >
                     {t('logout') || 'Logout'}
                   </button>
@@ -305,7 +303,7 @@ export default function NavBar() {
               ) : (
                 <button
                   onClick={handleLogin}
-                  className="px-3 py-2 text-blue-600"
+                  className="px-3 py-2 text-blue-600 rounded-md hover:bg-blue-50"
                 >
                   {t('login')}
                 </button>
@@ -329,8 +327,8 @@ export function MobileBottomNav({
 }) {
   // if `inline` true, render centered inside header; otherwise fixed at viewport bottom
   const baseClass = inline
-    ? 'sm:hidden absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/95 border rounded-full shadow-lg px-2 py-1 flex gap-2'
-    : 'sm:hidden fixed left-0 right-0 bottom-0 z-50';
+  ? 'sm:hidden absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/90 border rounded-full shadow-lg px-2 py-1 flex gap-2'
+  : 'sm:hidden fixed left-0 right-0 bottom-0 z-50';
 
   const iconSize = inline ? 16 : 20;
   // increase tappable area on real devices
@@ -371,24 +369,39 @@ export function MobileBottomNav({
     >
       {/* full-width mobile bar with centered icons (Airbnb-like) */}
       <div className="w-full">
-        <div className="w-full bg-white/95 dark:bg-zinc-900/95 border-t border-gray-200 dark:border-zinc-700 shadow-sm flex justify-around items-center" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)', height: 'calc(5rem + env(safe-area-inset-bottom, 0px))' }}>
+        <div className="w-full bg-white/90 dark:bg-zinc-900/95 border-t border-gray-200 dark:border-zinc-700 shadow-sm flex justify-around items-center" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)', height: 'calc(5rem + env(safe-area-inset-bottom, 0px))' }}>
           <Link to="/" aria-label="Home" className={`${itemSizeClass} flex flex-col items-center justify-center text-center ${homeActive ? 'text-blue-600' : 'text-gray-700 dark:text-gray-200'}`}>
-            <SvgHome size={iconSize} className={homeActive ? 'text-blue-600' : 'text-gray-700'} />
+            <div className="flex flex-col items-center">
+              <SvgHome size={iconSize} className={homeActive ? 'text-blue-600' : 'text-gray-700'} />
+              <span className="text-[10px] mt-1 text-slate-700 dark:text-gray-200">Home</span>
+            </div>
           </Link>
           <Link to="/whois" aria-label="Nearby" className={`${itemSizeClass} flex flex-col items-center justify-center text-center ${whoisActive ? 'text-blue-600' : 'text-gray-700 dark:text-gray-200'}`}>
-            <SvgPeople size={iconSize} className={whoisActive ? 'text-blue-600' : 'text-gray-700'} />
+            <div className="flex flex-col items-center">
+              <SvgPeople size={iconSize} className={whoisActive ? 'text-blue-600' : 'text-gray-700'} />
+              <span className="text-[10px] mt-1 text-slate-700 dark:text-gray-200">Nearby</span>
+            </div>
           </Link>
           <Link to="/tours" aria-label="Tours" className={`${itemSizeClass} flex flex-col items-center justify-center text-center ${toursActive ? 'text-blue-600' : 'text-gray-700 dark:text-gray-200'}`}>
-            <SvgMap size={iconSize} className={toursActive ? 'text-blue-600' : 'text-gray-700'} />
+            <div className="flex flex-col items-center">
+              <SvgMap size={iconSize} className={toursActive ? 'text-blue-600' : 'text-gray-700'} />
+              <span className="text-[10px] mt-1 text-slate-700 dark:text-gray-200">Tours</span>
+            </div>
           </Link>
           {isLoggedIn ? (
             <>
                 <NotificationsDropdown triggerClassName="p-0 relative" iconClassName="text-gray-700" />
                 <Link to="/chat" aria-label="Chat" className={`${itemSizeClass} flex flex-col items-center justify-center text-center ${chatActive ? 'text-blue-600' : 'text-gray-700 dark:text-gray-200'}`}>
-                <SvgChat size={iconSize} className={chatActive ? 'text-blue-600' : 'text-gray-700'} />
-              </Link>
+                  <div className="flex flex-col items-center">
+                    <SvgChat size={iconSize} className={chatActive ? 'text-blue-600' : 'text-gray-700'} />
+                    <span className="text-[10px] mt-1 text-slate-700 dark:text-gray-200">Chat</span>
+                  </div>
+                </Link>
                 <Link to="/profile" aria-label="Profile" className={`${itemSizeClass} flex flex-col items-center justify-center text-center ${profileActive ? 'text-blue-600' : 'text-gray-700 dark:text-gray-200'}`}>
-                  <SvgAvatar size={iconSize} className={profileActive ? 'text-blue-600' : 'text-gray-700'} />
+                  <div className="flex flex-col items-center">
+                    <SvgAvatar size={iconSize} className={profileActive ? 'text-blue-600' : 'text-gray-700'} />
+                    <span className="text-[10px] mt-1 text-slate-700 dark:text-gray-200">Profile</span>
+                  </div>
                 </Link>
                 <button onClick={() => onLogout && onLogout()} aria-label="Logout" className="flex items-center justify-center p-1 text-red-600">
                   <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-red-600">
