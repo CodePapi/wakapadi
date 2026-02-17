@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import NavBar, { MobileBottomNav } from './NavBar'
+import SafetyNotice from './SafetyNotice'
 import { api } from '../lib/api'
 import { setLogoutBlock } from '../lib/anonymousAuth'
 import { safeStorage } from '../lib/storage'
@@ -25,6 +26,9 @@ export default function Layout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-surface text-on-surface">
       <NavBar />
+      <div className="px-2 sm:px-6 lg:px-8 mt-3">
+        <SafetyNotice />
+      </div>
       <main style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 6rem)' }}>
         <div className="max-w-5xl mx-auto px-2 sm:px-6 lg:px-8 py-4">
           {children}

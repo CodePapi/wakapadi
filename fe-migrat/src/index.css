@@ -82,9 +82,12 @@ body {
 }
 
 @media (prefers-color-scheme: light) {
-	:root { color: #213547; background-color: #ffffff }
-	a:hover { color: #747bff }
-	button { background-color: #f9f9f9 }
+	/* Slightly darker light theme background for less glare */
+	:root { color: #213547; background-color: #e6eef7 }
+	/* slightly less saturated hover color */
+	a:hover { color: #6670ff }
+	/* buttons on light theme: very light card surface rather than full white */
+	button { background-color: #f3f6fa; color: #0f172a }
 }
 
 /* larger screens: increase chat area height */
@@ -187,7 +190,8 @@ body {
 .chat-messages::-webkit-scrollbar { display: none; } /* Chrome, Safari, Opera */
 
 @media (prefers-color-scheme: light) {
-	.chat-wrapper { background-color: #ffffff; border: 1px solid rgba(15,23,42,0.06); box-shadow: 0 6px 18px rgba(2,6,23,0.04) }
+	/* Softer chat surface for light theme to avoid pure-white panels */
+	.chat-wrapper { background-color: #f3f6fa; border: 1px solid rgba(2,6,23,0.04); box-shadow: 0 6px 18px rgba(2,6,23,0.03) }
 
 	/* Adjust FB tokens for light */
 	:root { --fb-other-bg: #ffffff; --fb-self-bg: #E7F3FF; --fb-self-text: #052D4C; --fb-muted: #6b7280 }
@@ -324,7 +328,8 @@ header nav a:hover {
 		position: sticky;
 		bottom: env(safe-area-inset-bottom);
 		z-index: 20;
-		background: linear-gradient(to bottom, rgba(255,255,255,0.02), rgba(255,255,255,0.02));
+		/* Subtle translucent surface instead of bright white */
+		background: linear-gradient(to bottom, rgba(2,6,23,0.02), rgba(2,6,23,0.02));
 		padding: 12px 12px  calc(12px + env(safe-area-inset-bottom));
 		gap: 10px;
 		align-items: flex-end;
