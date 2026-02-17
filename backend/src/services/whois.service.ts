@@ -91,6 +91,24 @@ export class WhoisService {
     const FETCH_CANDIDATES = 1000
     let visibleUsers = await this.whoisModel.find(query).limit(FETCH_CANDIDATES).lean();
 
+    // Debug: log query and candidate counts/types to help diagnose prod/local differences
+    try {
+      const sample = (visibleUsers || []).slice(0, 5).map((v: any) => ({
+        _id: v._id,
+        city: v.city,
+        expiresAt: v.expiresAt,
+        coords: v.coordinates ? { latType: typeof v.coordinates.lat, lngType: typeof v.coordinates.lng } : null,
+      }))
+      console.info('[whois] getNearby debug', {
+        env: process.env.NODE_ENV || 'unknown',
+        query,
+        fetchedCandidates: (visibleUsers || []).length,
+        sample,
+      })
+    } catch (e) {
+      console.warn('[whois] getNearby debug failed to serialize candidates', e)
+    }
+
     // Defensive normalization: coerce any stored coordinates (strings) to numbers so distance can be computed
     visibleUsers.forEach((vu: any) => {
       if (vu && vu.coordinates) {
@@ -106,10 +124,16 @@ export class WhoisService {
           delete vu.coordinates
         }
       }
-
-      // Enforce: only include presences that shared numeric coordinates
-      visibleUsers = visibleUsers.filter((vu: any) => vu && vu.coordinates && typeof vu.coordinates.lat === 'number' && typeof vu.coordinates.lng === 'number')
     })
+
+    // Enforce: only include presences that shared numeric coordinates
+    const beforeFilterCount = visibleUsers.length
+    visibleUsers = visibleUsers.filter((vu: any) => vu && vu.coordinates && typeof vu.coordinates.lat === 'number' && typeof vu.coordinates.lng === 'number')
+    try {
+      console.info('[whois] getNearby filtered candidates', { before: beforeFilterCount, after: visibleUsers.length })
+    } catch (e) {
+      console.warn('[whois] getNearby filtered log failed', e)
+    }
 
     // Collect all userIds that are present and valid
       // Normalize userIds to strings so we can query the users collection reliably.

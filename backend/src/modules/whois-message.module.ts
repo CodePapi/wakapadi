@@ -10,11 +10,13 @@ import { WhoisGateway } from '../gateways/whois.gateway';
 import { User, UserSchema } from '../schemas/user.schema';
 import { UserModule } from './users.module';
 import { NotificationsModule } from './notifications.module';
+import { WhoisModule } from './whois.module';
 
 @Module({
   imports: [
     forwardRef(() => UserModule),
     forwardRef(() => NotificationsModule),
+    forwardRef(() => WhoisModule),
     MongooseModule.forFeature([
       { name: WhoisMessage.name, schema: WhoisMessageSchema },
       { name: User.name, schema: UserSchema }, // ✅ ADD THIS LINE

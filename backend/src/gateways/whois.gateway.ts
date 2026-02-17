@@ -17,6 +17,7 @@ import * as jwt from 'jsonwebtoken';
 import { InjectModel } from '@nestjs/mongoose';
 import mongoose, { Model } from 'mongoose';
 import { WhoisMessage } from '../schemas/whois-message.schema';
+import { WhoisService } from '../services/whois.service';
 import { WhoisMessageService } from '../services/whois-message.service'; // Import the service
 import { NotificationService } from '../services/notification.service';
 import { User } from '../schemas/user.schema'; // <--- Import User schema for getUserById
@@ -49,6 +50,8 @@ export class WhoisGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly userModel: Model<User>, // <--- Declare userModel
     @Inject(forwardRef(() => WhoisMessageService))
     private readonly messageService: WhoisMessageService, // Inject the service
+    @Inject(forwardRef(() => WhoisService))
+    private readonly whoisService: WhoisService,
     @Inject(forwardRef(() => NotificationService))
     private readonly notificationService: NotificationService,
   ) {}
@@ -100,6 +103,56 @@ export class WhoisGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const roomName = [data.userId1, data.userId2].sort().join('-');
     client.join(roomName);
     console.log(`Socket ${client.id} joined conversation room: ${roomName}`);
+  }
+
+  @SubscribeMessage('whois:join')
+  async handleWhoisJoin(@MessageBody() data: { city?: string; coordinates?: { lat: number; lng: number } }, @ConnectedSocket() client: Socket) {
+    try {
+      const token = client.handshake.auth?.token as string;
+      const payload = jwt.verify(token, JWT_SECRET) as { id: string };
+      const userId = payload.id;
+      if (!userId) return;
+      // Call service to upsert presence
+        try {
+          const presence = await this.whoisService.pingPresence(userId, { city: data.city || 'unknown', coordinates: data.coordinates });
+          // Broadcast a richer payload if we have presence data so clients can update in real-time without extra lookups
+          if (presence && presence.userId) {
+            const payload = {
+              userId,
+              presence: {
+                city: presence.city,
+                coordinates: presence.coordinates || null,
+                expiresAt: presence.expiresAt,
+              },
+            };
+            this.server.emit('userOnline', payload);
+          } else {
+            this.server.emit('userOnline', userId);
+          }
+        } catch (e) {
+          console.warn('whois:join failed', e);
+        }
+    } catch (err) {
+      // invalid token — ignore
+    }
+  }
+
+  @SubscribeMessage('whois:leave')
+  async handleWhoisLeave(@MessageBody() _data: any, @ConnectedSocket() client: Socket) {
+    try {
+      const token = client.handshake.auth?.token as string;
+      const payload = jwt.verify(token, JWT_SECRET) as { id: string };
+      const userId = payload.id;
+      if (!userId) return;
+      try {
+        await this.whoisService.removePresence(userId);
+        this.server.emit('userOffline', userId);
+      } catch (e) {
+        console.warn('whois:leave failed', e);
+      }
+    } catch (err) {
+      // invalid token — ignore
+    }
   }
 
   // NEW: Event for joining personal notification room (redundant if handled in handleConnection, but good for clarity)

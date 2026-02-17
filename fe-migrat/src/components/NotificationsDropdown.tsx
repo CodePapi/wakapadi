@@ -132,14 +132,18 @@ export default function NotificationsDropdown({ triggerClassName, iconClassName 
     if (missing.length === 0) return
     let cancelled = false
     ;(async () => {
-      for (const id of missing) {
-        try {
-          const res: any = await api.get(`/public/users/preferences/${encodeURIComponent(id)}`, { cache: 'no-store' })
-          const payload = res?.data ?? res
-          if (!cancelled) setPrefs((p) => ({ ...p, [id]: payload }))
-        } catch (err) {
-          // ignore - leave as unknown
+      try {
+        const ids = missing.join(',')
+        const res: any = await api.get(`/public/users/preferences/batch?ids=${encodeURIComponent(ids)}`, { cache: 'no-store' })
+        const arr: any[] = Array.isArray(res?.data) ? res.data : res || []
+        const next: Record<string, any> = {}
+        for (const u of arr) {
+          if (!u || !u._id) continue
+          next[u._id] = u
         }
+        if (!cancelled) setPrefs((p) => ({ ...p, ...next }))
+      } catch (err) {
+        // ignore - fallback to per-id fetch is possible but skip for now
       }
     })()
     return () => { cancelled = true }

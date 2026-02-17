@@ -29,13 +29,14 @@ export default function Whois() {
   const [hasMore, setHasMore] = useState(true)
   const [currentCoords, setCurrentCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [authToken, setAuthToken] = useState<string | null>(() => safeStorage.getItem('token') || null)
   const [toast, setToast] = useState<{ id: string; text: string } | null>(null)
   const [hiddenList, setHiddenList] = useState<string[]>([])
   const [showHiddenPanel, setShowHiddenPanel] = useState(false)
   const [hiddenProfiles, setHiddenProfiles] = useState<Record<string, any>>({})
   const [showLocationPrompt, setShowLocationPrompt] = useState(false)
   const [manualCity, setManualCity] = useState('')
-  const [availableCities, setAvailableCities] = useState<Array<{ city: string; count: number }>>([])
+  const [availableCities, setAvailableCities] = useState<Array<{ city: string; count: number; display: string }>>([])
   const [fetchingCities, setFetchingCities] = useState(false)
   const [geoInProgress, setGeoInProgress] = useState(false)
 
@@ -285,19 +286,22 @@ export default function Whois() {
       const users: any[] = Array.isArray(wRes?.data) ? wRes.data : []
 
       const counts: Record<string, number> = {}
+      const displays: Record<string, string> = {}
       for (const u of users) {
         if (!u) continue
         // Attempt to detect a user city from common fields
-        let c = ''
-        if (typeof u.city === 'string' && u.city.trim()) c = u.city.trim().toLowerCase()
-        else if (u.location && typeof u.location.city === 'string' && u.location.city.trim()) c = u.location.city.trim().toLowerCase()
-        else if (u.address && typeof u.address.city === 'string' && u.address.city.trim()) c = u.address.city.trim().toLowerCase()
-        else if (typeof u.region === 'string' && u.region.trim()) c = u.region.trim().toLowerCase()
-        if (!c) continue
-        counts[c] = (counts[c] || 0) + 1
+        let raw = ''
+        if (typeof u.city === 'string' && u.city.trim()) raw = u.city.trim()
+        else if (u.location && typeof u.location.city === 'string' && u.location.city.trim()) raw = u.location.city.trim()
+        else if (u.address && typeof u.address.city === 'string' && u.address.city.trim()) raw = u.address.city.trim()
+        else if (typeof u.region === 'string' && u.region.trim()) raw = u.region.trim()
+        if (!raw) continue
+        const key = raw.toLowerCase()
+        counts[key] = (counts[key] || 0) + 1
+        if (!displays[key]) displays[key] = raw
       }
 
-      const active = Object.keys(counts).map((cityName) => ({ city: cityName, count: counts[cityName] })).sort((a, b) => b.count - a.count)
+      const active = Object.keys(counts).map((cityKey) => ({ city: cityKey, count: counts[cityKey], display: displays[cityKey] || cityKey })).sort((a, b) => b.count - a.count)
       setAvailableCities(active)
     } catch (e) {
       setAvailableCities([])
@@ -355,6 +359,8 @@ export default function Whois() {
       if (coordsToSend) payload.coordinates = { lat: Number(coordsToSend.lat), lng: Number(coordsToSend.lng) }
       // debug removed
       await api.post('/whois/ping', payload)
+      // notify any socket listener that we've successfully pinged presence
+      try { window.dispatchEvent(new CustomEvent('wakapadi:whois:pinged', { detail: { city: targetCity, coordinates: payload.coordinates } })) } catch (e) {}
     } catch (err) {
       console.error('Ping presence failed:', err)
     }
@@ -386,7 +392,7 @@ export default function Whois() {
           const { latitude, longitude } = pos.coords
           setCurrentCoords({ lat: latitude, lng: longitude })
           const geo: any = await api.get(`/geolocation/reverse?lat=${latitude}&lon=${longitude}`, { cache: 'no-store' })
-          const detectedCity = (geo?.data?.address?.city || geo?.data?.address?.town || geo?.data?.address?.village || '').trim().toLowerCase()
+          const detectedCity = (geo?.data?.address?.city || geo?.data?.address?.town || geo?.data?.address?.village || '').trim()
           if (!detectedCity) {
             setError('Could not determine city from your location')
             setLoading(false)
@@ -418,7 +424,7 @@ export default function Whois() {
           }
 
           if (cityFromIp) {
-            const normalized = String(cityFromIp).trim().toLowerCase()
+            const normalized = String(cityFromIp).trim()
             setCity(normalized)
             try { const session = await ensureAnonymousSession(); if (session?.userId) setCurrentUserId(session.userId) } catch (e) {}
             await pingPresence(normalized)
@@ -431,7 +437,7 @@ export default function Whois() {
           if (lat && lon) {
             try {
               const geo: any = await api.get(`/geolocation/reverse?lat=${lat}&lon=${lon}`, { cache: 'no-store' })
-              const detectedCity = (geo?.data?.address?.city || geo?.data?.address?.town || geo?.data?.address?.village || '').trim().toLowerCase()
+              const detectedCity = (geo?.data?.address?.city || geo?.data?.address?.town || geo?.data?.address?.village || '').trim()
               if (detectedCity) {
                 setCity(detectedCity)
                 try { const session = await ensureAnonymousSession(); if (session?.userId) setCurrentUserId(session.userId) } catch (e) {}
@@ -489,7 +495,7 @@ export default function Whois() {
               // reverse geocode to get city and fetch
               try {
                 const geo: any = await api.get(`/geolocation/reverse?lat=${parsed.lat}&lon=${parsed.lng}`, { cache: 'no-store' })
-                const detectedCity = (geo?.data?.address?.city || geo?.data?.address?.town || geo?.data?.address?.village || '').trim().toLowerCase()
+                const detectedCity = (geo?.data?.address?.city || geo?.data?.address?.town || geo?.data?.address?.village || '').trim()
                 if (detectedCity) {
                     setCity(detectedCity)
                     await pingPresence(detectedCity)
@@ -513,7 +519,7 @@ export default function Whois() {
             setCurrentCoords({ lat: latitude, lng: longitude })
             try {
               const geo: any = await api.get(`/geolocation/reverse?lat=${latitude}&lon=${longitude}`, { cache: 'no-store' })
-              const detectedCity = (geo?.data?.address?.city || geo?.data?.address?.town || geo?.data?.address?.village || '').trim().toLowerCase()
+              const detectedCity = (geo?.data?.address?.city || geo?.data?.address?.town || geo?.data?.address?.village || '').trim()
               if (detectedCity) {
                 setCity(detectedCity)
                 // ensure session again before ping/fetch
@@ -548,8 +554,14 @@ export default function Whois() {
     cityRef.current = city
   }, [city])
 
+  // keep a ref of latest coordinates for socket handlers
+  const coordsRef = useRef<{ lat: number; lng: number } | null>(currentCoords)
   useEffect(() => {
-    const token = safeStorage.getItem('token')
+    coordsRef.current = currentCoords
+  }, [currentCoords])
+
+  useEffect(() => {
+    const token = authToken
     if (!token) return
 
     const SOCKET = import.meta.env.VITE_SOCKET_URL || ''
@@ -565,19 +577,21 @@ export default function Whois() {
       if (currentUserId) socket.emit('joinNotifications', { userId: currentUserId })
     })
 
-    socket.on('userOnline', async (userId: string) => {
+    socket.on('userOnline', async (userIdOrPayload: any) => {
       try {
         const now = Date.now()
-        const last = recentActivity.get(userId) || 0
+        const id = typeof userIdOrPayload === 'string' ? userIdOrPayload : (userIdOrPayload && userIdOrPayload.userId)
+        if (!id) return
+        const last = recentActivity.get(id) || 0
         if (now - last < ACTIVITY_DEBOUNCE_MS) return
-        recentActivity.set(userId, now)
+        recentActivity.set(id, now)
 
         // mark user active in the current list if present
         let found = false
         setUsers((prev) => {
           const next = prev.map((u) => {
             const cid = (u.userId || u._id || u.id)
-            if (cid === userId) {
+            if (cid === id) {
               found = true
               return { ...u, active: true, lastSeen: null }
             }
@@ -586,40 +600,32 @@ export default function Whois() {
           return next
         })
 
-        // if not found in current list, attempt to fetch minimal profile and prepend
+        // If the gateway supplied a presence payload, we can add the user immediately without an extra HTTP fetch.
+        const presence = userIdOrPayload && userIdOrPayload.presence ? userIdOrPayload.presence : null
         if (!found) {
-          try {
-            const profile: any = await api.get(`/users/preferences/${encodeURIComponent(userId)}`, { cache: 'no-store' })
-            if (profile) {
+          if (presence && presence.coordinates && typeof presence.coordinates.lat === 'number' && typeof presence.coordinates.lng === 'number') {
+            try {
               const item = {
-                _id: userId,
-                username: profile.username || 'Traveler',
-                name: profile.username || profile.name || undefined,
-                avatar: profile.avatarUrl || `https://i.pravatar.cc/40?u=${userId}`,
-                bio: profile.bio || undefined,
-                travelPrefs: profile.travelPrefs || undefined,
-                languages: profile.languages || undefined,
-                socials: profile.socials || undefined,
-                gender: profile.gender || undefined,
-                profileVisible: typeof profile.profileVisible === 'boolean' ? profile.profileVisible : undefined,
+                _id: id,
+                userId: id,
+                city: presence.city || '',
+                coordinates: presence.coordinates,
                 active: true,
                 lastSeen: null,
-                coordinates: profile.coordinates || null,
+                distanceKm: null,
               }
-              // dedupe: ensure we don't already have this id (race guard)
               setUsers((prev) => {
-                if (prev.some((p) => ((p.userId || p._id || p.id) === userId))) return prev
+                if (prev.some((p) => ((p.userId || p._id || p.id) === id))) return prev
                 return [item, ...prev]
               })
-              // show toast for new nearby user
-              try {
-                setToast({ id: userId, text: `${item.username || 'Traveler'} is nearby` })
-                setTimeout(() => setToast(null), 3200)
-              } catch (e) {}
+              try { setToast({ id, text: `Someone is nearby` }); setTimeout(() => setToast(null), 3200) } catch (e) {}
+            } catch (e) {
+              console.warn('Failed to prepend presence from socket payload', e)
+              try { await fetchNearby(cityRef.current || '', 1) } catch (err) { console.warn('Failed to refresh nearby users on userOnline event', err) }
             }
-          } catch (err) {
-            // ignore failures to fetch profile
-            console.warn('Could not fetch user profile for', userId)
+          } else {
+            // Fallback: refresh nearby list so the client picks up the new presence (server-side stored)
+            try { await fetchNearby(cityRef.current || '', 1) } catch (err) { console.warn('Failed to refresh nearby users on userOnline event', err) }
           }
         }
       } catch (e) {
@@ -645,10 +651,83 @@ export default function Whois() {
       console.warn('Socket connect error', err)
     })
 
+    // Listen for visibility changes, logout, and ping events so we can emit join/leave in real-time
+    const onVisibilityChanged = (ev: any) => {
+      try {
+        const detail = ev && ev.detail
+        const visible = !!(detail && detail.visible)
+        const uid = safeStorage.getItem('userId') || ''
+        const coords = coordsRef.current
+        if (!uid) return
+        if (visible && coords) {
+          try { if (socket && typeof (socket as any).emit === 'function') socket.emit('whois:join', { userId: uid, city: cityRef.current || '', coordinates: { lat: coords.lat, lng: coords.lng } }) } catch (e) { console.warn('whois join emit failed', e) }
+        } else {
+          try { if (socket && typeof (socket as any).emit === 'function') socket.emit('whois:leave', { userId: uid }) } catch (e) { console.warn('whois leave emit failed', e) }
+        }
+      } catch (e) { console.warn('onVisibilityChanged handler failed', e) }
+    }
+
+    const onLogout = () => {
+      try {
+        const uid = safeStorage.getItem('userId') || ''
+        if (!uid) return
+        try { if (socket && typeof (socket as any).emit === 'function') socket.emit('whois:leave', { userId: uid }) } catch (e) { console.warn('whois leave emit failed', e) }
+      } catch (e) { console.warn('onLogout handler failed', e) }
+    }
+
+    const onPing = (ev: any) => {
+      try {
+        const detail = ev && ev.detail
+        const uid = safeStorage.getItem('userId') || ''
+        const coords = detail && detail.coordinates ? detail.coordinates : coordsRef.current
+        if (!uid || !coords) return
+        try { if (socket && typeof (socket as any).emit === 'function') socket.emit('whois:join', { userId: uid, city: detail?.city || cityRef.current || '', coordinates: { lat: Number(coords.lat), lng: Number(coords.lng) } }) } catch (e) { console.warn('whois join emit failed (ping)', e) }
+      } catch (e) { console.warn('onPing handler failed', e) }
+    }
+
+    window.addEventListener('wakapadi:visibility-changed', onVisibilityChanged as EventListener)
+    window.addEventListener('wakapadi:logout', onLogout as EventListener)
+    window.addEventListener('wakapadi:whois:pinged', onPing as EventListener)
+
     return () => {
+      try { window.removeEventListener('wakapadi:visibility-changed', onVisibilityChanged as EventListener) } catch (e) {}
+      try { window.removeEventListener('wakapadi:logout', onLogout as EventListener) } catch (e) {}
+      try { window.removeEventListener('wakapadi:whois:pinged', onPing as EventListener) } catch (e) {}
       try { socket.disconnect() } catch (e) {}
     }
-  }, [fetchNearby])
+  }, [fetchNearby, authToken])
+
+  // Listen for login events so we can initialize socket real-time subscriptions
+  useEffect(() => {
+    const onLogin = () => {
+      try {
+        const t = safeStorage.getItem('token') || null
+        setAuthToken(t)
+      } catch (e) {
+        setAuthToken(null)
+      }
+    }
+    const onLogoutLocal = () => setAuthToken(null)
+    const onStorage = (ev: StorageEvent) => {
+      try {
+        if (!ev) return
+        if (ev.key === 'token') {
+          setAuthToken(ev.newValue || null)
+        }
+      } catch (e) {}
+    }
+
+    window.addEventListener('wakapadi:login', onLogin as EventListener)
+    window.addEventListener('wakapadi:logout', onLogoutLocal as EventListener)
+    window.addEventListener('storage', onStorage as EventListener)
+    // also update authToken on mount in case token was set earlier
+    onLogin()
+    return () => {
+      window.removeEventListener('wakapadi:login', onLogin as EventListener)
+      window.removeEventListener('wakapadi:logout', onLogoutLocal as EventListener)
+      window.removeEventListener('storage', onStorage as EventListener)
+    }
+  }, [])
 
   // Listen for local hide toast events
   useEffect(() => {
@@ -727,6 +806,10 @@ export default function Whois() {
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:bg-blue-500 dark:hover:bg-blue-600"
           >{t('whoisFindNearby')}</button>
           <button
+            onClick={() => { setCity(''); setPage(1); setLoading(true); fetchNearby('', 1).catch(() => {}); }}
+            className="ml-3 px-4 py-2 bg-gray-100 text-gray-900 rounded-md hover:bg-gray-200"
+          >Show everyone</button>
+          <button
             onClick={() => setShowHiddenPanel(true)}
             className="ml-3 px-3 py-2 border border-gray-200 bg-white text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md text-sm hover:bg-gray-50 dark:hover:bg-gray-600"
           >Manage hidden users</button>
@@ -762,7 +845,7 @@ export default function Whois() {
                     <select value={manualCity} onChange={(e) => setManualCity(e.target.value)} className="flex-1 px-3 py-2 border rounded-md">
                       <option value="">{t('whoisSelectCityPlaceholder') || 'Select a city'}</option>
                       {availableCities.map((c) => (
-                        <option key={c.city} value={c.city}>{`${c.city}`}</option>
+                        <option key={c.city} value={c.display}>{`${c.display}`}</option>
                       ))}
                     </select>
                   ) : (
@@ -770,9 +853,9 @@ export default function Whois() {
                   )}
                   <button onClick={async () => {
                     if (!manualCity.trim()) return
-                    const normalized = manualCity.trim().toLowerCase()
-                    setShowLocationPrompt(false)
-                    setCity(normalized)
+                      const normalized = manualCity.trim()
+                      setShowLocationPrompt(false)
+                      setCity(normalized)
                     setPage(1)
                     setLoading(true)
                     try {

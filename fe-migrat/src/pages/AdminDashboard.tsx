@@ -5,6 +5,7 @@ import { useTranslation } from '../lib/i18n'
 import { api } from '../lib/api'
 import { safeStorage } from '../lib/storage'
 
+
 function getUtcDayString(offsetDays = 0) {
   const d = new Date()
   d.setUTCDate(d.getUTCDate() - offsetDays)
@@ -28,6 +29,7 @@ export default function AdminDashboard() {
   const [toursCount, setToursCount] = useState<number | null>(null)
   const [whoisSummary, setWhoisSummary] = useState<{ city: string; count: number }[] | null>(null)
   const [citiesCount, setCitiesCount] = useState<number | null>(null)
+  const [whoisUsers, setWhoisUsers] = useState<any[] | null>(null)
   const [contactMessages, setContactMessages] = useState<any[] | null>(null)
   const [addCitiesInput, setAddCitiesInput] = useState<string>('')
   const [addCitiesStatus, setAddCitiesStatus] = useState<string | null>(null)
@@ -37,6 +39,7 @@ export default function AdminDashboard() {
   const [apiToken, setApiToken] = useState<string>(() => safeStorage.getItem('token') || '')
   const [logs, setLogs] = useState<Array<{ ts: string; msg: string }>>([])
   const [pollingLogs, setPollingLogs] = useState(false)
+  const [lastApiError, setLastApiError] = useState<string | null>(null)
   const pollRef = useRef<number | null>(null)
   const logsBoxRef = useRef<HTMLDivElement | null>(null)
 
@@ -191,10 +194,28 @@ export default function AdminDashboard() {
         }
       }
       setWhoisSummary(summary)
+      // fetch a sample of global whois users for admin actions
+      try {
+        const wRes: any = await api.get('/whois/nearby?city=&page=1&limit=100', { cache: 'no-store' })
+        setWhoisUsers(Array.isArray(wRes?.data) ? wRes.data : [])
+      } catch (e) {
+        setWhoisUsers([])
+      }
     } catch (e) {
       setWhoisSummary(null)
     }
   }
+
+  const fetchWhoisUsers = async () => {
+    try {
+      const res: any = await api.get('/whois/nearby?city=&page=1&limit=100', { cache: 'no-store' })
+      setWhoisUsers(Array.isArray(res?.data) ? res.data : [])
+    } catch (e: any) {
+      setWhoisUsers([])
+      try { setLastApiError(e?.message || String(e)) } catch (_) {}
+    }
+  }
+
 
   const fetchContactMessages = async () => {
     try {
@@ -235,14 +256,14 @@ export default function AdminDashboard() {
     try {
       await api.post(`/users/block/${encodeURIComponent(userId)}`)
       fetchReports()
-    } catch (e) { /* ignore */ }
+    } catch (e: any) { try { setLastApiError(e?.message || String(e)) } catch (_) {} }
   }
 
   const deleteUser = async (userId: string) => {
     try {
       await api.del(`/users/${encodeURIComponent(userId)}`)
       fetchReports()
-    } catch (e) { /* ignore */ }
+    } catch (e: any) { try { setLastApiError(e?.message || String(e)) } catch (_) {} }
   }
 
   const fetchDailyVisitsRange = async (days = 7) => {
@@ -263,6 +284,7 @@ export default function AdminDashboard() {
     // initial stats fetch
     fetchToursCount()
     fetchCitiesWhois()
+    fetchWhoisUsers()
     fetchDailyVisitsRange(7)
     fetchSchedulerStatus()
   }, [])
@@ -278,6 +300,14 @@ export default function AdminDashboard() {
             <button onClick={clearToken} className="px-3 py-2 rounded bg-gray-300 text-sm">Clear token</button>
             <button onClick={() => { logout(); navigate('/') }} className="px-3 py-2 rounded bg-gray-200 dark:bg-gray-700">{t('logout') || 'Sign out'}</button>
           </div>
+          {lastApiError ? (
+            <div className="mt-2 p-2 bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 text-red-800 dark:text-red-200 rounded text-sm flex items-center justify-between">
+              <div className="truncate mr-3">{lastApiError}</div>
+              <div className="flex-shrink-0">
+                <button onClick={() => setLastApiError(null)} className="px-2 py-1 bg-red-600 text-white rounded text-xs">Clear</button>
+              </div>
+            </div>
+          ) : null}
         </div>
 
         <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -445,6 +475,51 @@ export default function AdminDashboard() {
               <div key={c.city} className="p-3 border rounded">
                 <div className="text-sm text-gray-500">{c.city}</div>
                 <div className="text-lg font-bold">{c.count}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="bg-white dark:bg-gray-800 p-6 rounded shadow mt-6">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold">Online Whois Users (sample)</h3>
+            <div className="flex gap-2">
+              <button onClick={fetchWhoisUsers} className="px-2 py-1 text-sm text-blue-600">Refresh</button>
+            </div>
+          </div>
+          <div className="space-y-2 max-h-96 overflow-auto">
+            {whoisUsers === null ? (
+              <div className="text-sm text-gray-500">No data loaded.</div>
+            ) : whoisUsers.length === 0 ? (
+              <div className="text-sm text-gray-500">No online users found.</div>
+            ) : whoisUsers.map((u) => (
+              <div key={u.userId || u._id || u.id} className="p-3 border rounded flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="text-sm font-medium">{(u.username || u.handle || u.userId || u._id || u.id)}</div>
+                  <div className="text-xs text-gray-500">{u.city || u.location || ''}</div>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={async () => {
+                    try {
+                      if (!confirm('Remove stored presence for this user?')) return
+                      const token = safeStorage.getItem('token')
+                      if (!token) {
+                        alert('No API token set. Enter an admin token and click Save token before proceeding.')
+                        return
+                      }
+                      const id = u.userId || u._id || u.id
+                      try {
+                        await api.del(`/whois/${encodeURIComponent(id)}`)
+                        try { window.dispatchEvent(new CustomEvent('wakapadi:toast', { detail: { text: 'Presence removed' } })) } catch (e) {}
+                        await fetchWhoisUsers()
+                      } catch (err: any) {
+                        console.warn('remove presence failed', err)
+                        try { setLastApiError(err?.message || String(err)) } catch (_) {}
+                        try { window.dispatchEvent(new CustomEvent('wakapadi:toast', { detail: { text: 'Failed to remove presence: ' + (err?.message || String(err)) } })) } catch (e) {}
+                      }
+                    } catch (e) { console.warn('remove presence flow failed', e); try { setLastApiError(String(e)) } catch (_) {} }
+                  }} className="px-2 py-1 bg-red-600 text-white rounded text-sm">Remove presence</button>
+                </div>
               </div>
             ))}
           </div>
