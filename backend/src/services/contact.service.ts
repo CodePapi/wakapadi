@@ -14,6 +14,19 @@ export class ContactService {
     return this.model.create(dto);
   }
 
+  async update(id: string, patch: Partial<any>) {
+    return this.model.findByIdAndUpdate(id, { $set: patch }, { new: true }).exec();
+  }
+
+  async markAttended(id: string, attendedBy?: string, note?: string) {
+    const now = new Date();
+    return this.model.findByIdAndUpdate(id, { $set: { attended: true, attendedAt: now, attendedBy: attendedBy || null, attendedNote: note || null } }, { new: true }).exec();
+  }
+
+  async markUnattended(id: string) {
+    return this.model.findByIdAndUpdate(id, { $set: { attended: false, attendedAt: null, attendedBy: null, attendedNote: null } }, { new: true }).exec();
+  }
+
   async findAll() {
     return this.model.find().sort({ createdAt: -1 }).exec(); // for dashboard
   }

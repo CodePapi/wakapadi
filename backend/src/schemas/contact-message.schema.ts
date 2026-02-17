@@ -26,6 +26,19 @@ export class ContactMessage {
 
   @Prop({ type: Map, of: String })
   meta?: Record<string, any>;
+
+  // Admin handling fields
+  @Prop({ default: false })
+  attended?: boolean;
+
+  @Prop()
+  attendedAt?: Date;
+
+  @Prop()
+  attendedBy?: string; // admin identifier or email
+
+  @Prop()
+  attendedNote?: string;
 }
 
 export const ContactMessageSchema =

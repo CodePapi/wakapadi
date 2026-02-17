@@ -177,5 +177,15 @@
   ,"profileNoTwitter": "Kein Twitter"
   ,"profileNoWebsite": "Keine Website"
   ,"back": "Zurück"
+  ,
+  "error404Title": "Seite nicht gefunden",
+  "error404Body": "Wir konnten diese Seite nicht finden. Versuche die Suche oder gehe zurück zur Startseite.",
+  "error403Title": "Zugriff verboten",
+  "error403Body": "Sie haben keine Berechtigung, diese Seite anzuzeigen.",
+  "error500Title": "Ein Fehler ist aufgetreten",
+  "error500Body": "Ein unerwarteter Fehler ist aufgetreten. Versuchen Sie es erneut oder kontaktieren Sie den Support.",
+  "errorActionHome": "Zur Startseite",
+  "errorContactSupport": "Support kontaktieren",
+  "errorMotivation": "Entdecke Touren und triff Leute — dein nächstes Abenteuer wartet."
 }
 
