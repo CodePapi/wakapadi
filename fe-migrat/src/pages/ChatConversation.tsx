@@ -29,6 +29,7 @@ export default function ChatConversation() {
   const pickerRef = useRef<HTMLDivElement | null>(null)
   const socketRef = useRef<any>(null)
   const messagesContainerRef = useRef<HTMLDivElement | null>(null)
+  const bottomRef = useRef<HTMLDivElement | null>(null)
   const inputRef = useRef<HTMLTextAreaElement | null>(null)
   const messagesRef = useRef(new Set<string>())
   const currentDedupeMap = useRef(new Set<string>())
@@ -257,12 +258,24 @@ export default function ChatConversation() {
   // scroll to bottom when messages change
   useEffect(() => {
     try {
-      if (!messagesContainerRef.current) return
+      // prefer scrolling the sentinel into view so that date separators and last item sizes are respected
+      const doScroll = () => {
+        try {
+          if (bottomRef.current && typeof bottomRef.current.scrollIntoView === 'function') {
+            bottomRef.current.scrollIntoView({ block: 'end', behavior: 'auto' })
+            return
+          }
+          if (messagesContainerRef.current) {
+            const el = messagesContainerRef.current
+            el.scrollTop = el.scrollHeight
+          }
+        } catch (e) {}
+      }
       // allow DOM to update then scroll
-      requestAnimationFrame(() => {
-        const el = messagesContainerRef.current!
-        el.scrollTop = el.scrollHeight
-      })
+      requestAnimationFrame(() => doScroll())
+      // also schedule a short timeout in case layout changes after RAF (images, fonts)
+      const t = window.setTimeout(() => doScroll(), 120)
+      return () => window.clearTimeout(t)
     } catch (e) {}
   }, [messages])
 
@@ -395,7 +408,7 @@ export default function ChatConversation() {
   return (
     <>
     <section className="chat-loose container mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="max-w-2xl mx-auto flex flex-col h-[calc(100vh-6rem)] sm:h-auto">
+      <div className="max-w-2xl mx-auto flex flex-col h-[calc(100vh-6rem)]">
 
         <div className="mt-4 chat-wrapper flex-1 flex flex-col">
           <div className="chat-header px-3 py-2 flex items-center justify-between bg-white dark:bg-zinc-900">
@@ -514,6 +527,7 @@ export default function ChatConversation() {
                 return nodes
               })()
             )}
+            <div ref={bottomRef} />
           </div>
 
           <div aria-live="polite" className="sr-only" role="status">{announce}</div>
