@@ -134,7 +134,7 @@ export default function NearbyUserCard({ user }: { user: User }) {
   }
 
   return (
-    <article className={`bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-4 transition-transform duration-150 ${highlight ? 'ring-2 ring-green-300/60' : ''}`}>
+    <article className={`p-3 border border-gray-200 dark:border-zinc-700 rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow duration-150 hover:bg-gray-50 dark:bg-zinc-900 dark:hover:bg-zinc-800 ${highlight ? 'ring-2 ring-green-300/60' : ''}`}>
       <div className="md:grid md:grid-cols-[64px_1fr_auto] md:gap-4 flex flex-col items-center md:items-start md:flex-row">
         <div className="flex-shrink-0 w-20 md:w-16">
           <div className="w-20 h-20 md:w-16 md:h-16 rounded-full bg-gray-100 dark:bg-zinc-700 flex items-center justify-center overflow-hidden">
@@ -145,14 +145,14 @@ export default function NearbyUserCard({ user }: { user: User }) {
               <svg width="36" height="36" viewBox="0 0 24 24" fill="none" className="text-gray-300"><path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0 2c-4.418 0-8 2.239-8 5v1h16v-1c0-2.761-3.582-5-8-5z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
             )}
           </div>
-          {user?.active && (
+          {/* {user?.active && (
             <span className="inline-flex -mt-3 -ml-3">
               <span className="flex h-3 w-3">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-3 w-3 bg-green-600 border border-white"></span>
               </span>
             </span>
-          )}
+          )} */}
         </div>
 
         <div className="flex-1 min-w-0">

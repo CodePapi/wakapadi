@@ -851,7 +851,7 @@ export default function Whois() {
           >{t('whoisFindNearby')}</button>
           <button
             onClick={() => { setCity(''); setPage(1); setLoading(true); fetchNearby('', 1).catch(() => {}); }}
-            className="ml-3 px-4 py-2 bg-gray-100 text-gray-900 rounded-md hover:bg-gray-200"
+            className="ml-3 px-3 py-2 border border-gray-200 bg-white text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md text-sm hover:bg-gray-50 dark:hover:bg-gray-600"
           >Show everyone</button>
           <button
             onClick={() => setShowHiddenPanel(true)}
