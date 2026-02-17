@@ -11,6 +11,8 @@ const PeerProfile = React.lazy(() => import('./pages/PeerProfile'))
 const ChatInbox = React.lazy(() => import('./pages/ChatInbox'))
 const ChatConversation = React.lazy(() => import('./pages/ChatConversation'))
 const ContactUs = React.lazy(() => import('./pages/ContactUs'))
+const AdminLogin = React.lazy(() => import('./pages/AdminLogin'))
+const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard'))
 import { I18nProvider } from './lib/i18n'
 import Layout from './components/Layout'
 
@@ -27,6 +29,8 @@ export default function App() {
           <Suspense fallback={<div className="text-center">Loading…</div>}>
             <Routes>
                 <Route path="/" element={<Home />} />
+              <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/contact-us" element={<ContactUs />} />
                 <Route path="/whois" element={<Whois />} />
                 <Route path="/tours" element={<Tours />} />

@@ -5,6 +5,7 @@ import mongoose, { Model, Types } from 'mongoose';
 import { WhoisPresence } from '../schemas/whois.schema';
 import { WhoisMessage } from '../schemas/whois-message.schema';
 import { User } from '../schemas/user.schema'; // adjust path if needed
+import { CityService } from './city.services';
 
 @Injectable()
 export class WhoisService {
@@ -15,6 +16,7 @@ export class WhoisService {
     @InjectModel(WhoisMessage.name)
     private readonly messageModel: Model<WhoisMessage>,
     @InjectModel(User.name) private readonly userModel: Model<User>,
+    private readonly cityService: CityService,
   ) {}
 
   async removePresence(userId: string) {
@@ -24,7 +26,17 @@ export class WhoisService {
   async pingPresence(userId: string, data: Partial<WhoisPresence>) {
     const now = new Date();
     const expiresAt = new Date(now.getTime() + 6 * 60 * 60 * 1000); // 6 hours
-    const normalizedCity = data.city?.trim().toLowerCase() || 'unknown';
+    const rawCity = data.city || 'unknown';
+    let normalizedCity = 'unknown'
+    try {
+      if (this.cityService && typeof this.cityService.formatForStorage === 'function') {
+        normalizedCity = this.cityService.formatForStorage(rawCity)
+      } else {
+        normalizedCity = String(rawCity).trim()
+      }
+    } catch (e) {
+      normalizedCity = String(rawCity).trim()
+    }
 
     // Defensive: coerce coordinates to numbers if provided, otherwise drop invalid coords
     const payload: any = { ...data };

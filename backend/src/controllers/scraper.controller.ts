@@ -11,7 +11,7 @@
 
 
 // src/scraper/scraper.controller.ts
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, Get } from '@nestjs/common';
 import { ScraperService } from '../services/scraper.service';
 
 @Controller('scraper')
@@ -34,6 +34,34 @@ export class ScraperController {
       // Return a concise error for the client while exposing the message for local debugging
       return { statusCode: 500, message: 'Scrape failed', detail: err?.message || String(err) };
     }
+  }
+
+  // Admin endpoints to control scheduled scraping (no auth by design per request)
+  @Get('status')
+  async status() {
+    return this.scraperService.getSchedulerStatus();
+  }
+
+  @Post('pause')
+  async pause() {
+    this.scraperService.stopScheduler();
+    return { message: 'scraper paused' };
+  }
+
+  @Post('resume')
+  async resume(@Body() body: any) {
+    // optional cron in body
+    const cron = body?.cron;
+    this.scraperService.startScheduler(cron);
+    return { message: 'scraper resumed', cron: cron || this.scraperService.getSchedulerStatus().cron };
+  }
+
+  @Post('schedule')
+  async schedule(@Body() body: any) {
+    const cron = body?.cron;
+    if (!cron) return { error: 'missing cron' };
+    this.scraperService.setSchedulerCron(cron);
+    return { message: 'schedule updated', cron };
   }
 
   @Post('new/city')
