@@ -648,6 +648,32 @@ export default function Whois() {
         </div>
       </div>
 
+      {/* Share prompt: encourage users to invite others */}
+      <div className="mt-4">
+        <div className="p-4 rounded-md bg-blue-50 dark:bg-blue-900 border border-blue-100 dark:border-blue-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <div className="font-semibold text-gray-900 dark:text-gray-100">{t('whoisShareTitle')}</div>
+            <div className="text-sm text-gray-700 dark:text-gray-200 mt-1">{t('whoisShareBody')}</div>
+          </div>
+          <div className="flex gap-2 flex-nowrap">
+            <button
+              onClick={async () => {
+                const shareUrl = typeof window !== 'undefined' ? window.location.origin + window.location.pathname : '/'
+                try {
+                  await navigator.clipboard.writeText(shareUrl)
+                  try { window.dispatchEvent(new CustomEvent('wakapadi:toast', { detail: { text: t('whoisShareCopiedToast') || 'Link copied to clipboard' } })) } catch (e) {}
+                } catch (e) {
+                  try { window.prompt(t('whoisShareCopyPrompt') || 'Copy this link', shareUrl) } catch (err) {}
+                }
+              }}
+              className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 whitespace-nowrap"
+            >
+              {t('whoisShareCopy')}
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div className="mt-6 space-y-4">
         <VisibilityToggle />
 
