@@ -134,32 +134,33 @@ export default function NearbyUserCard({ user }: { user: User }) {
   }
 
   return (
-    <article className={`rounded-2xl p-4 bg-white/80 dark:bg-zinc-900/80 border border-gray-100 dark:border-zinc-800 shadow-md hover:shadow-2xl transition transform duration-200 ${highlight ? 'ring-2 ring-green-300/40' : ''}`}>
-      <div className="md:grid md:grid-cols-[72px_1fr_auto] md:gap-4 flex flex-col items-center md:items-start md:flex-row">
-        <div className="flex-shrink-0 w-20 md:w-18">
-          <div className="w-20 h-20 md:w-18 md:h-18 rounded-full bg-gradient-to-b from-gray-100 to-gray-50 dark:from-zinc-800 dark:to-zinc-900 flex items-center justify-center overflow-hidden ring-1 ring-gray-100 dark:ring-zinc-800">
+    <article className={`rounded-2xl p-4 bg-white/60 dark:bg-zinc-900/60 border border-gray-100/60 dark:border-zinc-800/60 shadow-md hover:shadow-2xl transition transform-gpu duration-250 hover:-translate-y-1 ${highlight ? 'ring-2 ring-green-300/40' : ''}`}>
+      <div className="md:grid md:grid-cols-[96px_1fr_auto] md:gap-6 flex flex-col items-center md:items-start md:flex-row">
+        <div className="flex-shrink-0 w-24 md:w-24">
+          <div className="w-24 h-24 rounded-full bg-gradient-to-b from-white to-gray-50 dark:from-zinc-800 dark:to-zinc-900 flex items-center justify-center overflow-hidden relative shadow-sm ring-4 ring-white dark:ring-zinc-900">
             {avatar ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={avatar} alt={`${displayName} ${t('avatar') || 'avatar'}`} className="w-full h-full object-cover rounded-full" />
             ) : (
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" className="text-gray-300"><path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0 2c-4.418 0-8 2.239-8 5v1h16v-1c0-2.761-3.582-5-8-5z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" className="text-gray-300"><path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0 2c-4.418 0-8 2.239-8 5v1h16v-1c0-2.761-3.582-5-8-5z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            )}
+
+            {user?.active && (
+              <span className="absolute -bottom-1 -right-1">
+                <span className="flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-60"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500 border-2 border-white dark:border-zinc-900"></span>
+                </span>
+              </span>
             )}
           </div>
-          {/* {user?.active && (
-            <span className="inline-flex -mt-3 -ml-3">
-              <span className="flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-600 border border-white"></span>
-              </span>
-            </span>
-          )} */}
         </div>
 
         <div className="flex-1 min-w-0">
-          <div className="flex flex-col items-center md:flex-row md:items-start md:justify-between gap-3">
+          <div className="flex flex-col items-center md:flex-row md:items-start md:justify-between gap-3 w-full">
             <div className="min-w-0">
               <div className="flex flex-col items-center md:flex-row md:items-center gap-3 text-center md:text-left">
-                <div className="text-base md:text-lg font-semibold text-gray-900 dark:text-gray-100 truncate leading-tight">{displayName}</div>
+                <div className="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate leading-tight">{displayName}</div>
                 {user?.anonymous && <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-100 px-2 py-0.5 rounded-full">{t('anonymousBadge') || 'Anonymous'}</span>}
               </div>
               {user?.bio && (
@@ -170,19 +171,15 @@ export default function NearbyUserCard({ user }: { user: User }) {
                   {user.bio}
                 </div>
               )}
-            </div>
-
-            {/* Desktop: right column shows only icons + values for compact mature alignment */}
-            <div className="hidden md:flex md:flex-col md:items-end md:justify-center text-xs text-gray-500 dark:text-gray-300">
-              <div className="inline-flex items-center gap-3 mb-1">
+              <div className="mt-3 hidden md:flex items-center gap-4 text-sm text-gray-500 dark:text-gray-300">
                 {user?.city && (
-                  <div className="inline-flex items-center gap-2 text-xs text-gray-500 dark:text-gray-300">
+                  <div className="inline-flex items-center gap-2">
                     <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="text-gray-500 dark:text-gray-300"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>
                     <span className="truncate">{formatCity(user.city)}</span>
                   </div>
                 )}
                 {distanceStr !== '—' && (
-                  <div className="inline-flex items-center gap-2 text-xs text-gray-500 dark:text-gray-300">
+                  <div className="inline-flex items-center gap-2">
                     <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500 dark:text-gray-300"><path d="M3 12h6l2 2 6-6 4 4"/></svg>
                     <span className="font-medium">{distanceStr}</span>
                   </div>
@@ -190,29 +187,13 @@ export default function NearbyUserCard({ user }: { user: User }) {
               </div>
             </div>
           </div>
-
-          {/* Mobile: inline icon row beneath name */}
-          <div className="mt-3 md:hidden flex items-center justify-center gap-3 text-xs text-gray-500 dark:text-gray-300">
-            {user?.city && (
-              <span className="inline-flex items-center gap-2">
-                <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-gray-500 dark:text-gray-300"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>
-                <span>{formatCity(user.city)}</span>
-              </span>
-            )}
-            {distanceStr !== '—' && (
-              <span className="inline-flex items-center gap-2">
-                <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500 dark:text-gray-300"><path d="M3 12h6l2 2 6-6 4 4"/></svg>
-                <span>{distanceStr}</span>
-              </span>
-            )}
-          </div>
         </div>
 
-        <div className="mt-3 md:mt-0 flex flex-row md:flex-col items-center md:items-end justify-center md:justify-center gap-3 w-full md:w-auto">
+        <div className="mt-4 md:mt-0 flex flex-row md:flex-col items-center md:items-end justify-center gap-3 w-full md:w-auto">
           {(user?.userId || user?._id || user?.id) && (
             <button onClick={onChat}
               aria-label={t('chat') || 'Chat'}
-              className="flex items-center justify-center p-3 bg-blue-600 text-white rounded-full shadow-md hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 border border-transparent"
+              className="flex items-center justify-center p-3 bg-gradient-to-b from-blue-600 to-blue-500 text-white rounded-full shadow-md hover:scale-105 transform transition duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 border border-transparent"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             </button>
@@ -230,5 +211,6 @@ export default function NearbyUserCard({ user }: { user: User }) {
       </div>
     </article>
   )
+
 }
 

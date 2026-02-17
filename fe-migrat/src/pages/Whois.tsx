@@ -799,13 +799,10 @@ export default function Whois() {
 
   return (
     <section aria-labelledby="whois-heading" className="container mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="p-4 rounded-xl bg-white/60 dark:bg-zinc-900/60 backdrop-blur-sm border border-gray-100/60 dark:border-zinc-800/60 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 id="whois-heading" className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{t('whoisNearby')}</h2>
           <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{t('whoisDescription')}</p>
-          {/* {currentUserId && (
-            <div className="mt-2 text-sm text-gray-600 dark:text-gray-300">{t('whoisYouNotListed') || "You won't appear in this list"}</div>
-          )} */}
         </div>
         <div className="mt-2 sm:mt-0">
           <div role="status" className="flex items-start gap-3 text-sm bg-yellow-50 dark:bg-yellow-900 border-l-4 border-yellow-300 dark:border-yellow-700 text-yellow-800 dark:text-yellow-200 px-3 py-2 rounded">
@@ -967,9 +964,11 @@ export default function Whois() {
           </div>
         )}
 
-        <div className="grid gap-3 mt-4">
+        <div className="grid gap-6 mt-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {loading && visibleUsers.length === 0 ? (
-            Array.from({ length: 3 }).map((_, i) => <div key={i} className="p-3 bg-gray-100 dark:bg-gray-800 rounded animate-pulse h-20" />)
+            Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="rounded-2xl p-4 bg-gray-100/80 dark:bg-zinc-800 animate-pulse h-36" />
+            ))
           ) : visibleUsers.length > 0 ? (
             visibleUsers.map((u) => <NearbyUserCard key={u.userId || u._id || u.id} user={u} />)
           ) : (
