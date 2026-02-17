@@ -166,6 +166,7 @@
   "profileDisplayNameRequired": "El nombre visible es obligatorio",
   "profileBioLabel": "Biografía",
   "profileBioTooLong": "La biografía debe tener 300 caracteres o menos",
+  "profileBioPlaceholder": "Haz saber tus intenciones a personas cerca de ti — p. ej. \"¿Quién quiere quedar en la cafetería este fin de semana? ¡Envíame un mensaje!\"",
   "profileVisibilityLabel": "Visibilidad del perfil",
   "profileSocialsInvalid": "Uno o más enlaces sociales no son URLs válidas",
   "profileSaving": "Guardando..."

@@ -103,7 +103,7 @@ export class WhoisService {
     if (userIds.length > 0) {
       const users = await this.userModel
           .find({ _id: { $in: userIds } })
-          .select('_id username profileVisible avatar')
+          .select('_id username profileVisible avatar bio')
         .lean();
       users.forEach((u) => userMap.set(u._id.toString(), u));
     }
@@ -179,6 +179,7 @@ export class WhoisService {
         ...base,
         userId: foundUser._id.toString(),
         username: foundUser.username || 'User',
+        bio: foundUser.bio || undefined,
       };
     });
 

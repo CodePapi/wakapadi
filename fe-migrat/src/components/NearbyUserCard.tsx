@@ -162,7 +162,14 @@ export default function NearbyUserCard({ user }: { user: User }) {
                 <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{displayName}</div>
                 {user?.anonymous && <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-100 px-2 py-0.5 rounded">{t('anonymousBadge') || 'Anonymous'}</span>}
               </div>
-              {user?.profileVisible === true && user?.bio && <div className="mt-2 text-sm text-gray-600 dark:text-gray-300 truncate text-center md:text-left">{user.bio}</div>}
+              {user?.bio && (
+                <div
+                  className="mt-2 text-sm text-gray-600 dark:text-gray-300 text-center md:text-left"
+                  style={{ overflow: 'hidden', display: '-webkit-box' as any, WebkitLineClamp: 2 as any, WebkitBoxOrient: 'vertical' as any }}
+                >
+                  {user.bio}
+                </div>
+              )}
             </div>
 
             {/* Desktop: right column shows only icons + values for compact mature alignment */}

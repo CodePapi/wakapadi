@@ -93,8 +93,54 @@ export default function Tours() {
         const added = Boolean(scrape?.data?.added)
         safeStorage.setItem('lastScrapedCity', city)
         if (added) await fetchTours()
+        return
       } catch (err) {
-        // ignore geolocation errors
+        // geolocation failed or denied — try IP-based fallback
+      }
+
+      try {
+        const r = await api.get('/geolocation/ip', { cache: 'no-store' })
+        const info = r?.data || {}
+        const cityFromIp = info.city || info.region || info.region_code || info.country_name
+        const lat = info.latitude || info.lat
+        const lon = info.longitude || info.lon || info.long
+
+        if (lat && lon) {
+          try { safeStorage.setItem('last_device_coords', JSON.stringify({ lat, lng: lon })) } catch (e) {}
+        }
+
+        const normalized = cityFromIp ? String(cityFromIp).trim().toLowerCase() : null
+        if (normalized) {
+          const last = safeStorage.getItem('lastScrapedCity') || ''
+          if (last === normalized) return
+          try {
+            const scrape = await api.post('/scraper/new/city', { city: normalized })
+            const added = Boolean(scrape?.data?.added)
+            safeStorage.setItem('lastScrapedCity', normalized)
+            if (added) await fetchTours()
+            return
+          } catch (e) {
+            // ignore POST errors
+          }
+        }
+
+        if (lat && lon) {
+          try {
+            const geo: any = await api.get(`/geolocation/reverse?lat=${lat}&lon=${lon}`)
+            const city = (geo?.data?.address?.city || geo?.data?.address?.town || geo?.data?.address?.village || '').trim().toLowerCase()
+            if (!city) return
+            const last = safeStorage.getItem('lastScrapedCity') || ''
+            if (last === city) return
+            const scrape = await api.post('/scraper/new/city', { city })
+            const added = Boolean(scrape?.data?.added)
+            safeStorage.setItem('lastScrapedCity', city)
+            if (added) await fetchTours()
+          } catch (e) {
+            // ignore
+          }
+        }
+      } catch (e) {
+        // ignore IP lookup errors
       }
     }
     detectAndScrapeCity()
