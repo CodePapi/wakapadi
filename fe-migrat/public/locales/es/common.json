@@ -1,5 +1,15 @@
 {
   "homeTitle": "Conoce gente cerca de ti. Explora en compañía. Una ciudad a la vez",
+  
+  "error404Title": "Página no encontrada",
+  "error404Body": "No pudimos encontrar esa página. Intenta buscar o regresa al inicio.",
+  "error403Title": "Acceso prohibido",
+  "error403Body": "No tienes permiso para ver esta página.",
+  "error500Title": "Algo salió mal",
+  "error500Body": "Ocurrió un error inesperado. Intenta de nuevo o contacta al soporte.",
+  "errorActionHome": "Ir al inicio",
+  "errorContactSupport": "Contactar soporte",
+  "errorMotivation": "Descubre tours y conoce gente — tu próxima aventura te espera.",
   "homeSubtitle": "Viaja con inteligencia, conoce gente nueva y explora como un local",
   "searchPlaceholder": "Buscar por ciudad",
   "homeSearchPlaceholder": "Buscar tours o lugares",

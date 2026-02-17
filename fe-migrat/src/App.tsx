@@ -13,6 +13,8 @@ const ChatConversation = React.lazy(() => import('./pages/ChatConversation'))
 const ContactUs = React.lazy(() => import('./pages/ContactUs'))
 const AdminLogin = React.lazy(() => import('./pages/AdminLogin'))
 const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard'))
+const NotFound = React.lazy(() => import('./pages/NotFound'))
+const ErrorPage = React.lazy(() => import('./pages/ErrorPage'))
 import { I18nProvider } from './lib/i18n'
 import Layout from './components/Layout'
 
@@ -32,6 +34,7 @@ export default function App() {
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/contact-us" element={<ContactUs />} />
+                <Route path="/forbidden" element={<ErrorPage status={403} />} />
                 <Route path="/whois" element={<Whois />} />
                 <Route path="/tours" element={<Tours />} />
                 <Route path="/saved" element={<SavedTours />} />
@@ -40,6 +43,7 @@ export default function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/chat" element={<ChatInbox />} />
                 <Route path="/chat/:userId" element={<ChatConversation />} />
+                <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
         </Layout>
