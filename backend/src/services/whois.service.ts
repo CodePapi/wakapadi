@@ -76,6 +76,8 @@ export class WhoisService {
     const query: any = {
       visible: true,
     };
+    // Only include currently-active presences (not expired)
+    query.expiresAt = { $gt: new Date() };
     // when city provided (non-empty), filter by city; otherwise allow global
     if (city && String(city).trim() !== '') query.city = city
 
@@ -87,7 +89,7 @@ export class WhoisService {
     // Fetch presences (limit fetched candidates to a reasonable upper bound)
     // We fetch up to 1000 candidates to keep server work bounded, then sort/paginate in-memory.
     const FETCH_CANDIDATES = 1000
-    const visibleUsers = await this.whoisModel.find(query).limit(FETCH_CANDIDATES).lean();
+    let visibleUsers = await this.whoisModel.find(query).limit(FETCH_CANDIDATES).lean();
 
     // Defensive normalization: coerce any stored coordinates (strings) to numbers so distance can be computed
     visibleUsers.forEach((vu: any) => {
@@ -104,6 +106,9 @@ export class WhoisService {
           delete vu.coordinates
         }
       }
+
+      // Enforce: only include presences that shared numeric coordinates
+      visibleUsers = visibleUsers.filter((vu: any) => vu && vu.coordinates && typeof vu.coordinates.lat === 'number' && typeof vu.coordinates.lng === 'number')
     })
 
     // Collect all userIds that are present and valid
