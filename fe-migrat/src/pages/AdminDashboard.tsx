@@ -27,6 +27,7 @@ export default function AdminDashboard() {
   const [cronInput, setCronInput] = useState<string>('')
   const [toursCount, setToursCount] = useState<number | null>(null)
   const [whoisSummary, setWhoisSummary] = useState<{ city: string; count: number }[] | null>(null)
+  const [citiesCount, setCitiesCount] = useState<number | null>(null)
   const [contactMessages, setContactMessages] = useState<any[] | null>(null)
   const [addCitiesInput, setAddCitiesInput] = useState<string>('')
   const [addCitiesStatus, setAddCitiesStatus] = useState<string | null>(null)
@@ -130,6 +131,7 @@ export default function AdminDashboard() {
     try {
       const cRes: any = await api.get('/cities/all', { cache: 'no-store' })
       const cities: string[] = Array.isArray(cRes?.data) ? cRes.data : []
+      setCitiesCount(cities.length)
       const summary: { city: string; count: number }[] = []
       for (const c of cities) {
         try {
@@ -274,7 +276,7 @@ export default function AdminDashboard() {
           <div className="bg-white dark:bg-gray-800 p-6 rounded shadow">
             <h3 className="font-semibold mb-2">Stats</h3>
             <p className="text-sm text-gray-600 mb-3">Quick metrics from the API.</p>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded">
                 <div className="text-xs text-gray-500">Total tours</div>
                 <div className="text-lg font-bold">{toursCount ?? '—'}</div>
@@ -283,6 +285,11 @@ export default function AdminDashboard() {
               <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded">
                 <div className="text-xs text-gray-500">Whois users (all cities)</div>
                 <div className="text-lg font-bold">{whoisSummary ? whoisSummary.reduce((s, x) => s + x.count, 0) : '—'}</div>
+                <button onClick={fetchCitiesWhois} className="mt-2 text-sm text-blue-600">Refresh</button>
+              </div>
+              <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded">
+                <div className="text-xs text-gray-500">Total cities</div>
+                <div className="text-lg font-bold">{citiesCount ?? '—'}</div>
                 <button onClick={fetchCitiesWhois} className="mt-2 text-sm text-blue-600">Refresh</button>
               </div>
             </div>
