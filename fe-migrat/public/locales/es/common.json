@@ -165,6 +165,13 @@
   "exampleCity": "p.ej. Lisboa",
   "whoisUseCity": "Usar",
   "whoisRequestingLocation": "Solicitando ubicación…",
+  "whoisShareTitle": "Comparte Wakapadi",
+  "whoisShareBody": "Comparte este enlace con amigos — cuanto más gente en tu zona se una, más cerca estará tu vecindario.",
+  "whoisShareButton": "Compartir",
+  "whoisShareCopy": "Copiar enlace",
+  "whoisShareCopiedToast": "Enlace copiado al portapapeles",
+  "whoisShareSharedToast": "¡Gracias por compartir!",
+  "whoisShareCopyPrompt": "Copia este enlace",
   "profileTitle": "Tu perfil",
   
   "profileLoading": "Cargando tu perfil...",

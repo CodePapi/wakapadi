@@ -209,6 +209,13 @@
   "exampleCity": "ex. Lisbonne",
   "whoisUseCity": "Utiliser",
   "whoisRequestingLocation": "Demande de localisation…",
+  "whoisShareTitle": "Partagez Wakapadi",
+  "whoisShareBody": "Partagez ce lien avec des amis — plus il y a de personnes dans votre quartier, plus votre communauté devient vivante.",
+  "whoisShareButton": "Partager",
+  "whoisShareCopy": "Copier le lien",
+  "whoisShareCopiedToast": "Lien copié dans le presse-papiers",
+  "whoisShareSharedToast": "Merci pour le partage !",
+  "whoisShareCopyPrompt": "Copiez ce lien",
   "profileTitle": "Votre profil",
   
   "profileLoading": "Chargement de votre profil...",
