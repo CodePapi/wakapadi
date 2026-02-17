@@ -90,16 +90,18 @@ export default function PeerProfile() {
                 try {
                   await ensureAnonymousSession()
                 } catch {}
-                    // Prevent navigation if blocked/reported
-                    if (blockState && (blockState.anyReported || blockState.blockedByMe || blockState.blockedByThem)) {
-                      try { window.dispatchEvent(new CustomEvent('wakapadi:toast', { detail: { text: t('actionFailed') || 'Action failed' } })) } catch {}
-                      return
-                    }
-                    navigate(`/chat/${userId}`)
+                // Prevent navigation if blocked/reported
+                if (blockState && (blockState.anyReported || blockState.blockedByMe || blockState.blockedByThem)) {
+                  try { window.dispatchEvent(new CustomEvent('wakapadi:toast', { detail: { text: t('actionFailed') || 'Action failed' } })) } catch {}
+                  return
+                }
+                navigate(`/chat/${userId}`)
               }}
-              className="px-5 py-2 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded shadow"
+              aria-label={t('chatWithAssistant') || 'Message'}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded shadow flex items-center gap-2"
             >
-              {t('chatWithAssistant') || 'Message'}
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15a2 2 0 0 1-2 2H8l-5 3V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              <span className="hidden sm:inline">{t('chatWithAssistant') || 'Message'}</span>
             </button>
 
             <button onClick={() => window.history.back()} className="px-4 py-2 border rounded text-sm">{t('back') || 'Back'}</button>
