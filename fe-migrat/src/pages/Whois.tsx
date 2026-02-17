@@ -44,10 +44,13 @@ export default function Whois() {
       if (pageNum > 1) setLoadingMore(true)
       else setLoading(true)
       setError(null)
-      const userId = safeStorage.getItem('userId') || ''
+      // Only include userId when authenticated (token present). Anonymous sessions should not reveal identities.
+      const token = safeStorage.getItem('token')
+      const userId = token ? (safeStorage.getItem('userId') || '') : ''
       const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams('')
       const useSeed = urlParams.get('useSeed') === '1'
-      const limit = 15
+      // When requesting a global/initial load (no city, first page), request up to 100 users to populate the page.
+      const limit = (!targetCity && pageNum === 1) ? 100 : 15
       // when using seed data, fetch local file and paginate client-side
       if (useSeed) {
         try {
@@ -126,7 +129,7 @@ export default function Whois() {
         } catch (e) {}
       }
       const latQs = effectiveCoords ? `&lat=${encodeURIComponent(String(effectiveCoords.lat))}&lon=${encodeURIComponent(String(effectiveCoords.lng))}` : ''
-      const qs = `?city=${encodeURIComponent(targetCity)}&page=${pageNum}&limit=15${userId ? `&userId=${encodeURIComponent(userId)}` : ''}${latQs}`
+      const qs = `?city=${encodeURIComponent(targetCity)}&page=${pageNum}&limit=${encodeURIComponent(String(limit))}${userId ? `&userId=${encodeURIComponent(userId)}` : ''}${latQs}`
       const res: any = await api.get(`/whois/nearby${qs}`, { cache: 'no-store' })
       let data = Array.isArray(res?.data) ? res.data : []
       // filter out locally hidden users
@@ -198,7 +201,7 @@ export default function Whois() {
         return combined
       })
 
-      setHasMore(data.length === 15)
+      setHasMore(data.length === limit)
     } catch (err) {
       console.error('Fetch nearby failed:', err)
       setError('Failed to load nearby users')
@@ -665,7 +668,10 @@ export default function Whois() {
     if (!u) return false
     const hasId = !!(u.userId || u._id || u.id)
     // Show users even if location data is not available so visitors see online people immediately.
-    return hasId
+    // Only include users that have shared coordinates or a server-provided distance.
+    const hasCoords = !!(u.coordinates && typeof u.coordinates.lat === 'number' && typeof u.coordinates.lng === 'number')
+    const hasDistance = typeof u.distanceKm === 'number' && u.distanceKm !== null
+    return hasId && (hasCoords || hasDistance)
   }), [users])
 
   return (
