@@ -171,7 +171,7 @@ export default function NearbyUserCard({ user }: { user: User }) {
                   {user.bio}
                 </div>
               )}
-              <div className="mt-3 hidden md:flex items-center gap-4 text-sm text-gray-500 dark:text-gray-300">
+              <div className="mt-3 flex items-center justify-center md:justify-start gap-4 text-sm text-gray-500 dark:text-gray-300">
                 {user?.city && (
                   <div className="inline-flex items-center gap-2">
                     <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="text-gray-500 dark:text-gray-300"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>
