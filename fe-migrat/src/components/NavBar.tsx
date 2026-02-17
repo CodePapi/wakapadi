@@ -331,9 +331,9 @@ export function MobileBottomNav({
   ? 'sm:hidden absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/90 border rounded-full shadow-lg px-2 py-1 flex gap-2'
   : 'sm:hidden fixed left-0 right-0 bottom-0 z-50';
 
-  const iconSize = inline ? 16 : 20;
+  const iconSize = inline ? 18 : 28;
   // increase tappable area on real devices
-  const itemSizeClass = inline ? 'w-8 h-8' : 'w-11 h-11';
+  const itemSizeClass = inline ? 'w-9 h-9' : 'w-14 h-14';
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -370,38 +370,38 @@ export function MobileBottomNav({
     >
       {/* full-width mobile bar with centered icons (Airbnb-like) */}
       <div className="w-full">
-        <div className="w-full bg-white/90 dark:bg-zinc-900/95 border-t border-gray-200 dark:border-zinc-700 shadow-sm flex justify-around items-center" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)', height: 'calc(5rem + env(safe-area-inset-bottom, 0px))' }}>
+        <div className="w-full bg-white/90 dark:bg-zinc-900/95 border-t border-gray-200 dark:border-zinc-700 shadow-sm flex justify-around items-center" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)', height: 'calc(6rem + env(safe-area-inset-bottom, 0px))' }}>
           <Link to="/" aria-label="Home" className={`${itemSizeClass} flex flex-col items-center justify-center text-center ${homeActive ? 'text-blue-600' : 'text-gray-700 dark:text-gray-200'}`}>
-            <div className="flex flex-col items-center">
+            <div className="flex items-center justify-center">
               <SvgHome size={iconSize} className={homeActive ? 'text-blue-600' : 'text-gray-700'} />
-              <span className="text-[10px] mt-1 text-slate-700 dark:text-gray-200">Home</span>
+              <span className="sr-only">Home</span>
             </div>
           </Link>
           <Link to="/whois" aria-label="Nearby" className={`${itemSizeClass} flex flex-col items-center justify-center text-center ${whoisActive ? 'text-blue-600' : 'text-gray-700 dark:text-gray-200'}`}>
-            <div className="flex flex-col items-center">
+            <div className="flex items-center justify-center">
               <SvgPeople size={iconSize} className={whoisActive ? 'text-blue-600' : 'text-gray-700'} />
-              <span className="text-[10px] mt-1 text-slate-700 dark:text-gray-200">Nearby</span>
+              <span className="sr-only">Nearby</span>
             </div>
           </Link>
           <Link to="/tours" aria-label="Tours" className={`${itemSizeClass} flex flex-col items-center justify-center text-center ${toursActive ? 'text-blue-600' : 'text-gray-700 dark:text-gray-200'}`}>
-            <div className="flex flex-col items-center">
+            <div className="flex items-center justify-center">
               <SvgMap size={iconSize} className={toursActive ? 'text-blue-600' : 'text-gray-700'} />
-              <span className="text-[10px] mt-1 text-slate-700 dark:text-gray-200">Tours</span>
+              <span className="sr-only">Tours</span>
             </div>
           </Link>
           {isLoggedIn ? (
             <>
                 <NotificationsDropdown triggerClassName="p-0 relative" iconClassName="text-gray-700" />
                 <Link to="/chat" aria-label="Chat" className={`${itemSizeClass} flex flex-col items-center justify-center text-center ${chatActive ? 'text-blue-600' : 'text-gray-700 dark:text-gray-200'}`}>
-                  <div className="flex flex-col items-center">
+                  <div className="flex items-center justify-center">
                     <SvgChat size={iconSize} className={chatActive ? 'text-blue-600' : 'text-gray-700'} />
-                    <span className="text-[10px] mt-1 text-slate-700 dark:text-gray-200">Chat</span>
+                    <span className="sr-only">Chat</span>
                   </div>
                 </Link>
                 <Link to="/profile" aria-label="Profile" className={`${itemSizeClass} flex flex-col items-center justify-center text-center ${profileActive ? 'text-blue-600' : 'text-gray-700 dark:text-gray-200'}`}>
-                  <div className="flex flex-col items-center">
+                  <div className="flex items-center justify-center">
                     <SvgAvatar size={iconSize} className={profileActive ? 'text-blue-600' : 'text-gray-700'} />
-                    <span className="text-[10px] mt-1 text-slate-700 dark:text-gray-200">Profile</span>
+                    <span className="sr-only">Profile</span>
                   </div>
                 </Link>
                 <button onClick={() => onLogout && onLogout()} aria-label="Logout" className="flex items-center justify-center p-1 text-red-600">
