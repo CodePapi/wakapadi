@@ -545,7 +545,15 @@ export default function Whois() {
     return () => window.removeEventListener('wakapadi:toast', onToast as EventListener)
   }, [])
 
-  const visibleUsers = useMemo(() => users.filter((u) => (u && (u.userId || u._id || u.id))), [users])
+  const visibleUsers = useMemo(() => users.filter((u) => {
+    if (!u) return false
+    const hasId = !!(u.userId || u._id || u.id)
+    const hasLocation = (
+      (u.coordinates && typeof u.coordinates.lat !== 'undefined' && typeof u.coordinates.lng !== 'undefined') ||
+      (typeof u.distanceKm === 'number')
+    )
+    return hasId && hasLocation
+  }), [users])
 
   return (
     <section aria-labelledby="whois-heading" className="container mx-auto px-4 sm:px-6 lg:px-8">
