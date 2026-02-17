@@ -134,7 +134,7 @@ export default function NearbyUserCard({ user }: { user: User }) {
   }
 
   return (
-    <article className={`bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-4 transition-transform duration-150 ${highlight ? 'ring-2 ring-green-300/60' : ''}`}>
+    <article className={`p-3 border border-gray-200 dark:border-zinc-700 rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow duration-150 hover:bg-gray-50 dark:bg-zinc-900 dark:hover:bg-zinc-800 ${highlight ? 'ring-2 ring-green-300/60' : ''}`}>
       <div className="md:grid md:grid-cols-[64px_1fr_auto] md:gap-4 flex flex-col items-center md:items-start md:flex-row">
         <div className="flex-shrink-0 w-20 md:w-16">
           <div className="w-20 h-20 md:w-16 md:h-16 rounded-full bg-gray-100 dark:bg-zinc-700 flex items-center justify-center overflow-hidden">
