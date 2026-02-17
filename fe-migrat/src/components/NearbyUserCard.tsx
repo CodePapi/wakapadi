@@ -134,8 +134,8 @@ export default function NearbyUserCard({ user }: { user: User }) {
   }
 
   return (
-    <article className={`rounded-2xl p-4 bg-white/60 dark:bg-zinc-900/60 border border-gray-100/60 dark:border-zinc-800/60 shadow-md hover:shadow-2xl transition transform-gpu duration-250 hover:-translate-y-1 ${highlight ? 'ring-2 ring-green-300/40' : ''}`}>
-      <div className="md:grid md:grid-cols-[96px_1fr_auto] md:gap-6 flex flex-col items-center md:items-start md:flex-row">
+    <article className={`h-full flex flex-col rounded-2xl p-4 bg-white/60 dark:bg-zinc-900/60 border border-gray-100/60 dark:border-zinc-800/60 shadow-md hover:shadow-2xl transition transform-gpu duration-250 hover:-translate-y-1 ${highlight ? 'ring-2 ring-green-300/40' : ''}`}>
+      <div className="md:grid md:grid-cols-[96px_1fr_auto] md:gap-6 flex flex-col items-center md:items-start md:flex-row flex-1 min-h-0">
         <div className="flex-shrink-0 w-24 md:w-24">
           <div className="w-24 h-24 rounded-full bg-gradient-to-b from-white to-gray-50 dark:from-zinc-800 dark:to-zinc-900 flex items-center justify-center overflow-hidden relative shadow-sm ring-4 ring-white dark:ring-zinc-900">
             {avatar ? (
@@ -156,7 +156,7 @@ export default function NearbyUserCard({ user }: { user: User }) {
           </div>
         </div>
 
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 min-h-0">
           <div className="flex flex-col items-center md:flex-row md:items-start md:justify-between gap-3 w-full">
             <div className="min-w-0">
               <div className="flex flex-col items-center md:flex-row md:items-center gap-3 text-center md:text-left">
@@ -165,7 +165,7 @@ export default function NearbyUserCard({ user }: { user: User }) {
               </div>
               {user?.bio && (
                 <div
-                  className="mt-2 text-sm text-gray-600 dark:text-gray-300 text-center md:text-left max-w-prose"
+                  className="mt-2 text-sm text-gray-600 dark:text-gray-300 text-center md:text-left max-w-prose min-h-0"
                   style={{ overflow: 'hidden', display: '-webkit-box' as any, WebkitLineClamp: 2 as any, WebkitBoxOrient: 'vertical' as any }}
                 >
                   {user.bio}

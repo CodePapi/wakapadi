@@ -29,26 +29,29 @@ export default function Whois() {
     } catch (e) {
       return () => {}
     }
-  }, [])
-  const [city, setCity] = useState('')
+    }, [])
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => (safeStorage.getItem('whois_view') as 'grid' | 'list') || 'grid')
+
+  // Local UI & data state
   const [users, setUsers] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [page, setPage] = useState(1)
-  const [hasMore, setHasMore] = useState(true)
   const [currentCoords, setCurrentCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(false)
+  const [city, setCity] = useState('')
+  const [hiddenList, setHiddenList] = useState<string[]>([])
+  const [hiddenProfiles, setHiddenProfiles] = useState<Record<string, any>>({})
+  const [fetchingCities, setFetchingCities] = useState(false)
+  const [availableCities, setAvailableCities] = useState<Array<{ city: string; count: number; display: string }>>([])
+  const [manualCity, setManualCity] = useState('')
+  const [showLocationPrompt, setShowLocationPrompt] = useState(false)
+  const [showHiddenPanel, setShowHiddenPanel] = useState(false)
+  const [geoInProgress, setGeoInProgress] = useState(false)
   const [authToken, setAuthToken] = useState<string | null>(() => safeStorage.getItem('token') || null)
   const [toast, setToast] = useState<{ id: string; text: string } | null>(null)
-  const [hiddenList, setHiddenList] = useState<string[]>([])
-  const [showHiddenPanel, setShowHiddenPanel] = useState(false)
-  const [hiddenProfiles, setHiddenProfiles] = useState<Record<string, any>>({})
-  const [showLocationPrompt, setShowLocationPrompt] = useState(false)
-  const [manualCity, setManualCity] = useState('')
-  const [availableCities, setAvailableCities] = useState<Array<{ city: string; count: number; display: string }>>([])
-  const [fetchingCities, setFetchingCities] = useState(false)
-  const [geoInProgress, setGeoInProgress] = useState(false)
 
   const fetchNearby = useCallback(async (targetCity: string, pageNum = 1) => {
     try {
@@ -841,6 +844,17 @@ export default function Whois() {
       <div className="mt-6 space-y-4">
         <VisibilityToggle />
 
+        <div className="mt-2 hidden sm:flex items-center justify-end">
+          <div className="inline-flex items-center rounded-md bg-white/50 dark:bg-zinc-900/50 px-1 border border-gray-200 dark:border-zinc-800">
+            <button onClick={() => { setViewMode('grid'); try { safeStorage.setItem('whois_view', 'grid') } catch (e) {} }} aria-pressed={viewMode === 'grid'} className={`p-2 ${viewMode === 'grid' ? 'bg-gray-100 dark:bg-zinc-800 rounded-md' : 'hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-md'}`} title="Grid view">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-700 dark:text-gray-200" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg>
+            </button>
+            <button onClick={() => { setViewMode('list'); try { safeStorage.setItem('whois_view', 'list') } catch (e) {} }} aria-pressed={viewMode === 'list'} className={`p-2 ${viewMode === 'list' ? 'bg-gray-100 dark:bg-zinc-800 rounded-md' : 'hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-md'}`} title="List view">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-700 dark:text-gray-200" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="3" rx="1"/><rect x="3" y="10.5" width="18" height="3" rx="1"/><rect x="3" y="17" width="18" height="3" rx="1"/></svg>
+            </button>
+          </div>
+        </div>
+
        <>{safeStorage.getItem('userId') &&<div className="mt-3">
           <button
             onClick={() => setShowLocationPrompt(true)}
@@ -964,34 +978,74 @@ export default function Whois() {
           </div>
         )}
 
-        <div className="grid gap-6 mt-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-          {loading && visibleUsers.length === 0 ? (
-            Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="rounded-2xl p-4 bg-gray-100/80 dark:bg-zinc-800 animate-pulse h-36" />
-            ))
-          ) : visibleUsers.length > 0 ? (
-            visibleUsers.map((u) => <NearbyUserCard key={u.userId || u._id || u.id} user={u} />)
-          ) : (
-            city && !loading ? (
-              <div className="text-center text-gray-600 space-y-3">
-                <div className="text-base font-medium">{t('whoisNoTravelersTitle')}</div>
-                <div className="text-sm">{t('whoisNoTravelersSubtitle')}</div>
-                <ul className="list-disc list-inside text-sm text-gray-600">
-                  <li>{t('whoisNoTravelersOptionOne')}</li>
-                  <li>{t('whoisNoTravelersOptionTwo')}</li>
-                  <li>{t('whoisNoTravelersOptionThree')}</li>
-                </ul>
-                <div className="mt-3 flex justify-center gap-3">
-                  <button onClick={() => fetchNearby(city, 1)} className="px-4 py-2 border rounded dark:border-gray-700 dark:text-gray-100">{t('retry')}</button>
-                  <a href="/tours" className="px-4 py-2 bg-white dark:bg-gray-800 border rounded-md dark:border-gray-700 dark:text-gray-100">{t('heroCtaExplore')}</a>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center text-gray-600">No users found nearby — try again later or explore tours.</div>
-            )
-          )}
-        </div>
+        {viewMode === 'grid' && (
+          <div className="grid gap-6 mt-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+            {loading && visibleUsers.length === 0 ? (
+              Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="rounded-2xl p-4 bg-gray-100/80 dark:bg-zinc-800 animate-pulse h-36" />
+              ))
+            ) : visibleUsers.length > 0 ? (
+              visibleUsers.map((u) => <NearbyUserCard key={u.userId || u._id || u.id} user={u} />)
+            ) : null}
 
+            {visibleUsers.length === 0 && !loading && (
+              city ? (
+                <div className="text-center text-gray-600 space-y-3">
+                  <div className="text-base font-medium">{t('whoisNoTravelersTitle')}</div>
+                  <div className="text-sm">{t('whoisNoTravelersSubtitle')}</div>
+                  <ul className="list-disc list-inside text-sm text-gray-600">
+                    <li>{t('whoisNoTravelersOptionOne')}</li>
+                    <li>{t('whoisNoTravelersOptionTwo')}</li>
+                    <li>{t('whoisNoTravelersOptionThree')}</li>
+                  </ul>
+                  <div className="mt-3 flex justify-center gap-3">
+                    <button onClick={() => fetchNearby(city, 1)} className="px-4 py-2 border rounded dark:border-gray-700 dark:text-gray-100">{t('retry')}</button>
+                    <a href="/tours" className="px-4 py-2 bg-white dark:bg-gray-800 border rounded-md dark:border-gray-700 dark:text-gray-100">{t('heroCtaExplore')}</a>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center text-gray-600">No users found nearby — try again later or explore tours.</div>
+              )
+            )}
+          </div>
+        )}
+
+        {viewMode === 'list' && (
+          <div className="mt-6 flex flex-col gap-4">
+            {loading && visibleUsers.length === 0 ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="rounded-2xl p-4 bg-gray-100/80 dark:bg-zinc-800 animate-pulse h-24" />
+              ))
+            ) : visibleUsers.length > 0 ? (
+              visibleUsers.map((u) => (
+                <div key={u.userId || u._id || u.id} className="w-full">
+                  <NearbyUserCard user={u} />
+                </div>
+              ))
+            ) : null}
+
+            {visibleUsers.length === 0 && !loading && (
+              city ? (
+                <div className="text-center text-gray-600 space-y-3">
+                  <div className="text-base font-medium">{t('whoisNoTravelersTitle')}</div>
+                  <div className="text-sm">{t('whoisNoTravelersSubtitle')}</div>
+                  <ul className="list-disc list-inside text-sm text-gray-600">
+                    <li>{t('whoisNoTravelersOptionOne')}</li>
+                    <li>{t('whoisNoTravelersOptionTwo')}</li>
+                    <li>{t('whoisNoTravelersOptionThree')}</li>
+                  </ul>
+                  <div className="mt-3 flex justify-center gap-3">
+                    <button onClick={() => fetchNearby(city, 1)} className="px-4 py-2 border rounded dark:border-gray-700 dark:text-gray-100">{t('retry')}</button>
+                    <a href="/tours" className="px-4 py-2 bg-white dark:bg-gray-800 border rounded-md dark:border-gray-700 dark:text-gray-100">{t('heroCtaExplore')}</a>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center text-gray-600">No users found nearby — try again later or explore tours.</div>
+              )
+            )}
+          </div>
+        )}
+        
         {hasMore && !loading && (
           <div className="mt-4 text-center">
             <button onClick={loadMore} className="px-4 py-2 border rounded">{loadingMore ? 'Loading...' : 'Load more'}</button>
