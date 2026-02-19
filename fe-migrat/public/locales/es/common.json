@@ -125,6 +125,7 @@
   "language": "Idioma",
   "logout": "Cerrar sesión",
   "footerTagline": "Explora, conéctate y descubre visitas guiadas locales gratuitas",
+  "followUsOnInstagram": "Síguenos en Instagram",
   "contactFormTitle": "Enviar mensaje"
 
   ,
@@ -208,7 +209,34 @@
   ,"profileNoInterests": "No hay intereses de viaje listados."
   ,"profileNoInstagram": "Sin Instagram"
   ,"profileNoTwitter": "Sin Twitter"
-  ,"profileNoWebsite": "Sin sitio web"
-  ,"back": "Atrás"
+  ,"profileNoWebsite": "Sin sitio web",
+  "back": "Atrás",
+  "faqTitle": "Preguntas frecuentes",
+  "faqQ1Q": "¿Qué es Wakapadi?",
+  "faqQ1A": "Wakapadi es una plataforma de viajes que te ayuda a descubrir visitas guiadas gratuitas, conectar con locales y otros viajeros, y ver quién está cerca para explorar ciudades juntos de forma comunitaria.",
+  "faqQ2Q": "¿Cómo empiezo?",
+  "faqQ2A": "Puedes explorar partes de la plataforma sin registrarte, pero para interactuar con funciones como #Whois Nearby o unirte a tours necesitarás una sesión anónima de un solo clic.",
+  "faqQ3Q": "¿Necesito crear una cuenta?",
+  "faqQ3A": "No se requiere un registro tradicional. Wakapadi crea automáticamente una cuenta anónima basada en la sesión del navegador: sin formularios, correos ni contraseñas.",
+  "faqQ4Q": "¿Qué pasa si cambio de navegador o dispositivo?",
+  "faqQ4A": "Como las cuentas están ligadas a la sesión del navegador, cambiar de navegador o dispositivo (o borrar los datos) creará una nueva cuenta privada. Los datos locales previos no se transfieren.",
+  "faqQ5Q": "¿Qué es la función \"#Whois Nearby\"?",
+  "faqQ5A": "#Whois Nearby muestra viajeros y locales que están cerca de tu ubicación para que podáis quedar, tomar un café o explorar juntos.",
+  "faqQ6Q": "¿Qué son las visitas guiadas gratuitas?",
+  "faqQ6A": "Son recorridos urbanos listados en Wakapadi a los que puedes unirte sin pagar por adelantado. Muchas funcionan con propinas o pago voluntario.",
+  "faqQ7Q": "¿Debo pagar para unirme a una visita?",
+  "faqQ7A": "Muchas visitas son gratuitas para unirse, pero puedes dar una propina o contribuir al guía según tu experiencia.",
+  "faqQ8Q": "¿Wakapadi está disponible en todo el mundo?",
+  "faqQ8A": "El catálogo de Wakapadi crece con el tiempo. La disponibilidad depende de la ciudad y de las contribuciones de la comunidad.",
+  "faqQ9Q": "¿Se comparte públicamente mi ubicación?",
+  "faqQ9A": "No — las coordenadas precisas no se comparten públicamente. La ubicación se usa (con tu consentimiento) para ofrecer la experiencia #Whois Nearby y distancias aproximadas.",
+  "faqQ10Q": "¿Puedo contactar a otros viajeros antes de quedar?",
+  "faqQ10A": "Sí — una vez que tengas una sesión anónima, puedes enviar mensajes a otros viajeros dentro de la plataforma para coordinar de forma segura.",
+  "faqQ11Q": "¿Cómo me uno a una visita listada?",
+  "faqQ11A": "Abre los detalles de la visita desde las secciones Disponibles o Destacadas y sigue las instrucciones del organizador para el punto de encuentro.",
+  "faqQ12Q": "¿Es seguro usar Wakapadi?",
+  "faqQ12A": "Wakapadi fomenta un comportamiento responsable: revisa perfiles, reúnanse en lugares públicos y actúa con prudencia. La plataforma no verifica usuarios automáticamente.",
+  "faqQ13Q": "¿Pueden los locales listar tours o experiencias?",
+  "faqQ13A": "Sí — los locales y guías pueden sugerir tours o experiencias para ser listados. Usa el formulario de Contacto para proponer un listado o una colaboración. Por ahora agregamos tours y experiencias de otras fuentes; a medida que crezcamos, daremos soporte a listados directos. Siéntete libre de usarlo en tus trabajos."
 }
 

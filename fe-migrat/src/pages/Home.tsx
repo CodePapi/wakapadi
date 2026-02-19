@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useTranslation } from '../lib/i18n'
+import Footer from '../components/Footer'
 import { api } from '../lib/api'
 
 
@@ -213,6 +214,23 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* FAQ Section */}
+      <section className="py-12">
+        <div className="mx-auto max-w-6xl px-4">
+          <h2 className="text-2xl font-semibold mb-6">{t('faqTitle') || 'Frequently asked questions'}</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[1,2,3,4,5,6,7,8,9,10,11,12,13].map((n) => (
+              <details key={n} className="p-4 rounded-lg bg-white/60 dark:bg-zinc-900/60 border border-gray-100/60 dark:border-zinc-800/60">
+                <summary className="font-medium cursor-pointer">{t(`faqQ${n}Q`)}</summary>
+                <div className="mt-3 text-sm text-gray-700 dark:text-gray-300">{t(`faqQ${n}A`)}</div>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <Footer />
     </main>
   )
 }
