@@ -125,6 +125,7 @@
   "language": "Idioma",
   "logout": "Cerrar sesión",
   "footerTagline": "Explora, conéctate y descubre visitas guiadas locales gratuitas",
+  "followUsOnInstagram": "Síguenos en Instagram",
   "contactFormTitle": "Enviar mensaje"
 
   ,
@@ -208,8 +209,7 @@
   ,"profileNoInterests": "No hay intereses de viaje listados."
   ,"profileNoInstagram": "Sin Instagram"
   ,"profileNoTwitter": "Sin Twitter"
-  ,"profileNoWebsite": "Sin sitio web"
-  ,"back": "Atrás"
+  ,"profileNoWebsite": "Sin sitio web",
   "back": "Atrás",
   "faqTitle": "Preguntas frecuentes",
   "faqQ1Q": "¿Qué es Wakapadi?",

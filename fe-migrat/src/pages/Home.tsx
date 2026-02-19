@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useTranslation } from '../lib/i18n'
+import Footer from '../components/Footer'
 import { api } from '../lib/api'
 
 
@@ -228,6 +229,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <Footer />
     </main>
   )
 }
